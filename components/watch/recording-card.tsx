@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import MuxPlayer from "@mux/mux-player-react/lazy";
 import "@mux/mux-player/themes/minimal";
 import { IconTrash } from "@tabler/icons-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { LuxeCard as Card, LuxeCardContent as CardContent } from "@/components/ui/luxe-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { type Asset, type AIAnalysisJob, getAssetPlaybackId, supabase } from "@/lib/supabase";
@@ -178,7 +178,7 @@ export function RecordingCard({ asset, onUpdate, onDelete }: RecordingCardProps)
 
   return (
     <>
-      <Card className="group relative overflow-hidden transition-all hover:shadow-lg py-0">
+      <Card variant="revealed-pointer" className="group relative overflow-hidden transition-all hover:shadow-lg py-0">
         <CardContent className="p-0 pb-4">
           {/* Video Display */}
           <div className="relative aspect-video bg-black mb-3" onClick={(e) => e.stopPropagation()}>
