@@ -168,8 +168,8 @@ function getCurrentDetections(
       confidenceThreshold
     );
 
-    // Create a unique key for this detection
-    const detKey = `${Math.round(prevDet.bbox.x * 100)}-${Math.round(prevDet.bbox.y * 100)}`;
+    // Create a unique key for this detection (include class and size to avoid collisions)
+    const detKey = `${prevDet.class}-${Math.round(prevDet.bbox.x * 100)}-${Math.round(prevDet.bbox.y * 100)}-${Math.round(prevDet.bbox.width * 100)}-${Math.round(prevDet.bbox.height * 100)}`;
 
     if (matchingNext) {
       activeDetectionKeys.add(detKey);
@@ -246,8 +246,8 @@ function getCurrentDetections(
     for (const olderDet of olderFrame.detections) {
       if (olderDet.confidence < confidenceThreshold) continue;
       
-      // Create key for this detection
-      const detKey = `${Math.round(olderDet.bbox.x * 100)}-${Math.round(olderDet.bbox.y * 100)}`;
+      // Create key for this detection (include class and size to avoid collisions)
+      const detKey = `${olderDet.class}-${Math.round(olderDet.bbox.x * 100)}-${Math.round(olderDet.bbox.y * 100)}-${Math.round(olderDet.bbox.width * 100)}-${Math.round(olderDet.bbox.height * 100)}`;
       
       // Skip if we're already showing this detection from a more recent frame
       if (activeDetectionKeys.has(detKey)) continue;
@@ -341,8 +341,8 @@ export function DetectionOverlay({
         const labelWidth = confidenceText.length * 6 + 14;
         const labelY = y - 6;
 
-        // Use position-based key for stable rendering
-        const detectionKey = `${detection.class}-${Math.round(x)}-${Math.round(y)}-${idx}`;
+        // Use stable key based on detection properties (not index)
+        const detectionKey = `${detection.class}-${Math.round(detection.bbox.x * 100)}-${Math.round(detection.bbox.y * 100)}-${Math.round(detection.bbox.width * 100)}-${Math.round(detection.bbox.height * 100)}`;
 
         return (
           <g key={detectionKey} opacity={opacity}>

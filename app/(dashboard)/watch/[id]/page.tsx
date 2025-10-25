@@ -150,22 +150,30 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
     if (!player) return;
 
     let animationFrameId: number;
+    let mounted = true;
     
     const updateTime = () => {
+      // Check mounted flag to prevent updates after cleanup
+      if (!mounted) return;
+      
       if (player && player.currentTime !== undefined) {
         setCurrentTime(player.currentTime);
       }
-      animationFrameId = requestAnimationFrame(updateTime);
+      // Continue the loop only if still mounted
+      if (mounted) {
+        animationFrameId = requestAnimationFrame(updateTime);
+      }
     };
 
     animationFrameId = requestAnimationFrame(updateTime);
 
     return () => {
+      mounted = false;
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [asset]);
+  }, [asset]); // Re-run when asset changes to get new player reference
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
