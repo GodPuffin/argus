@@ -1,0 +1,93 @@
+"use client"
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { PieChart, Pie, Cell, Legend, ResponsiveContainer } from "recharts"
+
+interface JobStatusChartProps {
+  data: {
+    queued: number
+    processing: number
+    succeeded: number
+    failed: number
+    dead: number
+  }
+}
+
+const chartConfig = {
+  queued: {
+    label: "Queued",
+    color: "hsl(0, 70%, 88%)", // Light red
+  },
+  processing: {
+    label: "Processing",
+    color: "hsl(14, 80%, 70%)", // Orange-red
+  },
+  succeeded: {
+    label: "Succeeded",
+    color: "hsl(142, 70%, 45%)", // Green for success
+  },
+  failed: {
+    label: "Failed",
+    color: "hsl(0, 80%, 55%)", // Medium red
+  },
+  dead: {
+    label: "Dead",
+    color: "hsl(0, 60%, 30%)", // Dark red
+  },
+}
+
+export function JobStatusChart({ data }: JobStatusChartProps) {
+  const chartData = [
+    { name: "Queued", value: data.queued, fill: chartConfig.queued.color },
+    { name: "Processing", value: data.processing, fill: chartConfig.processing.color },
+    { name: "Succeeded", value: data.succeeded, fill: chartConfig.succeeded.color },
+    { name: "Failed", value: data.failed, fill: chartConfig.failed.color },
+    { name: "Dead", value: data.dead, fill: chartConfig.dead.color },
+  ].filter(item => item.value > 0)
+
+  const total = data.queued + data.processing + data.succeeded + data.failed + data.dead
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>AI Job Status Distribution</CardTitle>
+        <CardDescription>
+          {total > 0 ? `Total ${total.toLocaleString()} jobs` : "No jobs yet"}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="pb-0">
+        {total > 0 ? (
+          <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[300px] w-full">
+            <PieChart>
+              <ChartTooltip 
+                cursor={false}
+                content={<ChartTooltipContent hideLabel />} 
+              />
+              <Pie
+                data={chartData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={90}
+                strokeWidth={2}
+                stroke="hsl(var(--background))"
+                label={({ name, percent }) => 
+                  percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''
+                }
+                labelLine={false}
+              />
+            </PieChart>
+          </ChartContainer>
+        ) : (
+          <div className="flex h-[300px] items-center justify-center text-muted-foreground">
+            No data available
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
