@@ -3,6 +3,7 @@
 import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts"
+import { ChartBackground } from "./chart-background"
 
 interface DetectionsByHourChartProps {
   data: Array<{ timestamp: number; count: number }>
@@ -39,8 +40,8 @@ export function DetectionsByHourChart({ data }: DetectionsByHourChartProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-6">
-        {data.length > 0 ? (
-          <div className="rounded-lg bg-muted/50 p-4 mb-0">
+        <ChartBackground>
+          {data.length > 0 ? (
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
             <BarChart data={chartData} margin={{ left: 0, right: 0 }}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
@@ -68,12 +69,12 @@ export function DetectionsByHourChart({ data }: DetectionsByHourChartProps) {
               />
             </BarChart>
           </ChartContainer>
-          </div>
-        ) : (
-          <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-            No hourly data available
-          </div>
-        )}
+          ) : (
+            <div className="flex h-[300px] items-center justify-center text-muted-foreground">
+              No hourly data available
+            </div>
+          )}
+        </ChartBackground>
       </CardContent>
     </Card>
   )

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import MuxPlayer from "@mux/mux-player-react";
 import { IconPencil, IconTrash, IconVolume, IconVolumeOff } from "@tabler/icons-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { LuxeCard as Card, LuxeCardContent as CardContent } from "@/components/ui/luxe-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -61,7 +61,7 @@ export function CameraCard({ camera, onRename, onDelete }: CameraCardProps) {
   };
 
   return (
-    <Card className="group relative overflow-hidden transition-all hover:shadow-lg py-0">
+    <Card variant="revealed-pointer" className="group relative overflow-hidden transition-all hover:shadow-lg py-0">
       <CardContent className="p-0 pb-4">
         {/* Video/Offline Display */}
         <div className="relative aspect-video bg-black mb-3">

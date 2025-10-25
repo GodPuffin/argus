@@ -34,7 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Filter } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -105,7 +105,7 @@ export default function JobsPage() {
       <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6 overflow-hidden">
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-6">
-          <Card>
+          <Card variant="revealed-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total</CardTitle>
             </CardHeader>
@@ -113,7 +113,7 @@ export default function JobsPage() {
               <div className="text-2xl font-bold">{stats.total}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card variant="revealed-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Queued</CardTitle>
             </CardHeader>
@@ -121,7 +121,7 @@ export default function JobsPage() {
               <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">{stats.queued}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card variant="revealed-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Processing</CardTitle>
             </CardHeader>
@@ -129,7 +129,7 @@ export default function JobsPage() {
               <div className="text-2xl font-bold text-blue-600 dark:text-blue-500">{stats.processing}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card variant="revealed-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Succeeded</CardTitle>
             </CardHeader>
@@ -137,7 +137,7 @@ export default function JobsPage() {
               <div className="text-2xl font-bold text-green-600 dark:text-green-500">{stats.succeeded}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card variant="revealed-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Failed</CardTitle>
             </CardHeader>
@@ -145,7 +145,7 @@ export default function JobsPage() {
               <div className="text-2xl font-bold text-orange-600 dark:text-orange-500">{stats.failed}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card variant="revealed-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Dead</CardTitle>
             </CardHeader>
@@ -156,7 +156,7 @@ export default function JobsPage() {
         </div>
 
         {/* Data Table */}
-        <Card className="flex flex-col flex-1 overflow-hidden">
+        <Card variant="revealed-pointer" className="flex flex-col flex-1 overflow-hidden">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>

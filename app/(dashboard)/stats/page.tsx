@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { SiteHeader } from "@/components/site-header"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card"
 import { AnimatedTabs } from "@/components/ui/animated-tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
@@ -144,7 +144,7 @@ export default function StatsPage() {
             {loading ? (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {[...Array(4)].map((_, i) => (
-                  <Card key={i}>
+                  <Card key={i} variant="revealed-pointer">
                     <CardHeader className="pb-2">
                       <Skeleton className="h-4 w-24" />
                     </CardHeader>
@@ -157,7 +157,7 @@ export default function StatsPage() {
             ) : stats ? (
               <div className={`grid gap-4 md:grid-cols-2 lg:grid-cols-4 transition-opacity duration-200 ${isRefetching ? 'opacity-60' : 'opacity-100'}`}>
                 {/* Total Jobs */}
-                <Card>
+                <Card variant="revealed-pointer">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Jobs</CardTitle>
                     <Activity className="h-4 w-4 text-muted-foreground" />
@@ -171,7 +171,7 @@ export default function StatsPage() {
                 </Card>
 
                 {/* Success Rate */}
-                <Card>
+                <Card variant="revealed-pointer">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
                     <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -185,7 +185,7 @@ export default function StatsPage() {
                 </Card>
 
                 {/* Active Streams */}
-                <Card>
+                <Card variant="revealed-pointer">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Active Streams</CardTitle>
                     <Radio className="h-4 w-4 text-green-500" />
@@ -199,7 +199,7 @@ export default function StatsPage() {
                 </Card>
 
                 {/* Total Detections */}
-                <Card>
+                <Card variant="revealed-pointer">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Detections</CardTitle>
                     <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -220,7 +220,7 @@ export default function StatsPage() {
             {loading ? (
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {[...Array(9)].map((_, i) => (
-                  <Card key={i}>
+                  <Card key={i} variant="revealed-pointer">
                     <CardHeader>
                       <Skeleton className="h-6 w-48" />
                       <Skeleton className="h-4 w-32" />
@@ -262,7 +262,7 @@ export default function StatsPage() {
                 </div>
               </div>
             ) : (
-              <Card>
+              <Card variant="revealed-pointer">
                 <CardHeader>
                   <CardTitle>No Data Available</CardTitle>
                   <CardDescription>
