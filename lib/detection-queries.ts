@@ -104,6 +104,9 @@ export async function getDetectionsForSource(
     });
   }
 
+  // Ensure detections are sorted by timestamp (important when merging multiple jobs)
+  allDetections.sort((a, b) => a.frame_timestamp - b.frame_timestamp);
+
   return allDetections;
 }
 

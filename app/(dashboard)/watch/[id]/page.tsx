@@ -4,18 +4,19 @@ import { use, useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import MuxPlayer from "@mux/mux-player-react";
 import "@mux/mux-player/themes/minimal";
-import { 
-  IconArrowLeft, 
-  IconAlertCircle, 
-  IconPlayerPlay, 
+import {
+  IconArrowLeft,
+  IconAlertCircle,
+  IconPlayerPlay,
   IconPlayerPause,
-  IconPlayerSkipBack,
-  IconPlayerSkipForward,
+  IconRewindBackward10,
+  IconRewindForward10,
   IconVolume,
   IconVolumeOff,
   IconMaximize,
   IconMinimize,
   IconRadar,
+  IconRadarOff,
   IconSettings
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
@@ -63,9 +64,11 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [confidenceThreshold, setConfidenceThreshold] = useState(0.3);
-  const [persistenceTime, setPersistenceTime] = useState(2.0);
+  const [persistenceTime, setPersistenceTime] = useState(1.0);
   const [interpolationEnabled, setInterpolationEnabled] = useState(true);
   const [fadeEnabled, setFadeEnabled] = useState(true);
+
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const timestamp = searchParams.get("timestamp");
   const startTime = timestamp ? parseFloat(timestamp) : undefined;
@@ -124,14 +127,12 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
       setVolume(player.volume);
       setIsMuted(player.muted);
     };
-    const handleTimeUpdate = () => setCurrentTime(player.currentTime || 0);
     const handleDurationChange = () => setDuration(player.duration || 0);
     const handleLoadedMetadata = () => setDuration(player.duration || 0);
 
     player.addEventListener("play", handlePlay);
     player.addEventListener("pause", handlePause);
     player.addEventListener("volumechange", handleVolumeChange);
-    player.addEventListener("timeupdate", handleTimeUpdate);
     player.addEventListener("durationchange", handleDurationChange);
     player.addEventListener("loadedmetadata", handleLoadedMetadata);
 
@@ -139,11 +140,41 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
       player.removeEventListener("play", handlePlay);
       player.removeEventListener("pause", handlePause);
       player.removeEventListener("volumechange", handleVolumeChange);
-      player.removeEventListener("timeupdate", handleTimeUpdate);
       player.removeEventListener("durationchange", handleDurationChange);
       player.removeEventListener("loadedmetadata", handleLoadedMetadata);
     };
   }, [asset]);
+
+  // Use requestAnimationFrame for smooth 60fps currentTime updates
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!player) return;
+
+    let animationFrameId: number;
+    let mounted = true;
+    
+    const updateTime = () => {
+      // Check mounted flag to prevent updates after cleanup
+      if (!mounted) return;
+      
+      if (player && player.currentTime !== undefined) {
+        setCurrentTime(player.currentTime);
+      }
+      // Continue the loop only if still mounted
+      if (mounted) {
+        animationFrameId = requestAnimationFrame(updateTime);
+      }
+    };
+
+    animationFrameId = requestAnimationFrame(updateTime);
+
+    return () => {
+      mounted = false;
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [asset]); // Re-run when asset changes to get new player reference
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -267,6 +298,14 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
     if (autoPlay && player.paused) {
       player.play();
     }
+    
+    // Scroll to top to view the video
+    if (scrollAreaRef.current) {
+      const scrollViewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollViewport) {
+        scrollViewport.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
   };
 
   const toggleFullscreen = () => {
@@ -379,7 +418,7 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {/* Scrollable content */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1" ref={scrollAreaRef}>
         <div className="flex flex-col">
           {/* Video player container */}
           <div 
@@ -497,7 +536,7 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
                       className="h-9 w-9"
                       title="Skip backward 10s (←)"
                     >
-                      <IconPlayerSkipBack className="size-5" />
+                      <IconRewindBackward10 className="size-5" />
                     </Button>
 
                     {/* Skip Forward */}
@@ -508,7 +547,7 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
                       className="h-9 w-9"
                       title="Skip forward 10s (→)"
                     >
-                      <IconPlayerSkipForward className="size-5" />
+                      <IconRewindForward10 className="size-5" />
                     </Button>
 
                     {/* Volume */}
@@ -542,13 +581,17 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
                     {/* Detection Toggle - Always show for ready videos */}
                     {asset?.status === "ready" && (
                       <Button
-                        variant={detectionsEnabled ? "default" : "ghost"}
+                        variant="ghost"
                         size="icon"
                         onClick={() => setDetectionsEnabled(!detectionsEnabled)}
                         className="h-9 w-9"
                         title="Toggle person detection overlay"
                       >
-                        <IconRadar className="size-5" />
+                        {detectionsEnabled ? (
+                          <IconRadarOff className="size-5" />
+                        ) : (
+                          <IconRadar className="size-5" />
+                        )}
                       </Button>
                     )}
 
