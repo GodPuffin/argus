@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts"
 
@@ -19,16 +19,17 @@ export function TopTagsChart({ data }: TopTagsChartProps) {
   const chartData = data.slice(0, 10)
 
   return (
-    <Card>
+    <Card variant="revealed-pointer">
       <CardHeader>
         <CardTitle>Top AI Analysis Tags</CardTitle>
         <CardDescription>
           Most common tags from AI analysis results
         </CardDescription>
       </CardHeader>
-      <CardContent className="pb-2">
+      <CardContent className="pb-6">
         {chartData.length > 0 ? (
-          <ChartContainer config={chartConfig} className="h-[300px] w-full">
+          <div className="rounded-lg bg-muted/50 p-4 mb-0">
+            <ChartContainer config={chartConfig} className="h-[300px] w-full">
             <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 10 }}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
               <XAxis 
@@ -55,6 +56,7 @@ export function TopTagsChart({ data }: TopTagsChartProps) {
               />
             </BarChart>
           </ChartContainer>
+          </div>
         ) : (
           <div className="flex h-[300px] items-center justify-center text-muted-foreground">
             No tag data available

@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { PieChart, Pie, Cell, Legend } from "recharts"
 import { Camera } from "lucide-react"
@@ -31,7 +31,7 @@ export function CameraActivityChart({ data }: CameraActivityChartProps) {
   const topCamera = data.length > 0 ? data[0] : null
 
   return (
-    <Card>
+    <Card variant="revealed-pointer">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Camera className="h-5 w-5" />
@@ -43,10 +43,11 @@ export function CameraActivityChart({ data }: CameraActivityChartProps) {
             : "No camera activity yet"}
         </CardDescription>
       </CardHeader>
-      <CardContent className="pb-0">
+      <CardContent className="pb-4">
         {total > 0 ? (
           <div className="flex flex-col">
-            <ChartContainer config={{}} className="mx-auto aspect-square max-h-[280px] w-full">
+            <div className="rounded-lg bg-muted/50 p-4 mb-0">
+              <ChartContainer config={{}} className="mx-auto aspect-square max-h-[280px] w-full">
               <PieChart>
                 <ChartTooltip 
                   cursor={false}
@@ -70,10 +71,11 @@ export function CameraActivityChart({ data }: CameraActivityChartProps) {
                 >
                   {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ChartContainer>
+                ))}
+              </Pie>
+            </PieChart>
+          </ChartContainer>
+            </div>
             {topCamera && (
               <div className="mt-2 text-center text-sm text-muted-foreground px-4 pb-4">
                 <span className="font-medium text-foreground">{topCamera.camera_name}</span> leads

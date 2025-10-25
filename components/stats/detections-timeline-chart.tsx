@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts"
 
@@ -30,17 +30,18 @@ export function DetectionsTimelineChart({ data }: DetectionsTimelineChartProps) 
   const avgPerFrame = totalFrames > 0 ? (totalDetections / totalFrames).toFixed(2) : '0'
 
   return (
-    <Card>
+    <Card variant="revealed-pointer">
       <CardHeader>
         <CardTitle>Detections Timeline</CardTitle>
         <CardDescription>
           Daily detection activity and frame processing
         </CardDescription>
       </CardHeader>
-      <CardContent className="pb-2">
+      <CardContent className="pb-6">
         {chartData.length > 0 ? (
           <>
-            <ChartContainer config={chartConfig} className="h-[300px] w-full">
+            <div className="rounded-lg bg-muted/50 p-4 mb-0">
+              <ChartContainer config={chartConfig} className="h-[300px] w-full">
               <LineChart data={chartData} margin={{ left: 0, right: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis 
@@ -74,6 +75,7 @@ export function DetectionsTimelineChart({ data }: DetectionsTimelineChartProps) 
                 />
               </LineChart>
             </ChartContainer>
+            </div>
             <div className="mt-3 text-sm text-muted-foreground px-2 pb-2">
               Average {avgPerFrame} detections per frame
             </div>
