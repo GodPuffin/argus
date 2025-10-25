@@ -1,324 +1,446 @@
-/**
- * Elasticsearch Data Synchronization
- * 
- * This module handles syncing MUX data (streams, cameras, recordings) 
- * with the Elasticsearch index for search functionality.
- */
-
-import { indexDocument, bulkIndexDocuments, deleteDocument, type ContentDocument } from './elasticsearch'
 import { supabase } from './supabase'
-
-const MUX_TOKEN_ID = process.env.MUX_TOKEN_ID
-const MUX_TOKEN_SECRET = process.env.MUX_TOKEN_SECRET
-
-// ============================================================================
-// MUX API Helpers
-// ============================================================================
-
-async function fetchMuxAPI(endpoint: string) {
-  if (!MUX_TOKEN_ID || !MUX_TOKEN_SECRET) {
-    throw new Error('MUX credentials not configured')
-  }
-
-  const response = await fetch(`https://api.mux.com${endpoint}`, {
-    headers: {
-      Authorization: 'Basic ' + Buffer.from(`${MUX_TOKEN_ID}:${MUX_TOKEN_SECRET}`).toString('base64'),
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error(`MUX API error: ${response.status}`)
-  }
-
-  return response.json()
-}
+import { indexDocument, bulkIndexDocuments } from './elasticsearch'
+import type { 
+  EventDocument, 
+  AnalysisDocument, 
+  BulkIndexDocument 
+} from './types/elasticsearch'
+import { buildDocumentTitle } from './types/elasticsearch'
 
 // ============================================================================
-// Data Transformation
+// Event Syncing
 // ============================================================================
 
-function transformStreamToDocument(stream: any): ContentDocument {
-  return {
-    type: 'stream',
-    title: `Live Stream ${stream.id.substring(0, 8)}`,
-    description: `Live stream with status: ${stream.status}. Latency mode: ${stream.latency_mode || 'standard'}`,
-    content: `Stream ID: ${stream.id}. Playback ID: ${stream.playback_ids?.[0]?.id || 'none'}. Recent assets: ${stream.recent_asset_ids?.join(', ') || 'none'}`,
-    tags: [
-      'mux',
-      'live-stream',
-      stream.status,
-      stream.latency_mode || 'standard',
-      stream.playback_ids?.[0]?.policy || 'unknown'
-    ].filter(Boolean),
-    created_at: stream.created_at || new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    metadata: {
-      stream_key: stream.stream_key,
-      playback_id: stream.playback_ids?.[0]?.id,
-      status: stream.status,
-      latency_mode: stream.latency_mode,
-      reconnect_window: stream.reconnect_window,
-      recent_asset_ids: stream.recent_asset_ids || [],
-      test: stream.test || false
-    }
-  }
-}
-
-function transformCameraToDocument(camera: any): ContentDocument {
-  return {
-    type: 'camera',
-    title: camera.camera_name || `Camera ${camera.id.substring(0, 8)}`,
-    description: `Live camera with status: ${camera.status}. Browser ID: ${camera.browser_id}. Latency mode: ${camera.latency_mode || 'standard'}`,
-    content: `Camera ID: ${camera.id}. Stream Key: ${camera.stream_key}. Playback ID: ${camera.playback_ids?.[0]?.id || 'none'}`,
-    tags: [
-      'camera',
-      'live-stream',
-      camera.status,
-      camera.latency_mode || 'standard',
-      camera.browser_id
-    ].filter(Boolean),
-    created_at: camera.created_at || new Date().toISOString(),
-    updated_at: camera.last_connected_at || camera.updated_at || new Date().toISOString(),
-    metadata: {
-      browser_id: camera.browser_id,
-      stream_key: camera.stream_key,
-      playback_id: camera.playback_ids?.[0]?.id,
-      status: camera.status,
-      latency_mode: camera.latency_mode,
-      reconnect_window: camera.reconnect_window_seconds,
-      last_connected_at: camera.last_connected_at,
-      active_asset_id: camera.active_asset_id
-    }
-  }
-}
-
-function transformAssetToDocument(asset: any): ContentDocument {
-  const durationFormatted = asset.duration 
-    ? `${Math.floor(asset.duration / 60)}m ${Math.floor(asset.duration % 60)}s`
-    : 'unknown duration'
-
-  return {
-    type: 'recording',
-    title: asset.passthrough || `Recording ${asset.id.substring(0, 8)}`,
-    description: `Recorded video (${durationFormatted}). Resolution: ${asset.max_stored_resolution || 'unknown'}. Status: ${asset.status}`,
-    content: `Asset ID: ${asset.id}. Playback ID: ${asset.playback_ids?.[0]?.id || 'none'}. Created at ${new Date(asset.created_at).toLocaleString()}`,
-    tags: [
-      'mux',
-      'recording',
-      'asset',
-      asset.status,
-      asset.max_stored_resolution,
-      asset.aspect_ratio
-    ].filter(Boolean),
-    created_at: asset.created_at || new Date().toISOString(),
-    updated_at: asset.updated_at || asset.created_at || new Date().toISOString(),
-    metadata: {
-      playback_id: asset.playback_ids?.[0]?.id,
-      status: asset.status,
-      duration: asset.duration,
-      max_stored_resolution: asset.max_stored_resolution,
-      max_stored_frame_rate: asset.max_stored_frame_rate,
-      aspect_ratio: asset.aspect_ratio,
-      tracks: asset.tracks,
-      errors: asset.errors,
-      master_access: asset.master_access,
-      mp4_support: asset.mp4_support
-    }
-  }
-}
-
-// ============================================================================
-// Sync Functions
-// ============================================================================
-
-export async function syncAllStreams(): Promise<number> {
-  console.log('[Elasticsearch Sync] Syncing live streams...')
-  
+/**
+ * Sync a single event to Elasticsearch
+ */
+export async function syncEventToElasticsearch(eventId: string | number): Promise<void> {
   try {
-    const data = await fetchMuxAPI('/video/v1/live-streams?limit=100')
-    const streams = data.data || []
+    // Query event with joined asset data
+    const { data: event, error } = await supabase
+      .from('ai_analysis_events')
+      .select('*')
+      .eq('id', eventId)
+      .single()
 
-    if (streams.length === 0) {
-      console.log('[Elasticsearch Sync] No live streams found')
-      return 0
+    if (error) {
+      console.error('[ES Sync] Error fetching event:', error)
+      throw error
     }
 
-    const documents = streams.map((stream: any) => ({
-      id: `stream-${stream.id}`,
-      document: transformStreamToDocument(stream)
-    }))
+    if (!event) {
+      console.warn('[ES Sync] Event not found:', eventId)
+      return
+    }
 
-    await bulkIndexDocuments(documents)
-    console.log(`[Elasticsearch Sync] Synced ${streams.length} live streams`)
+    // Query asset data separately
+    const { data: asset, error: assetError } = await supabase
+      .schema('mux')
+      .from('assets')
+      .select('id, playback_ids, duration_seconds, created_at, is_live, live_stream_id')
+      .eq('id', event.asset_id)
+      .single()
+
+    if (assetError || !asset) {
+      console.warn('[ES Sync] Asset not found for event:', event.asset_id)
+      return
+    }
     
-    return streams.length
+    // Get playback ID
+    const playbackIds = asset.playback_ids as any[]
+    const playbackId = playbackIds?.[0]?.id
+    
+    if (!playbackId) {
+      console.warn('[ES Sync] No playback ID for asset:', asset.id)
+      return
+    }
+
+    // Query live stream if needed
+    let cameraName: string | undefined
+    if (asset.live_stream_id) {
+      const { data: liveStream } = await supabase
+        .schema('mux')
+        .from('live_streams')
+        .select('camera_name')
+        .eq('id', asset.live_stream_id)
+        .single()
+      
+      cameraName = liveStream?.camera_name
+    }
+
+    // Determine asset type based on presence of live_stream_id
+    const assetType: 'live' | 'vod' = asset.live_stream_id ? 'live' : 'vod'
+
+    // Build the document
+    const document: EventDocument = {
+      doc_type: 'event',
+      asset_id: event.asset_id,
+      asset_type: assetType,
+      camera_name: cameraName,
+      title: buildDocumentTitle(assetType, cameraName, asset.created_at),
+      description: event.description,
+      severity: event.severity,
+      event_type: event.type,
+      timestamp_seconds: event.timestamp_seconds,
+      affected_entities: event.affected_entities || [],
+      tags: [], // Events don't have tags, but we keep the field for consistency
+      created_at: asset.created_at,
+      playback_id: playbackId,
+      duration: asset.duration_seconds ? Math.floor(asset.duration_seconds) : undefined
+    }
+
+    // Index the document
+    const docId = `event_${event.id}`
+    await indexDocument(docId, document)
+    
+    console.log(`[ES Sync] Event synced: ${docId}`)
   } catch (error) {
-    console.error('[Elasticsearch Sync] Error syncing streams:', error)
+    console.error('[ES Sync] Failed to sync event:', eventId, error)
     throw error
   }
 }
 
-export async function syncAllCameras(): Promise<number> {
-  console.log('[Elasticsearch Sync] Syncing cameras...')
-  
+/**
+ * Bulk sync all events to Elasticsearch
+ */
+export async function bulkSyncEvents(): Promise<number> {
   try {
-    const { data: cameras, error } = await supabase
-      .schema('mux')
-      .from('live_streams')
+    console.log('[ES Sync] Starting bulk event sync...')
+    
+    // Query all events
+    const { data: events, error } = await supabase
+      .from('ai_analysis_events')
       .select('*')
-      .not('browser_id', 'is', null) // Only get streams with browser_id (cameras)
       .order('created_at', { ascending: false })
 
     if (error) {
-      throw new Error(`Supabase error: ${error.message}`)
+      console.error('[ES Sync] Error fetching events:', error)
+      throw error
     }
 
-    if (!cameras || cameras.length === 0) {
-      console.log('[Elasticsearch Sync] No cameras found')
+    if (!events || events.length === 0) {
+      console.log('[ES Sync] No events to sync')
       return 0
     }
 
-    const documents = cameras.map((camera: any) => ({
-      id: `camera-${camera.id}`,
-      document: transformCameraToDocument(camera)
-    }))
-
-    await bulkIndexDocuments(documents)
-    console.log(`[Elasticsearch Sync] Synced ${cameras.length} cameras`)
+    // Get unique asset IDs
+    const assetIds = [...new Set(events.map(e => e.asset_id))]
     
-    return cameras.length
-  } catch (error) {
-    console.error('[Elasticsearch Sync] Error syncing cameras:', error)
-    throw error
-  }
-}
+    // Query all assets
+    const { data: assets, error: assetsError } = await supabase
+      .schema('mux')
+      .from('assets')
+      .select('id, playback_ids, duration_seconds, created_at, is_live, live_stream_id')
+      .in('id', assetIds)
 
-export async function syncAllAssets(): Promise<number> {
-  console.log('[Elasticsearch Sync] Syncing recordings/assets...')
-  
-  try {
-    const data = await fetchMuxAPI('/video/v1/assets?limit=100')
-    const assets = data.data || []
-
-    if (assets.length === 0) {
-      console.log('[Elasticsearch Sync] No assets found')
-      return 0
+    if (assetsError) {
+      console.error('[ES Sync] Error fetching assets:', assetsError)
+      throw assetsError
     }
 
-    const documents = assets.map((asset: any) => ({
-      id: `recording-${asset.id}`,
-      document: transformAssetToDocument(asset)
-    }))
+    // Create asset lookup map
+    const assetMap = new Map(assets?.map(a => [a.id, a]) || [])
 
-    await bulkIndexDocuments(documents)
-    console.log(`[Elasticsearch Sync] Synced ${assets.length} recordings/assets`)
+    // Get unique live stream IDs
+    const liveStreamIds = [...new Set(assets?.filter(a => a.live_stream_id).map(a => a.live_stream_id as string) || [])]
     
-    return assets.length
-  } catch (error) {
-    console.error('[Elasticsearch Sync] Error syncing assets:', error)
-    throw error
-  }
-}
-
-export async function syncAllData(): Promise<{ streams: number; cameras: number; assets: number }> {
-  console.log('[Elasticsearch Sync] Starting full data sync...')
-  
-  const results = {
-    streams: 0,
-    cameras: 0,
-    assets: 0
-  }
-
-  try {
-    results.streams = await syncAllStreams()
-  } catch (error) {
-    console.error('[Elasticsearch Sync] Failed to sync streams:', error)
-  }
-
-  try {
-    results.cameras = await syncAllCameras()
-  } catch (error) {
-    console.error('[Elasticsearch Sync] Failed to sync cameras:', error)
-  }
-
-  try {
-    results.assets = await syncAllAssets()
-  } catch (error) {
-    console.error('[Elasticsearch Sync] Failed to sync assets:', error)
-  }
-
-  const total = results.streams + results.cameras + results.assets
-  console.log(`[Elasticsearch Sync] Full sync complete: ${total} total documents`)
-  console.log(`  - Streams: ${results.streams}`)
-  console.log(`  - Cameras: ${results.cameras}`)
-  console.log(`  - Assets: ${results.assets}`)
-
-  return results
-}
-
-// ============================================================================
-// Individual Document Operations
-// ============================================================================
-
-export async function indexStream(streamId: string): Promise<void> {
-  try {
-    const data = await fetchMuxAPI(`/video/v1/live-streams/${streamId}`)
-    const stream = data.data
-    
-    await indexDocument(`stream-${streamId}`, transformStreamToDocument(stream))
-    console.log(`[Elasticsearch Sync] Indexed stream: ${streamId}`)
-  } catch (error) {
-    console.error(`[Elasticsearch Sync] Error indexing stream ${streamId}:`, error)
-    throw error
-  }
-}
-
-export async function indexCamera(cameraId: string): Promise<void> {
-  try {
-    const { data: camera, error } = await supabase
+    // Query all live streams
+    const { data: liveStreams } = await supabase
       .schema('mux')
       .from('live_streams')
+      .select('id, camera_name')
+      .in('id', liveStreamIds)
+
+    // Create live stream lookup map
+    const liveStreamMap = new Map(liveStreams?.map(ls => [ls.id, ls]) || [])
+
+    // Build documents
+    const documents: BulkIndexDocument[] = events
+      .filter(event => {
+        const asset = assetMap.get(event.asset_id)
+        return asset && (asset as any).playback_ids?.[0]?.id
+      })
+      .map(event => {
+        const asset = assetMap.get(event.asset_id) as any
+        const liveStream = asset.live_stream_id ? liveStreamMap.get(asset.live_stream_id) : null
+        const playbackIds = asset.playback_ids as any[]
+        const playbackId = playbackIds[0].id
+        const assetType: 'live' | 'vod' = asset.live_stream_id ? 'live' : 'vod'
+        const cameraName = liveStream?.camera_name
+
+        const document: EventDocument = {
+          doc_type: 'event',
+          asset_id: event.asset_id,
+          asset_type: assetType,
+          camera_name: cameraName,
+          title: buildDocumentTitle(assetType, cameraName, asset.created_at),
+          description: event.description,
+          severity: event.severity,
+          event_type: event.type,
+          timestamp_seconds: event.timestamp_seconds,
+          affected_entities: event.affected_entities || [],
+          tags: [],
+          created_at: asset.created_at,
+          playback_id: playbackId,
+          duration: asset.duration_seconds ? Math.floor(asset.duration_seconds) : undefined
+        }
+
+        return {
+          id: `event_${event.id}`,
+          document
+        }
+      })
+
+    // Bulk index
+    await bulkIndexDocuments(documents)
+    
+    console.log(`[ES Sync] Bulk synced ${documents.length} events`)
+    return documents.length
+  } catch (error) {
+    console.error('[ES Sync] Failed to bulk sync events:', error)
+    throw error
+  }
+}
+
+// ============================================================================
+// Analysis Syncing
+// ============================================================================
+
+/**
+ * Sync a single analysis result to Elasticsearch
+ */
+export async function syncAnalysisToElasticsearch(jobId: string | number): Promise<void> {
+  try {
+    // Query analysis result
+    const { data: result, error } = await supabase
+      .from('ai_analysis_results')
       .select('*')
-      .eq('id', cameraId)
+      .eq('job_id', jobId)
       .single()
 
-    if (error || !camera) {
-      throw new Error(`Camera not found: ${cameraId}`)
+    if (error) {
+      console.error('[ES Sync] Error fetching analysis result:', error)
+      throw error
+    }
+
+    if (!result) {
+      console.warn('[ES Sync] Analysis result not found:', jobId)
+      return
+    }
+
+    // Query job data
+    const { data: job, error: jobError } = await supabase
+      .from('ai_analysis_jobs')
+      .select('id, source_id, source_type, asset_start_seconds, asset_end_seconds')
+      .eq('id', jobId)
+      .single()
+
+    if (jobError || !job) {
+      console.warn('[ES Sync] Job not found:', jobId)
+      return
     }
     
-    await indexDocument(`camera-${cameraId}`, transformCameraToDocument(camera))
-    console.log(`[Elasticsearch Sync] Indexed camera: ${cameraId}`)
-  } catch (error) {
-    console.error(`[Elasticsearch Sync] Error indexing camera ${cameraId}:`, error)
-    throw error
-  }
-}
+    // Query asset data
+    const { data: asset, error: assetError } = await supabase
+      .schema('mux')
+      .from('assets')
+      .select('id, playback_ids, duration_seconds, created_at, is_live, live_stream_id')
+      .eq('id', job.source_id)
+      .single()
 
-export async function indexAsset(assetId: string): Promise<void> {
-  try {
-    const data = await fetchMuxAPI(`/video/v1/assets/${assetId}`)
-    const asset = data.data
+    if (assetError || !asset) {
+      console.warn('[ES Sync] Asset not found for job:', job.source_id)
+      return
+    }
     
-    await indexDocument(`recording-${assetId}`, transformAssetToDocument(asset))
-    console.log(`[Elasticsearch Sync] Indexed asset: ${assetId}`)
+    // Get playback ID
+    const playbackIds = asset.playback_ids as any[]
+    const playbackId = playbackIds?.[0]?.id
+    
+    if (!playbackId) {
+      console.warn('[ES Sync] No playback ID for asset:', asset.id)
+      return
+    }
+
+    // Query live stream if needed
+    let cameraName: string | undefined
+    if (asset.live_stream_id) {
+      const { data: liveStream } = await supabase
+        .schema('mux')
+        .from('live_streams')
+        .select('camera_name')
+        .eq('id', asset.live_stream_id)
+        .single()
+      
+      cameraName = liveStream?.camera_name
+    }
+
+    // Determine asset type based on presence of live_stream_id
+    const assetType: 'live' | 'vod' = asset.live_stream_id ? 'live' : 'vod'
+
+    // Build the document
+    const document: AnalysisDocument = {
+      doc_type: 'analysis',
+      asset_id: job.source_id,
+      asset_type: assetType,
+      camera_name: cameraName,
+      title: buildDocumentTitle(assetType, cameraName, (asset as any).created_at),
+      summary: result.summary || '',
+      tags: result.tags || [],
+      entities: result.entities || [],
+      asset_start_seconds: job.asset_start_seconds || 0,
+      asset_end_seconds: job.asset_end_seconds || 60,
+      created_at: (asset as any).created_at,
+      playback_id: playbackId,
+      duration: (asset as any).duration_seconds ? Math.floor((asset as any).duration_seconds) : undefined
+    }
+
+    // Index the document
+    const docId = `analysis_${result.job_id}`
+    await indexDocument(docId, document)
+    
+    console.log(`[ES Sync] Analysis synced: ${docId}`)
   } catch (error) {
-    console.error(`[Elasticsearch Sync] Error indexing asset ${assetId}:`, error)
+    console.error('[ES Sync] Failed to sync analysis:', jobId, error)
     throw error
   }
 }
 
-export async function removeStream(streamId: string): Promise<void> {
-  await deleteDocument(`stream-${streamId}`)
-  console.log(`[Elasticsearch Sync] Removed stream: ${streamId}`)
+/**
+ * Bulk sync all analysis results to Elasticsearch
+ */
+export async function bulkSyncAnalysis(): Promise<number> {
+  try {
+    console.log('[ES Sync] Starting bulk analysis sync...')
+    
+    // Query all analysis results
+    const { data: results, error } = await supabase
+      .from('ai_analysis_results')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('[ES Sync] Error fetching analysis results:', error)
+      throw error
+    }
+
+    if (!results || results.length === 0) {
+      console.log('[ES Sync] No analysis results to sync')
+      return 0
+    }
+
+    // Query all jobs
+    const jobIds = results.map(r => r.job_id)
+    const { data: jobs, error: jobsError } = await supabase
+      .from('ai_analysis_jobs')
+      .select('id, source_id, source_type, asset_start_seconds, asset_end_seconds')
+      .in('id', jobIds)
+
+    if (jobsError) {
+      console.error('[ES Sync] Error fetching jobs:', jobsError)
+      throw jobsError
+    }
+
+    // Create job lookup map
+    const jobMap = new Map(jobs?.map(j => [j.id, j]) || [])
+
+    // Get unique asset IDs
+    const assetIds = [...new Set(jobs?.map(j => j.source_id).filter(Boolean) || [])]
+    
+    // Query all assets
+    const { data: assets, error: assetsError } = await supabase
+      .schema('mux')
+      .from('assets')
+      .select('id, playback_ids, duration_seconds, created_at, is_live, live_stream_id')
+      .in('id', assetIds)
+
+    if (assetsError) {
+      console.error('[ES Sync] Error fetching assets:', assetsError)
+      throw assetsError
+    }
+
+    // Create asset lookup map
+    const assetMap = new Map(assets?.map(a => [a.id, a]) || [])
+
+    // Get unique live stream IDs
+    const liveStreamIds = [...new Set(assets?.filter(a => a.live_stream_id).map(a => a.live_stream_id as string) || [])]
+    
+    // Query all live streams
+    const { data: liveStreams } = await supabase
+      .schema('mux')
+      .from('live_streams')
+      .select('id, camera_name')
+      .in('id', liveStreamIds)
+
+    // Create live stream lookup map
+    const liveStreamMap = new Map(liveStreams?.map(ls => [ls.id, ls]) || [])
+
+    // Build documents
+    const documents: BulkIndexDocument[] = results
+      .filter(result => {
+        const job = jobMap.get(result.job_id)
+        const asset = job ? assetMap.get(job.source_id) : null
+        return asset && (asset as any).playback_ids?.[0]?.id
+      })
+      .map(result => {
+        const job = jobMap.get(result.job_id)!
+        const asset = assetMap.get(job.source_id) as any
+        const liveStream = asset.live_stream_id ? liveStreamMap.get(asset.live_stream_id) : null
+        const playbackIds = asset.playback_ids as any[]
+        const playbackId = playbackIds[0].id
+        const assetType: 'live' | 'vod' = asset.live_stream_id ? 'live' : 'vod'
+        const cameraName = liveStream?.camera_name
+
+        const document: AnalysisDocument = {
+          doc_type: 'analysis',
+          asset_id: job.source_id,
+          asset_type: assetType,
+          camera_name: cameraName,
+          title: buildDocumentTitle(assetType, cameraName, asset.created_at),
+          summary: result.summary || '',
+          tags: result.tags || [],
+          entities: result.entities || [],
+          asset_start_seconds: job.asset_start_seconds || 0,
+          asset_end_seconds: job.asset_end_seconds || 60,
+          created_at: asset.created_at,
+          playback_id: playbackId,
+          duration: asset.duration_seconds ? Math.floor(asset.duration_seconds) : undefined
+        }
+
+        return {
+          id: `analysis_${result.job_id}`,
+          document
+        }
+      })
+
+    // Bulk index
+    await bulkIndexDocuments(documents)
+    
+    console.log(`[ES Sync] Bulk synced ${documents.length} analysis results`)
+    return documents.length
+  } catch (error) {
+    console.error('[ES Sync] Failed to bulk sync analysis:', error)
+    throw error
+  }
 }
 
-export async function removeCamera(cameraId: string): Promise<void> {
-  await deleteDocument(`camera-${cameraId}`)
-  console.log(`[Elasticsearch Sync] Removed camera: ${cameraId}`)
-}
+// ============================================================================
+// Combined Syncing
+// ============================================================================
 
-export async function removeAsset(assetId: string): Promise<void> {
-  await deleteDocument(`recording-${assetId}`)
-  console.log(`[Elasticsearch Sync] Removed asset: ${assetId}`)
+/**
+ * Sync all events and analysis results to Elasticsearch
+ */
+export async function syncAllToElasticsearch(): Promise<{ events: number; analysis: number }> {
+  console.log('[ES Sync] Starting full sync...')
+  
+  const eventCount = await bulkSyncEvents()
+  const analysisCount = await bulkSyncAnalysis()
+  
+  console.log(`[ES Sync] Full sync complete: ${eventCount} events, ${analysisCount} analysis results`)
+  
+  return {
+    events: eventCount,
+    analysis: analysisCount
+  }
 }
-

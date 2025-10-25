@@ -24,6 +24,11 @@ import { Slider } from "@/components/ui/slider";
 import { supabase, type Asset, getAssetPlaybackId } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/shadcn-io/spinner";
+import { EventTimeline } from "@/components/watch/event-timeline";
+import { useEventsRealtime } from "@/hooks/use-events-realtime";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDetections } from "@/hooks/use-detections";
 import { DetectionOverlay } from "@/components/watch/detection-overlay";
 import {
@@ -65,11 +70,14 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
   const timestamp = searchParams.get("timestamp");
   const startTime = timestamp ? parseFloat(timestamp) : undefined;
 
+  // Fetch events for this asset
+  const { events, loading: eventsLoading } = useEventsRealtime(id);
+
+  // Fetch detections for this asset
   const { detections, loading: detectionsLoading } = useDetections(
     asset?.id || null,
     { enabled: true }
   );
-
   useEffect(() => {
     const fetchAsset = async () => {
       try {
@@ -252,10 +260,13 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
     }
   };
 
-  const handleSeek = (values: number[]) => {
+  const seekToTime = (seconds: number, autoPlay = false) => {
     const player = playerRef.current;
     if (!player) return;
-    player.currentTime = values[0];
+    player.currentTime = seconds;
+    if (autoPlay && player.paused) {
+      player.play();
+    }
   };
 
   const toggleFullscreen = () => {
@@ -341,9 +352,9 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
   const isProcessing = asset.status !== "ready" && asset.status !== "errored";
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background overflow-hidden">
       {/* Header with back button and video info */}
-      <div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex-shrink-0">
         <div className="flex items-center justify-between h-14 px-4 max-w-full">
           <Button
             variant="ghost"
@@ -367,309 +378,424 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
         </div>
       </div>
 
-      {/* Video player container */}
-      <div 
-        id="video-container"
-        className="relative bg-black"
-        style={{ height: "70vh" }}
-      >
-        <div className="w-full h-full flex items-center justify-center">
-          {hasError ? (
-            <div className="text-center space-y-4 p-8">
-              <div className="w-20 h-20 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
-                <IconAlertCircle className="w-10 h-10 text-destructive" />
-              </div>
-              <h2 className="text-xl font-semibold text-white">Video Unavailable</h2>
-              <p className="text-white/70">
-                {asset.status === "errored" 
-                  ? "This video failed to process and cannot be played."
-                  : "This video cannot be played at this time."}
-              </p>
-            </div>
-          ) : isProcessing ? (
-            <div className="text-center space-y-4 p-8">
-              <Spinner variant="ring" size={48} className="mx-auto text-yellow-500" />
-              <h2 className="text-xl font-semibold text-white">Processing Video</h2>
-              <p className="text-white/70">
-                This video is still being processed. Please check back in a few moments.
-              </p>
-              {asset.is_live && (
-                <Badge variant="outline" className="bg-purple-500/10 text-purple-300 border-purple-500/20">
-                  Currently Recording
-                </Badge>
-              )}
-            </div>
-          ) : (
-            <div 
-              ref={containerRef}
-              className="relative w-full h-full cursor-pointer"
-              onClick={togglePlayPause}
-            >
-              <MuxPlayer
-                ref={playerRef}
-                theme="minimal"
-                playbackId={playbackId!}
-                streamType="on-demand"
-                startTime={startTime}
-                disableTracking={true}
-                disableCookies={true}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  "--controls": "none",
-                  pointerEvents: "none",
-                } as React.CSSProperties}
-                className="w-full h-full"
-              />
-
-              {/* Detection Overlay */}
-              {detectionsEnabled && detections.length > 0 && (
-                <DetectionOverlay
-                  detections={detections}
-                  currentTime={currentTime}
-                  videoDimensions={videoDimensions}
-                  enabled={detectionsEnabled}
-                  confidenceThreshold={confidenceThreshold}
-                  persistenceTime={persistenceTime}
-                  interpolationEnabled={interpolationEnabled}
-                  fadeEnabled={fadeEnabled}
-                />
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Custom Video Controls */}
-      {!hasError && !isProcessing && (
-        <div className="border-b bg-background/95 backdrop-blur">
-          <div className="px-4 py-3 max-w-full">
-            {/* Progress Bar */}
-            <div className="mb-3">
-              <Slider
-                value={[currentTime]}
-                min={0}
-                max={duration || 100}
-                step={0.1}
-                onValueChange={handleSeek}
-                className="cursor-pointer"
-              />
-              <div className="flex items-center justify-between mt-1 text-xs text-muted-foreground">
-                <span>{formatDuration(currentTime)}</span>
-                <span>{formatDuration(duration)}</span>
-              </div>
-            </div>
-
-            {/* Control Buttons */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {/* Play/Pause */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={togglePlayPause}
-                  className="h-9 w-9"
-                >
-                  {isPlaying ? (
-                    <IconPlayerPause className="size-5" />
-                  ) : (
-                    <IconPlayerPlay className="size-5" />
-                  )}
-                </Button>
-
-                {/* Skip Backward */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={skipBackward}
-                  className="h-9 w-9"
-                  title="Skip backward 10s (←)"
-                >
-                  <IconPlayerSkipBack className="size-5" />
-                </Button>
-
-                {/* Skip Forward */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={skipForward}
-                  className="h-9 w-9"
-                  title="Skip forward 10s (→)"
-                >
-                  <IconPlayerSkipForward className="size-5" />
-                </Button>
-
-                {/* Volume */}
-                <div className="flex items-center gap-2 ml-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleMute}
-                    className="h-9 w-9"
-                    title="Mute (m)"
-                  >
-                    {isMuted || volume === 0 ? (
-                      <IconVolumeOff className="size-5" />
-                    ) : (
-                      <IconVolume className="size-5" />
-                    )}
-                  </Button>
-                  <Slider
-                    value={[isMuted ? 0 : volume]}
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    onValueChange={handleVolumeChange}
-                    className="w-24 cursor-pointer"
-                  />
+      {/* Scrollable content */}
+      <ScrollArea className="flex-1">
+        <div className="flex flex-col">
+          {/* Video player container */}
+          <div 
+            id="video-container"
+            className="relative bg-black"
+            style={{ height: "70vh" }}
+          >
+            <div className="w-full h-full flex items-center justify-center">
+              {hasError ? (
+                <div className="text-center space-y-4 p-8">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
+                    <IconAlertCircle className="w-10 h-10 text-destructive" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-white">Video Unavailable</h2>
+                  <p className="text-white/70">
+                    {asset.status === "errored" 
+                      ? "This video failed to process and cannot be played."
+                      : "This video cannot be played at this time."}
+                  </p>
                 </div>
-              </div>
+              ) : isProcessing ? (
+                <div className="text-center space-y-4 p-8">
+                  <Spinner variant="ring" size={48} className="mx-auto text-yellow-500" />
+                  <h2 className="text-xl font-semibold text-white">Processing Video</h2>
+                  <p className="text-white/70">
+                    This video is still being processed. Please check back in a few moments.
+                  </p>
+                  {asset.is_live && (
+                    <Badge variant="outline" className="bg-purple-500/10 text-purple-300 border-purple-500/20">
+                      Currently Recording
+                    </Badge>
+                  )}
+                </div>
+              ) : (
+                <div 
+                  ref={containerRef}
+                  className="relative w-full h-full cursor-pointer"
+                  onClick={togglePlayPause}
+                >
+                  <MuxPlayer
+                    ref={playerRef}
+                    theme="minimal"
+                    playbackId={playbackId!}
+                    streamType="on-demand"
+                    startTime={startTime}
+                    disableTracking={true}
+                    disableCookies={true}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      "--controls": "none",
+                      pointerEvents: "none",
+                    } as React.CSSProperties}
+                    className="w-full h-full"
+                  />
 
-              {/* Right side controls */}
-              <div className="flex items-center gap-2">
-                {/* Detection Toggle - Always show for ready videos */}
-                {asset?.status === "ready" && (
-                  <Button
-                    variant={detectionsEnabled ? "default" : "ghost"}
-                    size="icon"
-                    onClick={() => setDetectionsEnabled(!detectionsEnabled)}
-                    className="h-9 w-9"
-                    title="Toggle person detection overlay"
-                  >
-                    <IconRadar className="size-5" />
-                  </Button>
-                )}
+                  {/* Detection Overlay */}
+                  {detectionsEnabled && detections.length > 0 && (
+                    <DetectionOverlay
+                      detections={detections}
+                      currentTime={currentTime}
+                      videoDimensions={videoDimensions}
+                      enabled={detectionsEnabled}
+                      confidenceThreshold={confidenceThreshold}
+                      persistenceTime={persistenceTime}
+                      interpolationEnabled={interpolationEnabled}
+                      fadeEnabled={fadeEnabled}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
 
-                {/* Detection Settings */}
-                {asset?.status === "ready" && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+          {/* Custom Video Controls */}
+          {!hasError && !isProcessing && (
+            <div className="border-b bg-background/95 backdrop-blur">
+              <div className="px-4 py-3 max-w-full">
+                {/* Interactive Timeline with Events */}
+                <div className="mb-3">
+                  <EventTimeline
+                    events={events}
+                    duration={duration}
+                    currentTime={currentTime}
+                    onSeek={seekToTime}
+                  />
+                  <div className="flex items-center justify-between mt-1 text-xs text-muted-foreground">
+                    <span>{formatDuration(currentTime)}</span>
+                    <span>{formatDuration(duration)}</span>
+                  </div>
+                </div>
+
+                {/* Control Buttons */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {/* Play/Pause */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={togglePlayPause}
+                      className="h-9 w-9"
+                    >
+                      {isPlaying ? (
+                        <IconPlayerPause className="size-5" />
+                      ) : (
+                        <IconPlayerPlay className="size-5" />
+                      )}
+                    </Button>
+
+                    {/* Skip Backward */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={skipBackward}
+                      className="h-9 w-9"
+                      title="Skip backward 10s (←)"
+                    >
+                      <IconPlayerSkipBack className="size-5" />
+                    </Button>
+
+                    {/* Skip Forward */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={skipForward}
+                      className="h-9 w-9"
+                      title="Skip forward 10s (→)"
+                    >
+                      <IconPlayerSkipForward className="size-5" />
+                    </Button>
+
+                    {/* Volume */}
+                    <div className="flex items-center gap-2 ml-2">
                       <Button
                         variant="ghost"
                         size="icon"
+                        onClick={toggleMute}
                         className="h-9 w-9"
-                        title={
-                          !detectionsEnabled
-                            ? "Enable detections to access settings"
-                            : detections.length === 0
-                            ? "No detections available yet"
-                            : "Detection settings"
-                        }
-                        disabled={!detectionsEnabled || detections.length === 0}
+                        title="Mute (m)"
                       >
-                        <IconSettings className="size-5" />
+                        {isMuted || volume === 0 ? (
+                          <IconVolumeOff className="size-5" />
+                        ) : (
+                          <IconVolume className="size-5" />
+                        )}
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-80">
-                      <DropdownMenuLabel>Detection Settings</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      
-                      <div className="px-2 py-3 space-y-4">
-                        {/* Confidence Threshold */}
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Label className="text-sm">Confidence Threshold</Label>
-                            <span className="text-xs text-muted-foreground">{Math.round(confidenceThreshold * 100)}%</span>
-                          </div>
-                          <Slider
-                            value={[confidenceThreshold]}
-                            min={0.1}
-                            max={0.9}
-                            step={0.05}
-                            onValueChange={(values) => setConfidenceThreshold(values[0])}
-                            className="cursor-pointer"
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Minimum confidence to show detections
-                          </p>
-                        </div>
+                      <Slider
+                        value={[isMuted ? 0 : volume]}
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        onValueChange={handleVolumeChange}
+                        className="w-24 cursor-pointer"
+                      />
+                    </div>
+                  </div>
 
-                        {/* Persistence Time */}
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Label className="text-sm">Persistence Time</Label>
-                            <span className="text-xs text-muted-foreground">{persistenceTime.toFixed(1)}s</span>
-                          </div>
-                          <Slider
-                            value={[persistenceTime]}
-                            min={0.5}
-                            max={5.0}
-                            step={0.5}
-                            onValueChange={(values) => setPersistenceTime(values[0])}
-                            className="cursor-pointer"
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            How long to show detections after they disappear
-                          </p>
-                        </div>
+                  {/* Right side controls */}
+                  <div className="flex items-center gap-2">
+                    {/* Detection Toggle - Always show for ready videos */}
+                    {asset?.status === "ready" && (
+                      <Button
+                        variant={detectionsEnabled ? "default" : "ghost"}
+                        size="icon"
+                        onClick={() => setDetectionsEnabled(!detectionsEnabled)}
+                        className="h-9 w-9"
+                        title="Toggle person detection overlay"
+                      >
+                        <IconRadar className="size-5" />
+                      </Button>
+                    )}
 
-                        {/* Smooth Interpolation Toggle */}
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-0.5">
-                            <Label className="text-sm">Smooth Interpolation</Label>
-                            <p className="text-xs text-muted-foreground">
-                              Smoothly animate boxes between frames
-                            </p>
-                          </div>
+                    {/* Detection Settings */}
+                    {asset?.status === "ready" && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                           <Button
-                            variant={interpolationEnabled ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setInterpolationEnabled(!interpolationEnabled)}
-                            className="ml-2"
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9"
+                            title={
+                              !detectionsEnabled
+                                ? "Enable detections to access settings"
+                                : detections.length === 0
+                                ? "No detections available yet"
+                                : "Detection settings"
+                            }
+                            disabled={!detectionsEnabled || detections.length === 0}
                           >
-                            {interpolationEnabled ? "On" : "Off"}
+                            <IconSettings className="size-5" />
                           </Button>
-                        </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-80">
+                          <DropdownMenuLabel>Detection Settings</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          
+                          <div className="px-2 py-3 space-y-4">
+                            {/* Confidence Threshold */}
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-sm">Confidence Threshold</Label>
+                                <span className="text-xs text-muted-foreground">{Math.round(confidenceThreshold * 100)}%</span>
+                              </div>
+                              <Slider
+                                value={[confidenceThreshold]}
+                                min={0.1}
+                                max={0.9}
+                                step={0.05}
+                                onValueChange={(values) => setConfidenceThreshold(values[0])}
+                                className="cursor-pointer"
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                Minimum confidence to show detections
+                              </p>
+                            </div>
 
-                        {/* Fade Effect Toggle */}
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-0.5">
-                            <Label className="text-sm">Fade Effect</Label>
-                            <p className="text-xs text-muted-foreground">
-                              Fade older detections for visual clarity
-                            </p>
+                            {/* Persistence Time */}
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-sm">Persistence Time</Label>
+                                <span className="text-xs text-muted-foreground">{persistenceTime.toFixed(1)}s</span>
+                              </div>
+                              <Slider
+                                value={[persistenceTime]}
+                                min={0.5}
+                                max={5.0}
+                                step={0.5}
+                                onValueChange={(values) => setPersistenceTime(values[0])}
+                                className="cursor-pointer"
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                How long to show detections after they disappear
+                              </p>
+                            </div>
+
+                            {/* Smooth Interpolation Toggle */}
+                            <div className="flex items-center justify-between">
+                              <div className="space-y-0.5">
+                                <Label className="text-sm">Smooth Interpolation</Label>
+                                <p className="text-xs text-muted-foreground">
+                                  Smoothly animate boxes between frames
+                                </p>
+                              </div>
+                              <Button
+                                variant={interpolationEnabled ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setInterpolationEnabled(!interpolationEnabled)}
+                                className="ml-2"
+                              >
+                                {interpolationEnabled ? "On" : "Off"}
+                              </Button>
+                            </div>
+
+                            {/* Fade Effect Toggle */}
+                            <div className="flex items-center justify-between">
+                              <div className="space-y-0.5">
+                                <Label className="text-sm">Fade Effect</Label>
+                                <p className="text-xs text-muted-foreground">
+                                  Fade older detections for visual clarity
+                                </p>
+                              </div>
+                              <Button
+                                variant={fadeEnabled ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setFadeEnabled(!fadeEnabled)}
+                                className="ml-2"
+                              >
+                                {fadeEnabled ? "On" : "Off"}
+                              </Button>
+                            </div>
                           </div>
-                          <Button
-                            variant={fadeEnabled ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setFadeEnabled(!fadeEnabled)}
-                            className="ml-2"
-                          >
-                            {fadeEnabled ? "On" : "Off"}
-                          </Button>
-                        </div>
-                      </div>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
 
-                {/* Fullscreen */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleFullscreen}
-                  className="h-9 w-9"
-                  title="Fullscreen (f)"
-                >
-                  {isFullscreen ? (
-                    <IconMinimize className="size-5" />
-                  ) : (
-                    <IconMaximize className="size-5" />
-                  )}
-                </Button>
+                    {/* Fullscreen */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={toggleFullscreen}
+                      className="h-9 w-9"
+                      title="Fullscreen (f)"
+                    >
+                      {isFullscreen ? (
+                        <IconMinimize className="size-5" />
+                      ) : (
+                        <IconMaximize className="size-5" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
+          )}
+
+          {/* Timeline Events Section */}
+          <div className="py-6 px-4 max-w-7xl mx-auto">
+            <h2 className="text-xl font-bold mb-4">Timeline Events</h2>
+            
+            {eventsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Spinner variant="ring" size={32} />
+              </div>
+            ) : events.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-muted-foreground">
+                  No events detected in this video
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {events.map((event) => (
+                  <Card
+                    key={event.id}
+                    className={`cursor-pointer transition-all hover:shadow-md border-l-4 ${getBorderColor(event.severity)}`}
+                    onClick={() => seekToTime(event.timestamp_seconds, true)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge
+                              variant={event.severity === "High" ? "destructive" : "secondary"}
+                              className={getSeverityBadgeClass(event.severity)}
+                            >
+                              {event.severity}
+                            </Badge>
+                            <Badge variant="outline">{event.type}</Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {formatDuration(event.timestamp_seconds)}
+                            </span>
+                          </div>
+                          <h3 className="font-semibold mb-1">{event.name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {event.description}
+                          </p>
+                          {event.affected_entities && Array.isArray(event.affected_entities) && event.affected_entities.length > 0 && (
+                            <div className="flex items-center gap-2 mt-2 flex-wrap">
+                              <span className="text-xs text-muted-foreground">Involved:</span>
+                              <TooltipProvider>
+                                {event.affected_entities.map((entity: any, idx: number) => {
+                                  const entityName = entity.label || entity.name || entity.type || "Unknown";
+                                  
+                                  return (
+                                    <Tooltip key={idx}>
+                                      <TooltipTrigger asChild>
+                                        <Badge 
+                                          variant="outline" 
+                                          className="text-xs cursor-help hover:bg-accent"
+                                        >
+                                          {entityName}
+                                        </Badge>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top" className="max-w-xs">
+                                        <div className="space-y-1">
+                                          <div className="font-semibold">{entityName}</div>
+                                          {entity.confidence && (
+                                            <div className="text-xs text-muted-foreground">
+                                              Confidence: {(entity.confidence * 100).toFixed(1)}%
+                                            </div>
+                                          )}
+                                          {entity.description && (
+                                            <div className="text-xs">{entity.description}</div>
+                                          )}
+                                          {entity.bbox && (
+                                            <div className="text-xs text-muted-foreground">
+                                              Position: [{entity.bbox.map((n: number) => n.toFixed(2)).join(', ')}]
+                                            </div>
+                                          )}
+                                        </div>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  );
+                                })}
+                              </TooltipProvider>
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            seekToTime(event.timestamp_seconds, true);
+                          }}
+                        >
+                          <IconPlayerPlay className="size-4 mr-1" />
+                          Jump to Event
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-      )}
-
-      {/* Timeline Events Section - Placeholder for future implementation */}
-      <div className="py-6 px-4 max-w-full">
-        <h2 className="text-xl font-bold mb-4">Timeline Events</h2>
-        <div className="text-sm text-muted-foreground">
-          Timeline events will appear here
-        </div>
-      </div>
+      </ScrollArea>
     </div>
   );
+}
+
+function getBorderColor(severity: string): string {
+  const colors: Record<string, string> = {
+    High: "border-l-red-500",
+    Medium: "border-l-yellow-500",
+    Minor: "border-l-blue-500",
+  };
+  return colors[severity] || "border-l-blue-500";
+}
+
+function getSeverityBadgeClass(severity: string): string {
+  const classes: Record<string, string> = {
+    High: "bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20",
+    Medium: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 border-yellow-500/20",
+    Minor: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20",
+  };
+  return classes[severity] || classes.Minor;
 }

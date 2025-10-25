@@ -3,6 +3,7 @@ import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { CriticalEventsMonitor } from "@/components/critical-events-monitor";
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
@@ -10,7 +11,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Argus - Browser Streaming Platform",
+  title: "Argus",
   description:
     "Stream live from your browser to Mux RTMP and watch recorded streams",
 };
@@ -31,6 +32,7 @@ export default function RootLayout({
         >
           {children}
           <Toaster />
+          <CriticalEventsMonitor />
         </ThemeProvider>
       </body>
     </html>

@@ -28,6 +28,19 @@ export interface AnalysisResult {
   end_epoch: number;
 }
 
+export interface AnalysisEvent {
+  id: number;
+  job_id: number;
+  asset_id: string;
+  name: string;
+  description: string;
+  severity: "Minor" | "Medium" | "High";
+  type: "Crime" | "Medical Emergency" | "Traffic Incident" | "Property Damage" | "Safety Hazard" | "Suspicious Activity" | "Normal Activity" | "Camera Interference";
+  timestamp_seconds: number;
+  affected_entities: any[];
+  created_at: string;
+}
+
 /**
  * Get job queue statistics
  */
@@ -254,5 +267,125 @@ export async function getPopularTags(limit = 20): Promise<
     .map(([tag, count]) => ({ tag, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, limit);
+}
+
+/**
+ * Get events for a specific asset
+ */
+export async function getEventsForAsset(
+  assetId: string,
+  options?: {
+    severity?: "Minor" | "Medium" | "High";
+    type?: string;
+    limit?: number;
+  },
+): Promise<AnalysisEvent[]> {
+  let query = supabase
+    .from("ai_analysis_events")
+    .select("*")
+    .eq("asset_id", assetId);
+
+  if (options?.severity) {
+    query = query.eq("severity", options.severity);
+  }
+
+  if (options?.type) {
+    query = query.eq("type", options.type);
+  }
+
+  query = query
+    .order("timestamp_seconds", { ascending: true })
+    .limit(options?.limit || 100);
+
+  const { data, error } = await query;
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
+}
+
+/**
+ * Get events filtered by severity
+ */
+export async function getEventsBySeverity(
+  severity: "Minor" | "Medium" | "High",
+  limit = 50,
+): Promise<AnalysisEvent[]> {
+  const { data, error } = await supabase
+    .from("ai_analysis_events")
+    .select("*")
+    .eq("severity", severity)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
+}
+
+/**
+ * Get events filtered by type
+ */
+export async function getEventsByType(
+  type: string,
+  limit = 50,
+): Promise<AnalysisEvent[]> {
+  const { data, error } = await supabase
+    .from("ai_analysis_events")
+    .select("*")
+    .eq("type", type)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
+}
+
+/**
+ * Get events in a specific time range for an asset
+ */
+export async function getEventsInTimeRange(
+  assetId: string,
+  startSeconds: number,
+  endSeconds: number,
+): Promise<AnalysisEvent[]> {
+  const { data, error } = await supabase
+    .from("ai_analysis_events")
+    .select("*")
+    .eq("asset_id", assetId)
+    .gte("timestamp_seconds", startSeconds)
+    .lte("timestamp_seconds", endSeconds)
+    .order("timestamp_seconds", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
+}
+
+/**
+ * Get recent critical events (High severity)
+ */
+export async function getCriticalEvents(limit = 20): Promise<AnalysisEvent[]> {
+  const { data, error } = await supabase
+    .from("ai_analysis_events")
+    .select("*")
+    .eq("severity", "High")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
 }
 

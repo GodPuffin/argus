@@ -10,7 +10,6 @@ import {
   IconMessageChatbot,
   IconDatabase,
   IconList,
-  IconNotification,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -51,11 +50,6 @@ const data = {
           title: "Stats",
           url: "/stats",
           icon: IconChartBar,
-        },
-        {
-          title: "Events",
-          url: "/events",
-          icon: IconNotification,
         },
         {
           title: "Search",

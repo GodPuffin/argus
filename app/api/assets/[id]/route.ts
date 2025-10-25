@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { deleteDocumentsByAssetId } from "@/lib/elasticsearch";
 
 const MUX_TOKEN_ID = process.env.MUX_TOKEN_ID;
 const MUX_TOKEN_SECRET = process.env.MUX_TOKEN_SECRET;
@@ -96,6 +97,15 @@ export async function DELETE(
         { error: "Failed to delete asset", details: errorData },
         { status: response.status }
       );
+    }
+
+    // Delete Elasticsearch entries for this asset (best-effort, non-blocking)
+    try {
+      const deletedCount = await deleteDocumentsByAssetId(params.id);
+      console.log(`[Asset Delete] Deleted ${deletedCount} Elasticsearch documents for asset ${params.id}`);
+    } catch (esError) {
+      // Log the error but don't fail the deletion
+      console.warn(`[Asset Delete] Failed to delete Elasticsearch entries for asset ${params.id}:`, esError);
     }
 
     return NextResponse.json({ success: true });
