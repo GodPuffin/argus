@@ -1,0 +1,25 @@
+{
+  "name": "ai-analysis-worker",
+  "version": "1.0.0",
+  "description": "AI Analysis Worker for minute-by-minute video analysis",
+  "type": "module",
+  "main": "analysis-worker.ts",
+  "scripts": {
+    "start": "tsx analysis-worker.ts",
+    "dev": "tsx watch analysis-worker.ts",
+    "monitor": "tsx monitor-queue.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^2.0.23",
+    "@google/genai": "^1.25.0",
+    "@supabase/supabase-js": "^2.75.1",
+    "ai": "^5.0.76",
+    "dotenv": "^16.4.5",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsx": "^4.7.0",
+    "typescript": "^5"
+  }
+}

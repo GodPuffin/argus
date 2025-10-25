@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "lib": ["deno.ns", "deno.window"]
+  },
+  "imports": {
+    "@mux/sync-engine": "npm:@mux/sync-engine@0.0.5",
+    "@mux/supabase": "npm:@mux/supabase@0.0.21",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2"
+  }
+}
