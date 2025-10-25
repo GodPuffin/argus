@@ -112,3 +112,16 @@ export interface AIAnalysisResult {
   created_at: string;
 }
 
+export interface AIAnalysisEvent {
+  id: number;
+  job_id: number;
+  asset_id: string;
+  name: string;
+  description: string;
+  severity: "Minor" | "Medium" | "High";
+  type: "Crime" | "Medical Emergency" | "Traffic Incident" | "Property Damage" | "Safety Hazard" | "Suspicious Activity" | "Normal Activity" | "Camera Interference";
+  timestamp_seconds: number;
+  affected_entities: any[] | any;
+  created_at: string;
+}
+

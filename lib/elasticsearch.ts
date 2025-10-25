@@ -1,42 +1,22 @@
 import { Client } from "@elastic/elasticsearch"
+import type { 
+  SearchDocument, 
+  SearchFilters, 
+  SearchResult, 
+  SearchHit,
+  BulkIndexDocument 
+} from "./types/elasticsearch"
 
-// ============================================================================
-// Types
-// ============================================================================
-
-export type ContentType = 'stream' | 'camera' | 'recording'
-
-export interface SearchFilters {
-  type?: ContentType
-  dateRange?: {
-    from: string
-    to: string
-  }
-}
-
-export interface ContentDocument {
-  type: ContentType
-  title: string
-  description?: string
-  content?: string
-  tags?: string[]
-  created_at: string
-  updated_at: string
-  metadata?: Record<string, any>
-}
-
-export interface SearchHit {
-  id: string
-  score: number
-  source: ContentDocument
-  highlights?: Record<string, string[]>
-}
-
-export interface SearchResult {
-  hits: SearchHit[]
-  total: number
-  took: number
-}
+// Re-export types for convenience
+export type { 
+  SearchDocument, 
+  SearchFilters, 
+  SearchResult, 
+  SearchHit,
+  EventDocument,
+  AnalysisDocument,
+  BulkIndexDocument
+} from "./types/elasticsearch"
 
 // ============================================================================
 // Configuration
@@ -67,8 +47,22 @@ export const esClient = isElasticsearchConfigured()
 const INDEX_MAPPING = {
   mappings: {
     properties: {
-      type: { 
+      // Base fields
+      doc_type: { 
         type: 'keyword' 
+      },
+      asset_id: {
+        type: 'keyword'
+      },
+      asset_type: {
+        type: 'keyword'
+      },
+      camera_name: {
+        type: 'text',
+        analyzer: 'standard',
+        fields: {
+          keyword: { type: 'keyword' }
+        }
       },
       title: {
         type: 'text',
@@ -77,26 +71,52 @@ const INDEX_MAPPING = {
           keyword: { type: 'keyword' }
         }
       },
+      created_at: { 
+        type: 'date' 
+      },
+      playback_id: {
+        type: 'keyword'
+      },
+      duration: {
+        type: 'integer'
+      },
+      
+      // Event-specific fields
       description: {
         type: 'text',
         analyzer: 'standard'
       },
-      content: {
+      severity: {
+        type: 'keyword'
+      },
+      event_type: {
+        type: 'keyword'
+      },
+      timestamp_seconds: {
+        type: 'integer'
+      },
+      affected_entities: {
+        type: 'object',
+        enabled: true
+      },
+      
+      // Analysis-specific fields
+      summary: {
         type: 'text',
         analyzer: 'standard'
       },
       tags: { 
         type: 'keyword' 
       },
-      created_at: { 
-        type: 'date' 
-      },
-      updated_at: { 
-        type: 'date' 
-      },
-      metadata: { 
+      entities: {
         type: 'object',
         enabled: true
+      },
+      asset_start_seconds: {
+        type: 'integer'
+      },
+      asset_end_seconds: {
+        type: 'integer'
       }
     }
   }
@@ -139,18 +159,25 @@ async function checkIndexExists(): Promise<boolean> {
 // ============================================================================
 
 function buildSearchQuery(query: string, filters?: SearchFilters) {
+  // Use match_all for wildcard searches (when only filters are present)
+  const isWildcard = query === '*'
+  
   const searchBody: any = {
     query: {
       bool: {
-        must: [
+        must: isWildcard ? [
+          { match_all: {} }
+        ] : [
           {
             multi_match: {
               query,
               fields: [
-                'title^2',        // Boost title matches by 2x
-                'description',
-                'content',
-                'tags'
+                'title^3',           // Boost title matches by 3x
+                'camera_name^2',     // Boost camera name matches by 2x
+                'description^1.5',   // Boost description
+                'summary^1.5',       // Boost summary
+                'tags^1.2',          // Boost tags slightly
+                'event_type'
               ],
               type: 'best_fields',
               fuzziness: 'AUTO'   // Automatic fuzzy matching for typos
@@ -162,22 +189,40 @@ function buildSearchQuery(query: string, filters?: SearchFilters) {
     highlight: {
       fields: {
         title: { pre_tags: ['<mark>'], post_tags: ['</mark>'] },
+        camera_name: { pre_tags: ['<mark>'], post_tags: ['</mark>'] },
         description: { pre_tags: ['<mark>'], post_tags: ['</mark>'] },
-        content: { pre_tags: ['<mark>'], post_tags: ['</mark>'] }
+        summary: { pre_tags: ['<mark>'], post_tags: ['</mark>'] },
+        tags: { pre_tags: ['<mark>'], post_tags: ['</mark>'] }
       },
       fragment_size: 150,
       number_of_fragments: 3
     },
-    size: SEARCH_RESULT_SIZE
+    size: SEARCH_RESULT_SIZE,
+    sort: [
+      '_score',
+      { created_at: { order: 'desc' } }
+    ]
   }
 
   // Apply filters
   if (filters) {
     const filterQueries: any[] = []
 
-    if (filters.type) {
+    if (filters.doc_type) {
       filterQueries.push({
-        term: { type: filters.type }
+        term: { doc_type: filters.doc_type }
+      })
+    }
+
+    if (filters.severity && filters.severity.length > 0) {
+      filterQueries.push({
+        terms: { severity: filters.severity }
+      })
+    }
+
+    if (filters.event_type && filters.event_type.length > 0) {
+      filterQueries.push({
+        terms: { event_type: filters.event_type }
       })
     }
 
@@ -263,7 +308,7 @@ export async function searchContent(
 
 export async function indexDocument(
   id: string,
-  document: ContentDocument
+  document: SearchDocument
 ): Promise<void> {
   if (!esClient) {
     console.warn('[Elasticsearch] Client not configured. Skipping indexing.')
@@ -287,7 +332,7 @@ export async function indexDocument(
 
 export async function updateDocument(
   id: string,
-  updates: Partial<ContentDocument>
+  updates: Partial<SearchDocument>
 ): Promise<void> {
   if (!esClient) {
     console.warn('[Elasticsearch] Client not configured. Skipping update.')
@@ -338,10 +383,15 @@ export async function deleteDocument(id: string): Promise<void> {
 }
 
 export async function bulkIndexDocuments(
-  documents: Array<{ id: string; document: ContentDocument }>
+  documents: BulkIndexDocument[]
 ): Promise<void> {
   if (!esClient) {
     console.warn('[Elasticsearch] Client not configured. Skipping bulk indexing.')
+    return
+  }
+
+  if (documents.length === 0) {
+    console.log('[Elasticsearch] No documents to index')
     return
   }
 

@@ -27,6 +27,45 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+// Base URL for the application API (for syncing to Elasticsearch)
+const APP_BASE_URL = process.env.APP_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+/**
+ * Sync event to Elasticsearch
+ */
+async function syncEventToElasticsearch(eventId: number) {
+  try {
+    const url = `${APP_BASE_URL}/api/search/sync?type=event&id=${eventId}`;
+    const response = await fetch(url, { method: 'POST' });
+    if (!response.ok) {
+      console.warn(`Failed to sync event ${eventId} to Elasticsearch:`, await response.text());
+    } else {
+      console.log(`Synced event ${eventId} to Elasticsearch`);
+    }
+  } catch (error) {
+    console.warn(`Failed to sync event ${eventId} to Elasticsearch:`, error);
+    // Don't throw - syncing is best-effort
+  }
+}
+
+/**
+ * Sync analysis result to Elasticsearch
+ */
+async function syncAnalysisToElasticsearch(jobId: number) {
+  try {
+    const url = `${APP_BASE_URL}/api/search/sync?type=analysis&id=${jobId}`;
+    const response = await fetch(url, { method: 'POST' });
+    if (!response.ok) {
+      console.warn(`Failed to sync analysis ${jobId} to Elasticsearch:`, await response.text());
+    } else {
+      console.log(`Synced analysis ${jobId} to Elasticsearch`);
+    }
+  } catch (error) {
+    console.warn(`Failed to sync analysis ${jobId} to Elasticsearch:`, error);
+    // Don't throw - syncing is best-effort
+  }
+}
+
 /**
  * Dequeue the next available job (FIFO)
  */
@@ -64,11 +103,12 @@ async function dequeueJob(): Promise<AnalysisJob | null> {
  * Mark job as succeeded and store results
  */
 async function markJobSucceeded(
-  jobId: number,
+  job: AnalysisJob,
   result: {
     summary: string;
     tags: string[];
     entities: any[];
+    events: any[];
     raw: any;
   },
 ) {
@@ -76,7 +116,7 @@ async function markJobSucceeded(
   const { error: resultError } = await supabase
     .from("ai_analysis_results")
     .upsert({
-      job_id: jobId,
+      job_id: job.id,
       summary: result.summary,
       tags: result.tags,
       entities: result.entities,
@@ -84,17 +124,98 @@ async function markJobSucceeded(
     });
 
   if (resultError) {
-    console.error(`Failed to insert result for job ${jobId}:`, resultError);
+    console.error(`Failed to insert result for job ${job.id}:`, resultError);
+  } else {
+    // Sync analysis result to Elasticsearch (best-effort, non-blocking)
+    syncAnalysisToElasticsearch(job.id).catch(err => 
+      console.warn(`Elasticsearch sync error for analysis ${job.id}:`, err)
+    );
+  }
+
+  // Insert events into dedicated events table
+  if (result.events && result.events.length > 0) {
+    // Resolve the actual asset_id
+    // For VOD jobs: source_id is already the asset_id
+    // For live jobs: need to lookup the live stream's active_asset_id
+    let assetId = job.source_id;
+    
+    if (job.source_type === "live") {
+      const { data: liveStream, error: liveStreamError } = await supabase
+        .schema("mux")
+        .from("live_streams")
+        .select("active_asset_id")
+        .eq("id", job.source_id)
+        .single();
+
+      if (liveStreamError || !liveStream?.active_asset_id) {
+        console.warn(
+          `Could not resolve active_asset_id for live stream ${job.source_id}, skipping events`,
+        );
+        // Skip events if we can't resolve the asset_id
+        // (this shouldn't happen normally as live streams should have active_asset_id)
+      } else {
+        assetId = liveStream.active_asset_id;
+      }
+    }
+
+    // Only insert events if we have a valid asset_id
+    if (assetId) {
+      const eventRecords = result.events.map((event: any) => {
+        // Calculate absolute timestamp from asset start
+        // job.asset_start_seconds contains the absolute position of this clip in the asset
+        // event.timestamp_seconds is relative to the clip start (0-60)
+        const absoluteTimestamp = (job.asset_start_seconds || 0) + event.timestamp_seconds;
+
+        // Map affected entity IDs to actual entity objects for denormalization
+        let affectedEntities: any[] = [];
+        if (event.affected_entity_ids && event.affected_entity_ids.length > 0) {
+          affectedEntities = event.affected_entity_ids
+            .map((id: number) => result.entities[id])
+            .filter((entity: any) => entity !== undefined);
+        }
+
+        return {
+          job_id: job.id,
+          asset_id: assetId,
+          name: event.name,
+          description: event.description,
+          severity: event.severity,
+          type: event.type,
+          timestamp_seconds: absoluteTimestamp,
+          affected_entities: affectedEntities,
+        };
+      });
+
+      const { data: insertedEvents, error: eventsError } = await supabase
+        .from("ai_analysis_events")
+        .insert(eventRecords)
+        .select('id');
+
+      if (eventsError) {
+        console.error(`Failed to insert events for job ${job.id}:`, eventsError);
+      } else {
+        console.log(`Inserted ${eventRecords.length} events for asset ${assetId} (job ${job.id})`);
+        
+        // Sync each event to Elasticsearch (best-effort, non-blocking)
+        if (insertedEvents && insertedEvents.length > 0) {
+          for (const event of insertedEvents) {
+            syncEventToElasticsearch(event.id).catch(err =>
+              console.warn(`Elasticsearch sync error for event ${event.id}:`, err)
+            );
+          }
+        }
+      }
+    }
   }
 
   // Update job status
   const { error: jobError } = await supabase
     .from("ai_analysis_jobs")
-    .update({ status: "succeeded", result_ref: jobId })
-    .eq("id", jobId);
+    .update({ status: "succeeded", result_ref: job.id })
+    .eq("id", job.id);
 
   if (jobError) {
-    console.error(`Failed to mark job ${jobId} as succeeded:`, jobError);
+    console.error(`Failed to mark job ${job.id} as succeeded:`, jobError);
   }
 }
 
@@ -192,7 +313,7 @@ async function processJob(job: AnalysisJob) {
     console.log(`Analysis complete for job ${job.id}`);
 
     // Store result
-    await markJobSucceeded(job.id, analysisResult);
+    await markJobSucceeded(job, analysisResult);
 
     console.log(`Job ${job.id} succeeded`);
   } catch (error) {

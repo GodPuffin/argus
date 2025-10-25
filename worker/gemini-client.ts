@@ -37,7 +37,25 @@ const analysisSchema = z.object({
       confidence: z.number().min(0).max(1).describe("Confidence score 0-1"),
     }),
   ).describe("Detected entities in the video"),
-  events: z.array(z.string()).describe("Notable events or actions"),
+  events: z.array(
+    z.object({
+      name: z.string().describe("Event name or title"),
+      description: z.string().describe("Detailed description of what happened"),
+      severity: z.enum(["Minor", "Medium", "High"]).describe("Severity level of the event"),
+      type: z.enum([
+        "Crime",
+        "Medical Emergency",
+        "Traffic Incident",
+        "Property Damage",
+        "Safety Hazard",
+        "Suspicious Activity",
+        "Normal Activity",
+        "Camera Interference",
+      ]).describe("Type/category of the event"),
+      timestamp_seconds: z.number().min(0).max(60).describe("When the event occurred in seconds from the start of this clip (0-60)"),
+      affected_entity_ids: z.array(z.number()).optional().describe("Optional array of entity indices (0-based) from the entities array that are involved in this event"),
+    }),
+  ).describe("Notable events or actions that occurred in the video"),
 });
 
 /**
@@ -117,12 +135,25 @@ export async function analyzeVideoWithGemini(
           {
             type: "text",
             text: `Analyze this video segment and provide:
-1. A concise summary (2-3 sentences) of what is happening
-2. Relevant tags/keywords (up to 10)
-3. Detected entities (people, objects, locations, activities) with confidence scores
-4. Any notable events or actions
+1. A concise summary (2-3 sentences) of what is happening.
+2. Relevant tags or keywords (up to 10).
+3. Detected people, objects, locations, and activities with confidence scores.
+4. Notable events with detailed information:
 
-Be specific and detailed in your analysis.`,
+IMPORTANT: Only describe events that are genuinely noteworthy and would matter to a human reviewer. If nothing significant happens, simply return no events. Avoid flagging trivial or routine actions.
+
+For each notable event, provide:
+   - Name: A clear, descriptive title for what occurred.
+   - Description: A detailed, natural-language explanation of the event, written as a human would describe it.
+   - Severity: Assess the urgency or importance:
+     * High: Critical incidents requiring immediate attention (e.g., active theft, assault, medical emergency, fire, weapon detected, etc.)
+     * Medium: Incidents that are unusual or suspicious and worth review (e.g., suspicious behavior, trespassing, safety violation, property damage, etc.)
+     * Minor: Routine or expected events that may be worth noting (e.g., delivery, maintenance, normal activity in new area, etc.)
+   - Type: Categorize the event as one of: Crime, Medical Emergency, Traffic Incident, Property Damage, Safety Hazard, Suspicious Activity, Normal Activity, or Camera Interference.
+   - Timestamp: When the event occurred in seconds from the start of the clip (0-60 seconds).
+   - Involvement: Briefly mention which people, objects, or situations were involved in the incident, using natural language and not dataset or index references.
+
+Be natural and specific in your analysis, as if you are describing the video to another person. Express who was involved based on their appearance or action (e.g., "a woman places an item in her bag", "a man assists another person"), not by ID numbers or system references. For events, prioritize accuracy in timing and severity. Focus on quality over quantity; only highlight what truly matters.`,
           },
           {
             type: "file",
@@ -154,6 +185,7 @@ Be specific and detailed in your analysis.`,
     summary: object.summary,
     tags: object.tags,
     entities: object.entities,
+    events: object.events,
     raw: object,
   };
 }

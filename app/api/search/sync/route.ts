@@ -1,57 +1,76 @@
-import { NextRequest, NextResponse } from "next/server";
-import { syncAllData, syncAllStreams, syncAllCameras, syncAllAssets } from "@/lib/elasticsearch-sync";
-import { ensureIndexExists } from "@/lib/elasticsearch";
+import { NextRequest, NextResponse } from 'next/server'
+import { 
+  syncEventToElasticsearch, 
+  syncAnalysisToElasticsearch,
+  syncAllToElasticsearch 
+} from '@/lib/elasticsearch-sync'
 
+/**
+ * POST /api/search/sync
+ * 
+ * Sync specific items or all items to Elasticsearch
+ * 
+ * Query params:
+ * - type: 'event' | 'analysis' | 'all' (required)
+ * - id: event_id or job_id (required if type is 'event' or 'analysis')
+ */
 export async function POST(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const type = searchParams.get("type"); // streams, cameras, assets, or all
+    const searchParams = request.nextUrl.searchParams
+    const type = searchParams.get('type')
+    const id = searchParams.get('id')
 
-    // Ensure index exists before syncing
-    await ensureIndexExists();
-
-    let results;
-
-    switch (type) {
-      case 'streams':
-        const streamCount = await syncAllStreams();
-        results = { streams: streamCount, cameras: 0, assets: 0 };
-        break;
-      
-      case 'cameras':
-        const cameraCount = await syncAllCameras();
-        results = { streams: 0, cameras: cameraCount, assets: 0 };
-        break;
-      
-      case 'assets':
-        const assetCount = await syncAllAssets();
-        results = { streams: 0, cameras: 0, assets: assetCount };
-        break;
-      
-      case 'all':
-      default:
-        results = await syncAllData();
-        break;
+    if (!type) {
+      return NextResponse.json(
+        { error: 'Missing required parameter: type' },
+        { status: 400 }
+      )
     }
 
-    const total = results.streams + results.cameras + results.assets;
+    if (type === 'all') {
+      const result = await syncAllToElasticsearch()
+      return NextResponse.json({
+        success: true,
+        message: 'Full sync completed',
+        counts: result
+      })
+    }
 
-    return NextResponse.json({
-      success: true,
-      message: `Successfully synced ${total} documents`,
-      results
-    });
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Missing required parameter: id' },
+        { status: 400 }
+      )
+    }
 
-  } catch (error) {
-    console.error("[Sync API] Error:", error);
+    if (type === 'event') {
+      await syncEventToElasticsearch(id)
+      return NextResponse.json({
+        success: true,
+        message: `Event ${id} synced to Elasticsearch`
+      })
+    }
+
+    if (type === 'analysis') {
+      await syncAnalysisToElasticsearch(id)
+      return NextResponse.json({
+        success: true,
+        message: `Analysis ${id} synced to Elasticsearch`
+      })
+    }
+
     return NextResponse.json(
-      {
-        success: false,
-        error: "Sync failed",
-        details: error instanceof Error ? error.message : "Unknown error",
+      { error: `Invalid type: ${type}. Must be 'event', 'analysis', or 'all'` },
+      { status: 400 }
+    )
+  } catch (error: any) {
+    console.error('[API] Sync error:', error)
+    return NextResponse.json(
+      { 
+        error: 'Failed to sync to Elasticsearch',
+        details: error.message 
       },
       { status: 500 }
-    );
+    )
   }
 }
-
