@@ -14,7 +14,9 @@ import {
   IconVolume,
   IconVolumeOff,
   IconMaximize,
-  IconMinimize
+  IconMinimize,
+  IconRadar,
+  IconSettings
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,20 +29,28 @@ import { useEventsRealtime } from "@/hooks/use-events-realtime";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useDetections } from "@/hooks/use-detections";
+import { DetectionOverlay } from "@/components/watch/detection-overlay";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
 
 export default function WatchAssetPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const playerRef = useRef<any>(null);
   
-  // Unwrap params promise (Next.js 15+ requirement)
   const { id } = use(params);
   
   const [asset, setAsset] = useState<Asset | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Video player state
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
@@ -48,13 +58,26 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
   const [duration, setDuration] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  const [detectionsEnabled, setDetectionsEnabled] = useState(true);
+  const [videoDimensions, setVideoDimensions] = useState({ width: 1920, height: 1080 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const [confidenceThreshold, setConfidenceThreshold] = useState(0.3);
+  const [persistenceTime, setPersistenceTime] = useState(2.0);
+  const [interpolationEnabled, setInterpolationEnabled] = useState(true);
+  const [fadeEnabled, setFadeEnabled] = useState(true);
+
   const timestamp = searchParams.get("timestamp");
   const startTime = timestamp ? parseFloat(timestamp) : undefined;
 
   // Fetch events for this asset
   const { events, loading: eventsLoading } = useEventsRealtime(id);
 
-  // Fetch asset data
+  // Fetch detections for this asset
+  const { detections, loading: detectionsLoading } = useDetections(
+    asset?.id || null,
+    { enabled: true }
+  );
   useEffect(() => {
     const fetchAsset = async () => {
       try {
@@ -91,7 +114,6 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
     fetchAsset();
   }, [id]);
 
-  // Setup player event listeners
   useEffect(() => {
     const player = playerRef.current;
     if (!player) return;
@@ -123,7 +145,6 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
     };
   }, [asset]);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -154,7 +175,41 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [router, isFullscreen]);
 
-  // Track fullscreen changes
+  useEffect(() => {
+    const updateDimensions = () => {
+      const player = playerRef.current;
+      if (!player) return;
+
+      const videoElement = player.media || player.querySelector('video');
+      if (!videoElement) return;
+
+      const videoWidth = videoElement.videoWidth || 1920;
+      const videoHeight = videoElement.videoHeight || 1080;
+
+      setVideoDimensions({
+        width: videoWidth,
+        height: videoHeight,
+      });
+    };
+
+    const player = playerRef.current;
+    if (player) {
+      player.addEventListener("loadedmetadata", updateDimensions);
+      player.addEventListener("resize", updateDimensions);
+      updateDimensions();
+    }
+
+    window.addEventListener("resize", updateDimensions);
+
+    return () => {
+      if (player) {
+        player.removeEventListener("loadedmetadata", updateDimensions);
+        player.removeEventListener("resize", updateDimensions);
+      }
+      window.removeEventListener("resize", updateDimensions);
+    };
+  }, [asset]);
+
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -168,7 +223,6 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
     router.back();
   };
 
-  // Video control functions
   const togglePlayPause = () => {
     const player = playerRef.current;
     if (!player) return;
@@ -361,7 +415,8 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
                 </div>
               ) : (
                 <div 
-                  className="w-full h-full cursor-pointer"
+                  ref={containerRef}
+                  className="relative w-full h-full cursor-pointer"
                   onClick={togglePlayPause}
                 >
                   <MuxPlayer
@@ -380,6 +435,20 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
                     } as React.CSSProperties}
                     className="w-full h-full"
                   />
+
+                  {/* Detection Overlay */}
+                  {detectionsEnabled && detections.length > 0 && (
+                    <DetectionOverlay
+                      detections={detections}
+                      currentTime={currentTime}
+                      videoDimensions={videoDimensions}
+                      enabled={detectionsEnabled}
+                      confidenceThreshold={confidenceThreshold}
+                      persistenceTime={persistenceTime}
+                      interpolationEnabled={interpolationEnabled}
+                      fadeEnabled={fadeEnabled}
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -470,6 +539,122 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
 
                   {/* Right side controls */}
                   <div className="flex items-center gap-2">
+                    {/* Detection Toggle - Always show for ready videos */}
+                    {asset?.status === "ready" && (
+                      <Button
+                        variant={detectionsEnabled ? "default" : "ghost"}
+                        size="icon"
+                        onClick={() => setDetectionsEnabled(!detectionsEnabled)}
+                        className="h-9 w-9"
+                        title="Toggle person detection overlay"
+                      >
+                        <IconRadar className="size-5" />
+                      </Button>
+                    )}
+
+                    {/* Detection Settings */}
+                    {asset?.status === "ready" && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9"
+                            title={
+                              !detectionsEnabled
+                                ? "Enable detections to access settings"
+                                : detections.length === 0
+                                ? "No detections available yet"
+                                : "Detection settings"
+                            }
+                            disabled={!detectionsEnabled || detections.length === 0}
+                          >
+                            <IconSettings className="size-5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-80">
+                          <DropdownMenuLabel>Detection Settings</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          
+                          <div className="px-2 py-3 space-y-4">
+                            {/* Confidence Threshold */}
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-sm">Confidence Threshold</Label>
+                                <span className="text-xs text-muted-foreground">{Math.round(confidenceThreshold * 100)}%</span>
+                              </div>
+                              <Slider
+                                value={[confidenceThreshold]}
+                                min={0.1}
+                                max={0.9}
+                                step={0.05}
+                                onValueChange={(values) => setConfidenceThreshold(values[0])}
+                                className="cursor-pointer"
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                Minimum confidence to show detections
+                              </p>
+                            </div>
+
+                            {/* Persistence Time */}
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-sm">Persistence Time</Label>
+                                <span className="text-xs text-muted-foreground">{persistenceTime.toFixed(1)}s</span>
+                              </div>
+                              <Slider
+                                value={[persistenceTime]}
+                                min={0.5}
+                                max={5.0}
+                                step={0.5}
+                                onValueChange={(values) => setPersistenceTime(values[0])}
+                                className="cursor-pointer"
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                How long to show detections after they disappear
+                              </p>
+                            </div>
+
+                            {/* Smooth Interpolation Toggle */}
+                            <div className="flex items-center justify-between">
+                              <div className="space-y-0.5">
+                                <Label className="text-sm">Smooth Interpolation</Label>
+                                <p className="text-xs text-muted-foreground">
+                                  Smoothly animate boxes between frames
+                                </p>
+                              </div>
+                              <Button
+                                variant={interpolationEnabled ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setInterpolationEnabled(!interpolationEnabled)}
+                                className="ml-2"
+                              >
+                                {interpolationEnabled ? "On" : "Off"}
+                              </Button>
+                            </div>
+
+                            {/* Fade Effect Toggle */}
+                            <div className="flex items-center justify-between">
+                              <div className="space-y-0.5">
+                                <Label className="text-sm">Fade Effect</Label>
+                                <p className="text-xs text-muted-foreground">
+                                  Fade older detections for visual clarity
+                                </p>
+                              </div>
+                              <Button
+                                variant={fadeEnabled ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setFadeEnabled(!fadeEnabled)}
+                                className="ml-2"
+                              >
+                                {fadeEnabled ? "On" : "Off"}
+                              </Button>
+                            </div>
+                          </div>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+
                     {/* Fullscreen */}
                     <Button
                       variant="ghost"
@@ -614,4 +799,3 @@ function getSeverityBadgeClass(severity: string): string {
   };
   return classes[severity] || classes.Minor;
 }
-

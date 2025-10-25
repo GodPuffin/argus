@@ -8,8 +8,9 @@ import "dotenv/config";
 import { createClient } from "@supabase/supabase-js";
 import { fetchAndTransmuxSegment } from "./ffmpeg-transmux.js";
 import { analyzeVideoWithGemini } from "./gemini-client.js";
+import { analyzeVideoWithRoboflow } from "./roboflow-detector.js";
 import { startSegmentScheduler } from "./segment-scheduler.js";
-import type { AnalysisJob } from "./types.js";
+import type { AnalysisJob, RoboflowAnalysisResponse } from "./types.js";
 
 // Configuration
 const SUPABASE_URL = process.env.SUPABASE_URL!;
@@ -111,8 +112,9 @@ async function markJobSucceeded(
     events: any[];
     raw: any;
   },
+  detections?: RoboflowAnalysisResponse,
 ) {
-  // Insert result
+  // Insert Gemini result
   const { error: resultError } = await supabase
     .from("ai_analysis_results")
     .upsert({
@@ -208,6 +210,34 @@ async function markJobSucceeded(
     }
   }
 
+  // Insert object detection results
+  if (detections && detections.detections.length > 0) {
+    const detectionRecords = detections.detections.map((detection) => ({
+      job_id: jobId,
+      frame_timestamp: detection.frame_timestamp,
+      frame_index: detection.frame_index,
+      detections: detection.detections,
+    }));
+
+    const { error: detectionError } = await supabase
+      .from("ai_object_detections")
+      .upsert(detectionRecords, {
+        onConflict: "job_id,frame_timestamp",
+        ignoreDuplicates: true,
+      });
+
+    if (detectionError) {
+      console.error(
+        `Failed to insert detections for job ${jobId}:`,
+        detectionError,
+      );
+    } else {
+      console.log(
+        `Stored ${detectionRecords.length} detection frames for job ${jobId}`,
+      );
+    }
+  }
+
   // Update job status
   const { error: jobError } = await supabase
     .from("ai_analysis_jobs")
@@ -300,20 +330,52 @@ async function processJob(job: AnalysisJob) {
       playbackUrl = `https://stream.mux.com/${job.playback_id}.m3u8?${params.toString()}`;
     }
 
-    console.log(`Fetching segment from Mux: ${playbackUrl}`);
-
     // Fetch HLS and transmux to MP4
     const mp4Buffer = await fetchAndTransmuxSegment(playbackUrl);
 
-    console.log(`Transmuxed segment: ${mp4Buffer.length} bytes`);
+    console.log(`Segment ready: ${(mp4Buffer.length / 1024 / 1024).toFixed(1)}MB`);
 
-    // Analyze with Gemini
-    const analysisResult = await analyzeVideoWithGemini(mp4Buffer);
+    // Calculate timestamp offset for this segment
+    const segmentStartTime = job.source_type === "vod" 
+      ? job.start_epoch  // VOD uses relative seconds
+      : 0;  // LIVE clips are already timestamped from stream start
 
-    console.log(`Analysis complete for job ${job.id}`);
+    // Run analysis based on source type
+    if (job.source_type === "live") {
+      // LIVE: Gemini only
+      console.log(`LIVE job: Running Gemini analysis only`);
+      const analysisResult = await analyzeVideoWithGemini(mp4Buffer);
+      console.log(`Analysis complete for job ${job.id} (LIVE)`);
+      await markJobSucceeded(job.id, analysisResult);
+    } else {
+      // VOD: Gemini + Roboflow in parallel
+      console.log(`VOD job: Running Gemini + Roboflow analysis`);
+      const [analysisResult, detectionResult] = await Promise.allSettled([
+        analyzeVideoWithGemini(mp4Buffer),
+        analyzeVideoWithRoboflow(mp4Buffer, segmentStartTime),
+      ]);
 
-    // Store result
-    await markJobSucceeded(job, analysisResult);
+      // Check Gemini result
+      if (analysisResult.status === "rejected") {
+        throw new Error(`Gemini analysis failed: ${analysisResult.reason}`);
+      }
+
+      // Log Roboflow result (don't fail job if it fails)
+      let detections: RoboflowAnalysisResponse | undefined;
+      if (detectionResult.status === "fulfilled") {
+        detections = detectionResult.value;
+        console.log(
+          `Roboflow detected ${detections.totalDetections} people in ${detections.totalFrames} frames`,
+        );
+      } else {
+        console.warn(
+          `Roboflow detection failed (job will still succeed): ${detectionResult.reason}`,
+        );
+      }
+
+      console.log(`Analysis complete for job ${job.id} (VOD)`);
+      await markJobSucceeded(job, analysisResult.value, detections);
+    }
 
     console.log(`Job ${job.id} succeeded`);
   } catch (error) {

@@ -47,3 +47,28 @@ export interface GeminiAnalysisResponse {
   raw: any;
 }
 
+export interface BoundingBox {
+  x: number; // Normalized 0-1
+  y: number; // Normalized 0-1
+  width: number; // Normalized 0-1
+  height: number; // Normalized 0-1
+}
+
+export interface Detection {
+  class: string;
+  confidence: number;
+  bbox: BoundingBox;
+}
+
+export interface ObjectDetection {
+  frame_timestamp: number; // Relative seconds within segment
+  frame_index: number;
+  detections: Detection[];
+}
+
+export interface RoboflowAnalysisResponse {
+  detections: ObjectDetection[];
+  totalFrames: number;
+  totalDetections: number;
+}
+
