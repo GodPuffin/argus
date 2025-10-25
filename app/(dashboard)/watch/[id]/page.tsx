@@ -63,9 +63,11 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [confidenceThreshold, setConfidenceThreshold] = useState(0.3);
-  const [persistenceTime, setPersistenceTime] = useState(2.0);
+  const [persistenceTime, setPersistenceTime] = useState(1.0);
   const [interpolationEnabled, setInterpolationEnabled] = useState(true);
   const [fadeEnabled, setFadeEnabled] = useState(true);
+
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const timestamp = searchParams.get("timestamp");
   const startTime = timestamp ? parseFloat(timestamp) : undefined;
@@ -124,14 +126,12 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
       setVolume(player.volume);
       setIsMuted(player.muted);
     };
-    const handleTimeUpdate = () => setCurrentTime(player.currentTime || 0);
     const handleDurationChange = () => setDuration(player.duration || 0);
     const handleLoadedMetadata = () => setDuration(player.duration || 0);
 
     player.addEventListener("play", handlePlay);
     player.addEventListener("pause", handlePause);
     player.addEventListener("volumechange", handleVolumeChange);
-    player.addEventListener("timeupdate", handleTimeUpdate);
     player.addEventListener("durationchange", handleDurationChange);
     player.addEventListener("loadedmetadata", handleLoadedMetadata);
 
@@ -139,9 +139,31 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
       player.removeEventListener("play", handlePlay);
       player.removeEventListener("pause", handlePause);
       player.removeEventListener("volumechange", handleVolumeChange);
-      player.removeEventListener("timeupdate", handleTimeUpdate);
       player.removeEventListener("durationchange", handleDurationChange);
       player.removeEventListener("loadedmetadata", handleLoadedMetadata);
+    };
+  }, [asset]);
+
+  // Use requestAnimationFrame for smooth 60fps currentTime updates
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!player) return;
+
+    let animationFrameId: number;
+    
+    const updateTime = () => {
+      if (player && player.currentTime !== undefined) {
+        setCurrentTime(player.currentTime);
+      }
+      animationFrameId = requestAnimationFrame(updateTime);
+    };
+
+    animationFrameId = requestAnimationFrame(updateTime);
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
     };
   }, [asset]);
 
@@ -267,6 +289,14 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
     if (autoPlay && player.paused) {
       player.play();
     }
+    
+    // Scroll to top to view the video
+    if (scrollAreaRef.current) {
+      const scrollViewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollViewport) {
+        scrollViewport.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
   };
 
   const toggleFullscreen = () => {
@@ -379,7 +409,7 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {/* Scrollable content */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1" ref={scrollAreaRef}>
         <div className="flex flex-col">
           {/* Video player container */}
           <div 
