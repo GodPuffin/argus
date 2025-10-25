@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchContent } from "@/lib/elasticsearch";
+import { supabase } from "@/lib/supabase";
 import type { SearchFilters, DocumentType, EventSeverity, EventType } from "@/lib/types/elasticsearch";
 
 export async function GET(request: NextRequest) {
@@ -58,9 +59,40 @@ export async function GET(request: NextRequest) {
     // Perform the search
     const results = await searchContent(query.trim(), filters);
 
+    // Validate that assets still exist in mux.assets table
+    let validatedHits = results.hits;
+    
+    if (results.hits.length > 0) {
+      // Get unique asset IDs from search results
+      const assetIds = [...new Set(results.hits.map(hit => hit.source.asset_id))];
+      
+      // Query mux.assets to check which assets still exist
+      const { data: existingAssets, error: assetsError } = await supabase
+        .schema('mux')
+        .from('assets')
+        .select('id')
+        .in('id', assetIds);
+      
+      if (assetsError) {
+        console.warn('[Search API] Error checking assets existence:', assetsError);
+        // Continue with unvalidated results if the check fails
+      } else {
+        // Create a Set of valid asset IDs for fast lookup
+        const validAssetIds = new Set(existingAssets?.map(a => a.id) || []);
+        
+        // Filter results to only include those with valid assets
+        const originalCount = results.hits.length;
+        validatedHits = results.hits.filter(hit => validAssetIds.has(hit.source.asset_id));
+        
+        if (validatedHits.length < originalCount) {
+          console.log(`[Search API] Filtered out ${originalCount - validatedHits.length} results with missing assets`);
+        }
+      }
+    }
+
     // Group results by asset_id
-    const groupedResults = new Map<string, typeof results.hits>();
-    for (const hit of results.hits) {
+    const groupedResults = new Map<string, typeof validatedHits>();
+    for (const hit of validatedHits) {
       const assetId = hit.source.asset_id;
       if (!groupedResults.has(assetId)) {
         groupedResults.set(assetId, []);
@@ -70,9 +102,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       query: query.trim(),
-      results: results.hits,
+      results: validatedHits,
       grouped: Object.fromEntries(groupedResults),
-      total: results.total,
+      total: validatedHits.length,
       took: results.took,
       filters: {
         doc_type: docType || null,

@@ -479,3 +479,38 @@ export async function bulkIndexDocuments(
     throw new Error('Failed to bulk index documents')
   }
 }
+
+export async function deleteDocumentsByAssetId(assetId: string): Promise<number> {
+  if (!esClient) {
+    console.warn('[Elasticsearch] Client not configured. Skipping deletion.')
+    return 0
+  }
+
+  try {
+    const response = await esClient.deleteByQuery({
+      index: ELASTICSEARCH_INDEX,
+      query: {
+        term: {
+          asset_id: assetId
+        }
+      },
+      refresh: true
+    } as any)
+
+    // Handle response structure (newer versions return response directly, older versions use response.body)
+    const responseData = (response as any).body || response
+    const deleted = responseData.deleted || 0
+    
+    console.log(`[Elasticsearch] Deleted ${deleted} documents for asset ${assetId}`)
+    return deleted
+  } catch (error: any) {
+    // Ignore index not found errors
+    if (error.meta?.statusCode === 404) {
+      console.warn(`[Elasticsearch] Index not found when deleting documents for asset ${assetId}`)
+      return 0
+    }
+    
+    console.error(`[Elasticsearch] Error deleting documents for asset ${assetId}:`, error)
+    throw new Error(`Failed to delete documents for asset: ${assetId}`)
+  }
+}

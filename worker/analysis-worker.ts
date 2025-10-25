@@ -213,7 +213,7 @@ async function markJobSucceeded(
   // Insert object detection results
   if (detections && detections.detections.length > 0) {
     const detectionRecords = detections.detections.map((detection) => ({
-      job_id: jobId,
+      job_id: job.id,
       frame_timestamp: detection.frame_timestamp,
       frame_index: detection.frame_index,
       detections: detection.detections,
@@ -228,12 +228,12 @@ async function markJobSucceeded(
 
     if (detectionError) {
       console.error(
-        `Failed to insert detections for job ${jobId}:`,
+        `Failed to insert detections for job ${job.id}:`,
         detectionError,
       );
     } else {
       console.log(
-        `Stored ${detectionRecords.length} detection frames for job ${jobId}`,
+        `Stored ${detectionRecords.length} detection frames for job ${job.id}`,
       );
     }
   }
@@ -346,7 +346,7 @@ async function processJob(job: AnalysisJob) {
       console.log(`LIVE job: Running Gemini analysis only`);
       const analysisResult = await analyzeVideoWithGemini(mp4Buffer);
       console.log(`Analysis complete for job ${job.id} (LIVE)`);
-      await markJobSucceeded(job.id, analysisResult);
+      await markJobSucceeded(job, analysisResult);
     } else {
       // VOD: Gemini + Roboflow in parallel
       console.log(`VOD job: Running Gemini + Roboflow analysis`);
