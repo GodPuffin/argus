@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts"
 
@@ -31,16 +31,17 @@ export function DetectionsByHourChart({ data }: DetectionsByHourChartProps) {
   }))
 
   return (
-    <Card>
+    <Card variant="revealed-pointer">
       <CardHeader>
         <CardTitle>Detections by Hour</CardTitle>
         <CardDescription>
           Hourly detection patterns over time
         </CardDescription>
       </CardHeader>
-      <CardContent className="pb-2">
+      <CardContent className="pb-6">
         {data.length > 0 ? (
-          <ChartContainer config={chartConfig} className="h-[300px] w-full">
+          <div className="rounded-lg bg-muted/50 p-4 mb-0">
+            <ChartContainer config={chartConfig} className="h-[300px] w-full">
             <BarChart data={chartData} margin={{ left: 0, right: 0 }}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
               <XAxis 
@@ -67,6 +68,7 @@ export function DetectionsByHourChart({ data }: DetectionsByHourChartProps) {
               />
             </BarChart>
           </ChartContainer>
+          </div>
         ) : (
           <div className="flex h-[300px] items-center justify-center text-muted-foreground">
             No hourly data available

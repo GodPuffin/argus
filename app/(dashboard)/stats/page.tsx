@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { SiteHeader } from "@/components/site-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AnimatedTabs } from "@/components/ui/animated-tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -93,14 +93,24 @@ export default function StatsPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Time Range Selector */}
           <div className="flex items-center gap-3">
-            <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
-              <TabsList>
-                <TabsTrigger value="24h">24 Hours</TabsTrigger>
-                <TabsTrigger value="7d">7 Days</TabsTrigger>
-                <TabsTrigger value="30d">30 Days</TabsTrigger>
-                <TabsTrigger value="all">All Time</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <AnimatedTabs
+              tabs={["24 Hours", "7 Days", "30 Days", "All Time"]}
+              activeTab={
+                timeRange === "24h" ? "24 Hours" :
+                timeRange === "7d" ? "7 Days" :
+                timeRange === "30d" ? "30 Days" :
+                "All Time"
+              }
+              onTabChange={(tab) => {
+                const mapping: Record<string, TimeRange> = {
+                  "24 Hours": "24h",
+                  "7 Days": "7d",
+                  "30 Days": "30d",
+                  "All Time": "all",
+                }
+                setTimeRange(mapping[tab])
+              }}
+            />
             {isRefetching && (
               <Badge variant="outline" className="text-xs">
                 <Activity className="mr-1 h-3 w-3 animate-pulse" />

@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts"
 import { TrendingUp } from "lucide-react"
@@ -35,17 +35,18 @@ export function JobsTimelineChart({ data }: JobsTimelineChartProps) {
   const successRate = totalCreated > 0 ? ((totalSucceeded / totalCreated) * 100).toFixed(1) : '0'
 
   return (
-    <Card>
+    <Card variant="revealed-pointer">
       <CardHeader>
         <CardTitle>Jobs Timeline</CardTitle>
         <CardDescription>
           Daily job creation and completion trends
         </CardDescription>
       </CardHeader>
-      <CardContent className="pb-2">
+      <CardContent className="pb-6">
         {chartData.length > 0 ? (
           <>
-            <ChartContainer config={chartConfig} className="h-[300px] w-full">
+            <div className="rounded-lg bg-muted/50 p-4 mb-0">
+              <ChartContainer config={chartConfig} className="h-[300px] w-full">
               <LineChart data={chartData} margin={{ left: 0, right: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis 
@@ -90,6 +91,7 @@ export function JobsTimelineChart({ data }: JobsTimelineChartProps) {
                 />
               </LineChart>
             </ChartContainer>
+            </div>
             <div className="mt-3 flex items-center gap-2 text-sm px-2 pb-2">
               <TrendingUp className="h-4 w-4 text-green-500" />
               <span className="text-muted-foreground">

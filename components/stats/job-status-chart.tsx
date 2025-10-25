@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { PieChart, Pie, Cell, Legend, ResponsiveContainer } from "recharts"
 
@@ -49,16 +49,17 @@ export function JobStatusChart({ data }: JobStatusChartProps) {
   const total = data.queued + data.processing + data.succeeded + data.failed + data.dead
 
   return (
-    <Card>
+    <Card variant="revealed-pointer">
       <CardHeader>
         <CardTitle>AI Job Status Distribution</CardTitle>
         <CardDescription>
           {total > 0 ? `Total ${total.toLocaleString()} jobs` : "No jobs yet"}
         </CardDescription>
       </CardHeader>
-      <CardContent className="pb-0">
+      <CardContent className="pb-6">
         {total > 0 ? (
-          <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[300px] w-full">
+          <div className="rounded-lg bg-muted/50 p-4 mb-0">
+            <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[300px] w-full">
             <PieChart>
               <ChartTooltip 
                 cursor={false}
@@ -81,6 +82,7 @@ export function JobStatusChart({ data }: JobStatusChartProps) {
               />
             </PieChart>
           </ChartContainer>
+          </div>
         ) : (
           <div className="flex h-[300px] items-center justify-center text-muted-foreground">
             No data available
