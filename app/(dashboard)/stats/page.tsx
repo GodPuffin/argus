@@ -34,6 +34,8 @@ import type { StatsData } from "@/lib/stats-queries"
 type TimeRange = '24h' | '7d' | '30d' | 'all'
 const STATS_TIME_RANGE_KEY = "stats-time-range"
 
+const STATS_TIME_RANGE_KEY = "stats-time-range"
+
 export default function StatsPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>(() => {
     // Load saved time range from localStorage
