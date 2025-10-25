@@ -4,18 +4,19 @@ import { use, useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import MuxPlayer from "@mux/mux-player-react";
 import "@mux/mux-player/themes/minimal";
-import { 
-  IconArrowLeft, 
-  IconAlertCircle, 
-  IconPlayerPlay, 
+import {
+  IconArrowLeft,
+  IconAlertCircle,
+  IconPlayerPlay,
   IconPlayerPause,
-  IconPlayerSkipBack,
-  IconPlayerSkipForward,
+  IconRewindBackward10,
+  IconRewindForward10,
   IconVolume,
   IconVolumeOff,
   IconMaximize,
   IconMinimize,
   IconRadar,
+  IconRadarOff,
   IconSettings
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
@@ -535,7 +536,7 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
                       className="h-9 w-9"
                       title="Skip backward 10s (←)"
                     >
-                      <IconPlayerSkipBack className="size-5" />
+                      <IconRewindBackward10 className="size-5" />
                     </Button>
 
                     {/* Skip Forward */}
@@ -546,7 +547,7 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
                       className="h-9 w-9"
                       title="Skip forward 10s (→)"
                     >
-                      <IconPlayerSkipForward className="size-5" />
+                      <IconRewindForward10 className="size-5" />
                     </Button>
 
                     {/* Volume */}
@@ -586,7 +587,11 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
                         className="h-9 w-9"
                         title="Toggle person detection overlay"
                       >
-                        <IconRadar className="size-5" />
+                        {detectionsEnabled ? (
+                          <IconRadar className="size-5" />
+                        ) : (
+                          <IconRadarOff className="size-5" />
+                        )}
                       </Button>
                     )}
 
