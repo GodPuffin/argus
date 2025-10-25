@@ -8,7 +8,7 @@ import { IconTrash } from "@tabler/icons-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { type Asset, getAssetPlaybackId } from "@/lib/supabase";
+import { type Asset, type AIAnalysisJob, getAssetPlaybackId, supabase } from "@/lib/supabase";
 import { Spinner } from "@/components/ui/shadcn-io/spinner";
 import { RecordingInfoButton } from "./recording-info-modal";
 import {
@@ -36,6 +36,8 @@ export function RecordingCard({ asset, onUpdate, onDelete }: RecordingCardProps)
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [blurUpUrl, setBlurUpUrl] = useState<string | undefined>(undefined);
+  const [activeJob, setActiveJob] = useState<AIAnalysisJob | null>(null);
+  const [loadingJob, setLoadingJob] = useState(true);
   const playerRef = useRef<any>(null);
 
   const formatDuration = (seconds: number) => {
@@ -46,7 +48,6 @@ export function RecordingCard({ asset, onUpdate, onDelete }: RecordingCardProps)
   };
 
   const formatDate = (timestamp: string | number) => {
-    // Handle both ISO strings and Unix timestamps
     const date = typeof timestamp === 'string' && timestamp.includes('-') 
       ? new Date(timestamp) 
       : new Date(typeof timestamp === 'string' ? parseInt(timestamp) * 1000 : timestamp * 1000);
@@ -54,7 +55,6 @@ export function RecordingCard({ asset, onUpdate, onDelete }: RecordingCardProps)
   };
 
   const formatRelativeTime = (timestamp: string | number) => {
-    // Handle both ISO strings and Unix timestamps
     const date = typeof timestamp === 'string' && timestamp.includes('-') 
       ? new Date(timestamp) 
       : new Date(typeof timestamp === 'string' ? parseInt(timestamp) * 1000 : timestamp * 1000);
@@ -84,13 +84,11 @@ export function RecordingCard({ asset, onUpdate, onDelete }: RecordingCardProps)
 
   const playbackId = getAssetPlaybackId(asset);
 
-  // Generate blurup placeholder for smooth blur effect
   useEffect(() => {
     if (!playbackId) return;
     
     const generateBlurUp = async () => {
       try {
-        // Parse aspect ratio or default to 16:9
         let width = 16;
         let height = 9;
         
@@ -110,7 +108,6 @@ export function RecordingCard({ asset, onUpdate, onDelete }: RecordingCardProps)
         setBlurUpUrl(blurDataURL);
       } catch (error) {
         console.error('Failed to generate blur-up:', error);
-        // Fallback to basic thumbnail if blurup fails
         const aspectRatio = asset.aspect_ratio || '16:9';
         const [w, h] = aspectRatio.split(':').map(Number);
         setBlurUpUrl(`https://image.mux.com/${playbackId}/thumbnail.webp?width=${w || 16}&height=${h || 9}&time=0`);
@@ -119,6 +116,65 @@ export function RecordingCard({ asset, onUpdate, onDelete }: RecordingCardProps)
 
     generateBlurUp();
   }, [playbackId, asset.aspect_ratio]);
+
+  useEffect(() => {
+    const fetchActiveJob = async () => {
+      try {
+        setLoadingJob(true);
+        const { data, error } = await supabase
+          .from("ai_analysis_jobs")
+          .select("*")
+          .eq("source_id", asset.id)
+          .in("status", ["queued", "processing"])
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error fetching active job:", error);
+          setLoadingJob(false);
+          return;
+        }
+
+        setActiveJob(data as AIAnalysisJob | null);
+      } catch (err) {
+        console.error("Failed to fetch active job:", err);
+      } finally {
+        setLoadingJob(false);
+      }
+    };
+
+    fetchActiveJob();
+
+    const channel = supabase
+      .channel(`job-updates-${asset.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "ai_analysis_jobs",
+          filter: `source_id=eq.${asset.id}`,
+        },
+        (payload) => {
+          if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+            const job = payload.new as AIAnalysisJob;
+            if (job.status === "queued" || job.status === "processing") {
+              setActiveJob(job);
+            } else {
+              setActiveJob(null);
+            }
+          } else if (payload.eventType === "DELETE") {
+            setActiveJob(null);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [asset.id]);
 
   return (
     <>
@@ -179,7 +235,7 @@ export function RecordingCard({ asset, onUpdate, onDelete }: RecordingCardProps)
             {/* Time/Quality and Action Buttons */}
             <div className="flex items-center justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <span className="text-sm text-muted-foreground">
                     {formatDuration(asset.duration_seconds || 0)}
                   </span>
@@ -195,7 +251,7 @@ export function RecordingCard({ asset, onUpdate, onDelete }: RecordingCardProps)
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+              <div className="flex gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
               <RecordingInfoButton asset={asset} />
               
               <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -240,20 +296,36 @@ export function RecordingCard({ asset, onUpdate, onDelete }: RecordingCardProps)
             <div className="flex items-center gap-2 pt-2 border-t flex-wrap">
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${
-                  asset.status === "ready" 
+                  loadingJob
+                    ? "bg-gray-400"
+                    : activeJob 
+                    ? "bg-blue-500" 
+                    : asset.status === "ready" 
                     ? "bg-green-500" 
                     : asset.status === "errored" 
                     ? "bg-red-500" 
                     : "bg-yellow-500"
                 }`} />
-                <span className="text-xs text-muted-foreground capitalize">
-                  {asset.status === "ready" 
-                    ? "Ready to play" 
-                    : asset.status === "preparing" 
-                    ? "Processing" 
-                    : asset.status === "errored"
-                    ? "Error"
-                    : asset.status}
+                <span className="text-xs text-muted-foreground capitalize flex items-center gap-1">
+                  {loadingJob ? (
+                    <>
+                      <Spinner variant="circle" className="size-3" />
+                      Loading...
+                    </>
+                  ) : activeJob ? (
+                    <>
+                      <Spinner variant="circle" className="size-3" />
+                      {activeJob.status === "processing" ? "Analyzing" : "Queued for Analysis"}
+                    </>
+                  ) : asset.status === "ready" ? (
+                    "Ready to play"
+                  ) : asset.status === "preparing" ? (
+                    "Processing"
+                  ) : asset.status === "errored" ? (
+                    "Error"
+                  ) : (
+                    asset.status
+                  )}
                 </span>
               </div>
               {asset.is_live && (
