@@ -4,6 +4,7 @@ import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription a
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts"
 import { TrendingUp } from "lucide-react"
+import { ChartBackground } from "./chart-background"
 
 interface JobsTimelineChartProps {
   data: Array<{ date: string; created: number; succeeded: number; failed: number }>
@@ -43,9 +44,9 @@ export function JobsTimelineChart({ data }: JobsTimelineChartProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-6">
-        {chartData.length > 0 ? (
-          <>
-            <div className="rounded-lg bg-muted/50 p-4 mb-0">
+        <ChartBackground>
+          {chartData.length > 0 ? (
+            <>
               <ChartContainer config={chartConfig} className="h-[300px] w-full">
               <LineChart data={chartData} margin={{ left: 0, right: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
@@ -91,19 +92,19 @@ export function JobsTimelineChart({ data }: JobsTimelineChartProps) {
                 />
               </LineChart>
             </ChartContainer>
+              <div className="mt-3 flex items-center gap-2 text-sm px-2 pb-2">
+                <TrendingUp className="h-4 w-4 text-green-500" />
+                <span className="text-muted-foreground">
+                  {successRate}% success rate
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="flex h-[300px] items-center justify-center text-muted-foreground">
+              No timeline data available
             </div>
-            <div className="mt-3 flex items-center gap-2 text-sm px-2 pb-2">
-              <TrendingUp className="h-4 w-4 text-green-500" />
-              <span className="text-muted-foreground">
-                {successRate}% success rate
-              </span>
-            </div>
-          </>
-        ) : (
-          <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-            No timeline data available
-          </div>
-        )}
+          )}
+        </ChartBackground>
       </CardContent>
     </Card>
   )

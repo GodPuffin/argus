@@ -4,6 +4,7 @@ import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription a
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { PieChart, Pie, Cell, Legend } from "recharts"
 import { Camera } from "lucide-react"
+import { ChartBackground } from "./chart-background"
 
 interface CameraActivityChartProps {
   data: Array<{ camera_name: string; event_count: number; camera_id: string }>
@@ -44,9 +45,9 @@ export function CameraActivityChart({ data }: CameraActivityChartProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-4">
-        {total > 0 ? (
-          <div className="flex flex-col">
-            <div className="rounded-lg bg-muted/50 p-4 mb-0">
+        <ChartBackground>
+          {total > 0 ? (
+            <div className="flex flex-col">
               <ChartContainer config={{}} className="mx-auto aspect-square max-h-[280px] w-full">
               <PieChart>
                 <ChartTooltip 
@@ -75,19 +76,19 @@ export function CameraActivityChart({ data }: CameraActivityChartProps) {
               </Pie>
             </PieChart>
           </ChartContainer>
+              {topCamera && (
+                <div className="mt-2 text-center text-sm text-muted-foreground px-4 pb-4">
+                  <span className="font-medium text-foreground">{topCamera.camera_name}</span> leads
+                  with {topCamera.event_count.toLocaleString()} events
+                </div>
+              )}
             </div>
-            {topCamera && (
-              <div className="mt-2 text-center text-sm text-muted-foreground px-4 pb-4">
-                <span className="font-medium text-foreground">{topCamera.camera_name}</span> leads
-                with {topCamera.event_count.toLocaleString()} events
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-            No camera activity data available
-          </div>
-        )}
+          ) : (
+            <div className="flex h-[300px] items-center justify-center text-muted-foreground">
+              No camera activity data available
+            </div>
+          )}
+        </ChartBackground>
       </CardContent>
     </Card>
   )

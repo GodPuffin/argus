@@ -4,6 +4,7 @@ import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription a
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts"
 import { Activity } from "lucide-react"
+import { ChartBackground } from "./chart-background"
 
 interface ProcessingVolumeChartProps {
   data: Array<{ date: string; volume: number }>
@@ -34,9 +35,9 @@ export function ProcessingVolumeChart({ data }: ProcessingVolumeChartProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-6">
-        {chartData.length > 0 ? (
-          <>
-            <div className="rounded-lg bg-muted/50 p-4 mb-0">
+        <ChartBackground>
+          {chartData.length > 0 ? (
+            <>
               <ChartContainer config={chartConfig} className="h-[300px] w-full">
               <AreaChart data={chartData} margin={{ left: 0, right: 10 }}>
                 <defs>
@@ -75,19 +76,19 @@ export function ProcessingVolumeChart({ data }: ProcessingVolumeChartProps) {
                 />
               </AreaChart>
             </ChartContainer>
+              <div className="mt-3 flex items-center gap-2 text-sm px-2 pb-2">
+                <Activity className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">
+                  Average {avgDaily} jobs per day
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="flex h-[300px] items-center justify-center text-muted-foreground">
+              No processing volume data available
             </div>
-            <div className="mt-3 flex items-center gap-2 text-sm px-2 pb-2">
-              <Activity className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">
-                Average {avgDaily} jobs per day
-              </span>
-            </div>
-          </>
-        ) : (
-          <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-            No processing volume data available
-          </div>
-        )}
+          )}
+        </ChartBackground>
       </CardContent>
     </Card>
   )

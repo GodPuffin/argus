@@ -3,6 +3,7 @@
 import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { PieChart, Pie, Cell, Legend } from "recharts"
+import { ChartBackground } from "./chart-background"
 
 interface DetectionClassChartProps {
   data: Array<{ class: string; count: number }>
@@ -36,8 +37,8 @@ export function DetectionClassChart({ data }: DetectionClassChartProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-6">
-        {total > 0 ? (
-          <div className="rounded-lg bg-muted/50 p-4 mb-0">
+        <ChartBackground>
+          {total > 0 ? (
             <ChartContainer config={{}} className="mx-auto aspect-square max-h-[300px] w-full">
             <PieChart>
               <ChartTooltip 
@@ -62,12 +63,12 @@ export function DetectionClassChart({ data }: DetectionClassChartProps) {
               />
             </PieChart>
           </ChartContainer>
-          </div>
-        ) : (
-          <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-            No detection data available
-          </div>
-        )}
+          ) : (
+            <div className="flex h-[300px] items-center justify-center text-muted-foreground">
+              No detection data available
+            </div>
+          )}
+        </ChartBackground>
       </CardContent>
     </Card>
   )
