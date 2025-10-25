@@ -10,6 +10,7 @@ import {
   IconMessageChatbot,
   IconDatabase,
   IconList,
+  IconBug,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -75,6 +76,11 @@ const data = {
           title: "Database",
           url: "/database",
           icon: IconDatabase,
+        },
+        {
+          title: "Debug",
+          url: "/debug",
+          icon: IconBug,
         },
       ],
     },
