@@ -581,16 +581,16 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
                     {/* Detection Toggle - Always show for ready videos */}
                     {asset?.status === "ready" && (
                       <Button
-                        variant={detectionsEnabled ? "default" : "ghost"}
+                        variant="ghost"
                         size="icon"
                         onClick={() => setDetectionsEnabled(!detectionsEnabled)}
                         className="h-9 w-9"
                         title="Toggle person detection overlay"
                       >
                         {detectionsEnabled ? (
-                          <IconRadar className="size-5" />
-                        ) : (
                           <IconRadarOff className="size-5" />
+                        ) : (
+                          <IconRadar className="size-5" />
                         )}
                       </Button>
                     )}
