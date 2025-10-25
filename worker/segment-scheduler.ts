@@ -1,19 +1,13 @@
-/**
- * Live Asset Segment Scheduler
- * Scans mux.assets from live streams and enqueues 60s analysis windows
- * Replaces the DB cron-based segmentation approach
- */
-
 import "dotenv/config";
 import { createClient } from "@supabase/supabase-js";
 
-// Configuration
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const MUX_TOKEN_ID = process.env.MUX_TOKEN_ID!;
 const MUX_TOKEN_SECRET = process.env.MUX_TOKEN_SECRET!;
-const SCHEDULER_INTERVAL_MS = 60000; // Run every 60 seconds
-const WINDOW_SIZE = 60; // 60-second analysis windows
+const SCHEDULER_INTERVAL_MS = 60000;
+const WINDOW_SIZE = 60;
+const LIVE_WINDOW_SIZE = 20;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
   throw new Error(
@@ -55,7 +49,6 @@ interface MuxApiAssetResponse {
 
 /**
  * Fetch current asset duration from Mux API
- * Used for live assets where duration_seconds may be stale
  */
 async function fetchMuxAssetDuration(assetId: string): Promise<number | null> {
   try {
@@ -88,7 +81,7 @@ async function fetchMuxAssetDuration(assetId: string): Promise<number | null> {
 }
 
 /**
- * Enqueue 60s analysis windows for an asset
+ * Enqueue analysis windows for an asset
  * Returns the number of jobs enqueued
  */
 async function enqueueAssetWindows(
@@ -96,7 +89,6 @@ async function enqueueAssetWindows(
   durationSeconds: number,
   liveStreamPlaybackId?: string,
 ): Promise<number> {
-  // For live assets, use the live stream playback ID; otherwise use asset playback ID
   const playbackId = asset.is_live && liveStreamPlaybackId 
     ? liveStreamPlaybackId 
     : asset.playback_ids[0]?.id;
@@ -106,31 +98,28 @@ async function enqueueAssetWindows(
     return 0;
   }
 
-  // Calculate complete 60s windows
-  const numCompleteWindows = Math.floor(durationSeconds / WINDOW_SIZE);
+  const windowSize = asset.is_live ? LIVE_WINDOW_SIZE : WINDOW_SIZE;
+  
+  const numCompleteWindows = Math.floor(durationSeconds / windowSize);
 
   if (numCompleteWindows === 0) {
     console.log(
-      `Asset ${asset.id} only has ${durationSeconds}s, no complete windows yet`,
+      `Asset ${asset.id} only has ${durationSeconds}s, no complete ${windowSize}s windows yet`,
     );
     return 0;
   }
 
-  // Build job records for all windows
-  // Use 'live' source_type for active live streams, 'vod' for completed assets
   const sourceType = asset.is_live ? "live" : "vod";
   
-  // For live streams, convert relative offsets to absolute epoch timestamps
   const assetStartEpoch = asset.is_live 
     ? Math.floor(new Date(asset.created_at).getTime() / 1000)
     : 0;
   
   const jobs = [];
   for (let i = 0; i < numCompleteWindows; i++) {
-    const relativeStart = i * WINDOW_SIZE;
-    const relativeEnd = (i + 1) * WINDOW_SIZE;
+    const relativeStart = i * windowSize;
+    const relativeEnd = (i + 1) * windowSize;
     
-    // For live: store absolute epochs; for vod: store relative seconds
     const startEpoch = asset.is_live ? assetStartEpoch + relativeStart : relativeStart;
     const endEpoch = asset.is_live ? assetStartEpoch + relativeEnd : relativeEnd;
 
@@ -140,13 +129,12 @@ async function enqueueAssetWindows(
       playback_id: playbackId,
       start_epoch: startEpoch,
       end_epoch: endEpoch,
-      asset_start_seconds: relativeStart,  // Always relative seconds for deduplication
+      asset_start_seconds: relativeStart,
       asset_end_seconds: relativeEnd,
       status: "queued",
     });
   }
 
-  // Bulk upsert - idempotent via unique index on (source_id, asset_start_seconds, asset_end_seconds)
   const { error } = await supabase
     .from("ai_analysis_jobs")
     .upsert(jobs, {
@@ -160,21 +148,16 @@ async function enqueueAssetWindows(
   }
 
   console.log(
-    `Enqueued ${jobs.length} windows for asset ${asset.id} (duration: ${durationSeconds}s, is_live: ${asset.is_live}, source_type: ${sourceType}, base_epoch: ${assetStartEpoch})`,
+    `Enqueued ${jobs.length} x ${windowSize}s windows for asset ${asset.id} (duration: ${durationSeconds}s, is_live: ${asset.is_live}, source_type: ${sourceType}, base_epoch: ${assetStartEpoch})`,
   );
   return jobs.length;
 }
 
-/**
- * Process a single live-derived asset
- */
 async function processAsset(asset: MuxAsset): Promise<void> {
-  // Determine current duration
   let durationSeconds: number;
   let liveStreamPlaybackId: string | undefined;
 
   if (asset.is_live) {
-    // Fetch live duration from Mux API
     const liveDuration = await fetchMuxAssetDuration(asset.id);
 
     if (liveDuration !== null) {
@@ -183,14 +166,12 @@ async function processAsset(asset: MuxAsset): Promise<void> {
         `Asset ${asset.id} (LIVE): DB duration=${asset.duration_seconds ?? 0}s, Live duration=${durationSeconds}s`,
       );
     } else {
-      // Fall back to DB duration if API call fails
       durationSeconds = Math.floor(asset.duration_seconds ?? 0);
       console.log(
         `Asset ${asset.id} (LIVE): Using DB duration=${durationSeconds}s (API call failed)`,
       );
     }
 
-    // Fetch the live stream playback ID for active streams
     if (asset.live_stream_id) {
       const { data: liveStream, error } = await supabase
         .schema("mux")
@@ -207,18 +188,14 @@ async function processAsset(asset: MuxAsset): Promise<void> {
       }
     }
   } else {
-    // Completed asset - use DB duration
     durationSeconds = Math.floor(asset.duration_seconds ?? 0);
     console.log(
       `Asset ${asset.id} (COMPLETED): duration=${durationSeconds}s`,
     );
   }
 
-  // Enqueue windows
   const enqueuedCount = await enqueueAssetWindows(asset, durationSeconds, liveStreamPlaybackId);
 
-  // Mark as complete if asset is no longer live (regardless of whether windows were enqueued)
-  // This prevents re-processing short assets that never reach 60s
   if (!asset.is_live) {
     const { error } = await supabase
       .schema("mux")
@@ -239,18 +216,14 @@ async function processAsset(asset: MuxAsset): Promise<void> {
   }
 }
 
-/**
- * Main scheduler loop - scans and processes live-derived assets
- */
 async function schedulerLoop() {
   console.log("Live Asset Segment Scheduler starting...");
-  console.log(`Config: SCHEDULER_INTERVAL=${SCHEDULER_INTERVAL_MS}ms, WINDOW_SIZE=${WINDOW_SIZE}s`);
+  console.log(`Config: SCHEDULER_INTERVAL=${SCHEDULER_INTERVAL_MS}ms, VOD_WINDOW=${WINDOW_SIZE}s, LIVE_WINDOW=${LIVE_WINDOW_SIZE}s`);
 
   while (true) {
     try {
       const startTime = Date.now();
 
-      // Query assets from live streams that need processing
       const { data: assets, error } = await supabase
         .schema("mux")
         .from("assets")
@@ -276,19 +249,14 @@ async function schedulerLoop() {
         console.log("No live-derived assets to process");
       }
 
-      // Wait before next iteration
       await new Promise((resolve) => setTimeout(resolve, SCHEDULER_INTERVAL_MS));
     } catch (error) {
       console.error("Error in scheduler loop:", error);
-      // Continue running even if one iteration fails
       await new Promise((resolve) => setTimeout(resolve, SCHEDULER_INTERVAL_MS));
     }
   }
 }
 
-/**
- * Start the scheduler (non-blocking)
- */
 export function startSegmentScheduler() {
   schedulerLoop().catch((error) => {
     console.error("Fatal error in segment scheduler:", error);

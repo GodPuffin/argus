@@ -21,7 +21,6 @@ export default function StreamPage() {
   const nameRef = useRef(state.textOverlay);
   const bytesSentRef = useRef(0);
   const lastUpdateTimeRef = useRef(Date.now());
-  const [showHmrWarning, setShowHmrWarning] = useState(false);
 
   const streamManager = useStreamManager({
     browserId: state.browserId,
@@ -146,13 +145,6 @@ export default function StreamPage() {
       mediaRecorderRef.current.state === "recording"
     ) {
       mediaRecorderRef.current.stop();
-      // Don't immediately close WebSocket - let MediaRecorder's stop event handle it
-      // This ensures all buffered data is flushed first
-    } else {
-      // If MediaRecorder isn't recording, clean up WebSocket directly
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.close();
-      }
     }
     state.setStreaming(false);
     state.setDataRate(0);
@@ -241,15 +233,11 @@ export default function StreamPage() {
       });
 
       mediaRecorderRef.current.addEventListener("stop", () => {
-        console.log("MediaRecorder stopped - waiting for final data chunks...");
-        // Give MediaRecorder time to flush any remaining data chunks
-        // The 'dataavailable' event may fire after 'stop' with final buffered data
-        setTimeout(() => {
-          console.log("Closing WebSocket connection...");
-          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-            wsRef.current.close();
-          }
-        }, 500); // Wait 500ms for final chunks to be sent
+        console.log("MediaRecorder stopped");
+        stopStreaming();
+        if (wsRef.current) {
+          wsRef.current.close();
+        }
       });
 
       mediaRecorderRef.current.addEventListener("error", (e) => {
@@ -268,20 +256,9 @@ export default function StreamPage() {
       }, 100);
     });
 
-    wsRef.current.addEventListener("close", (event) => {
-      console.log("WebSocket disconnected", { code: event.code, reason: event.reason });
+    wsRef.current.addEventListener("close", () => {
+      console.log("WebSocket disconnected");
       state.setConnected(false);
-      
-      // Check if this was an unexpected disconnect (not user-initiated)
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-        console.warn("⚠️ Stream interrupted unexpectedly! This may be due to code changes in development mode.");
-        // Show warning banner in development
-        if (process.env.NODE_ENV === "development") {
-          setShowHmrWarning(true);
-          setTimeout(() => setShowHmrWarning(false), 5000);
-        }
-      }
-      
       stopStreaming();
     });
 
@@ -299,24 +276,9 @@ export default function StreamPage() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      console.log("StreamPage unmounting - cleaning up resources");
-      
-      // Close WebSocket connection
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.close();
-      }
-      
-      // Stop MediaRecorder
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-        mediaRecorderRef.current.stop();
-      }
-      
-      // Cancel animation frame
       if (requestAnimationRef.current) {
         cancelAnimationFrame(requestAnimationRef.current);
       }
-      
-      // Stop camera tracks
       if (inputStreamRef.current) {
         inputStreamRef.current.getTracks().forEach((track) => track.stop());
       }
@@ -327,11 +289,6 @@ export default function StreamPage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <SiteHeader title="Stream" />
-      {showHmrWarning && (
-        <div className="bg-yellow-500/10 border-b border-yellow-500/20 px-4 py-2 text-sm text-yellow-600 dark:text-yellow-400">
-          ⚠️ Stream interrupted by code changes (Hot Module Reload). This only happens in development mode.
-        </div>
-      )}
       <ScrollArea className="flex min-h-0 flex-1">
         <div className="@container/main flex min-h-0 flex-col gap-4 p-4 md:gap-6 md:p-6">
           <div className="grid gap-4 md:grid-cols-2">

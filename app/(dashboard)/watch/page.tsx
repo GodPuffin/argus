@@ -15,22 +15,17 @@ export default function WatchPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
-  // Use realtime hooks - no more manual polling!
   const { cameras, loading: loadingCameras } = useCamerasRealtime();
   const { assets, loading: loadingAssets } = useAssetsRealtime();
   
-  // Tab persistence with URL param override
   const [activeTab, setActiveTab] = useState<string>("cameras");
   
-  // Initialize tab from URL param or localStorage
   useEffect(() => {
     const urlTab = searchParams.get("tab");
     if (urlTab && (urlTab === "cameras" || urlTab === "recordings")) {
       setActiveTab(urlTab);
-      // Save to localStorage
       localStorage.setItem(WATCH_TAB_STORAGE_KEY, urlTab);
     } else {
-      // Read from localStorage
       const savedTab = localStorage.getItem(WATCH_TAB_STORAGE_KEY);
       if (savedTab && (savedTab === "cameras" || savedTab === "recordings")) {
         setActiveTab(savedTab);
@@ -38,10 +33,8 @@ export default function WatchPage() {
     }
   }, [searchParams]);
   
-  // Handle tab change
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    // Save to localStorage
     localStorage.setItem(WATCH_TAB_STORAGE_KEY, value);
   };
 
@@ -59,7 +52,6 @@ export default function WatchPage() {
         throw new Error("Failed to update camera name");
       }
       
-      // No need to manually refresh - realtime will update automatically!
     } catch (error) {
       console.error("Error updating camera:", error);
       alert("Failed to update camera name");
@@ -76,7 +68,6 @@ export default function WatchPage() {
         throw new Error("Failed to delete camera");
       }
       
-      // No need to manually refresh - realtime will update automatically!
     } catch (error) {
       console.error("Error deleting camera:", error);
       alert("Failed to delete camera");
@@ -97,7 +88,6 @@ export default function WatchPage() {
         throw new Error("Failed to update asset");
       }
 
-      // No need to manually refresh - realtime will update automatically!
     } catch (error) {
       console.error("Error updating asset:", error);
       alert("Failed to update recording");
@@ -114,7 +104,6 @@ export default function WatchPage() {
         throw new Error("Failed to delete asset");
       }
 
-      // No need to manually refresh - realtime will update automatically!
     } catch (error) {
       console.error("Error deleting asset:", error);
       alert("Failed to delete recording");

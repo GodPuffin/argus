@@ -22,6 +22,17 @@ export async function fetchAndTransmuxSegment(
 
   return new Promise((resolve, reject) => {
     const ffmpegArgs = [
+      // Protocol options for HLS
+      "-protocol_whitelist", "file,http,https,tcp,tls",
+      
+      // Increase HLS timeout and retries
+      "-reconnect", "1",
+      "-reconnect_streamed", "1", 
+      "-reconnect_delay_max", "5",
+      
+      // HLS specific options
+      "-live_start_index", "-1", // Read entire playlist
+      
       // Input from HLS
       "-i",
       hlsUrl,
@@ -47,8 +58,6 @@ export async function fetchAndTransmuxSegment(
       outputPath,
     ];
 
-    console.log(`Running ffmpeg: ${ffmpegArgs.join(" ")}`);
-
     const ffmpeg = spawn("ffmpeg", ffmpegArgs);
 
     let stderrOutput = "";
@@ -58,6 +67,7 @@ export async function fetchAndTransmuxSegment(
     });
 
     ffmpeg.on("close", async (code) => {
+      
       if (code !== 0) {
         console.error(`FFmpeg failed with code ${code}:`);
         console.error(stderrOutput);
@@ -70,9 +80,7 @@ export async function fetchAndTransmuxSegment(
         const buffer = await readFile(outputPath);
 
         // Clean up temporary file
-        await unlink(outputPath).catch((err) =>
-          console.warn(`Failed to delete temp file ${outputPath}:`, err),
-        );
+        await unlink(outputPath).catch(() => {});
 
         resolve(buffer);
       } catch (error) {

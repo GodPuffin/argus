@@ -19,6 +19,9 @@ RUN npm ci --production
 WORKDIR /app
 COPY worker ./worker
 
+# Ensure models directory exists and has the ONNX model
+RUN mkdir -p ./worker/models
+
 # Run worker
 WORKDIR /app/worker
 CMD ["npm", "start"]
