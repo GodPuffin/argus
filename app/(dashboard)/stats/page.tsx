@@ -7,8 +7,6 @@ import { AnimatedTabs } from "@/components/ui/animated-tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
 import { 
   Activity, 
   CheckCircle2, 
@@ -35,16 +33,26 @@ import type { StatsData } from "@/lib/stats-queries"
 
 type TimeRange = '24h' | '7d' | '30d' | 'all'
 
+const STATS_TIME_RANGE_KEY = "stats-time-range"
+
 export default function StatsPage() {
-  const [timeRange, setTimeRange] = useState<TimeRange>('all')
+  const [timeRange, setTimeRange] = useState<TimeRange>(() => {
+    // Load saved time range from localStorage
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(STATS_TIME_RANGE_KEY) as TimeRange
+      if (saved && ['24h', '7d', '30d', 'all'].includes(saved)) {
+        return saved
+      }
+    }
+    return 'all'
+  })
   const [stats, setStats] = useState<StatsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [isRefetching, setIsRefetching] = useState(false)
-  const [realtimeEnabled, setRealtimeEnabled] = useState(true)
 
-  // Real-time updates
+  // Real-time updates - always enabled
   const { lastUpdate } = useStatsRealtime({
-    enabled: realtimeEnabled,
+    enabled: true,
     onUpdate: () => {
       // Refetch stats when updates occur
       if (!loading) {
@@ -81,6 +89,8 @@ export default function StatsPage() {
   useEffect(() => {
     const isInitial = loading && stats === null
     fetchStats(timeRange, isInitial)
+    // Save time range to localStorage
+    localStorage.setItem(STATS_TIME_RANGE_KEY, timeRange)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRange])
 
@@ -90,52 +100,36 @@ export default function StatsPage() {
       
       <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         {/* Controls */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {/* Time Range Selector */}
-          <div className="flex items-center gap-3">
-            <AnimatedTabs
-              tabs={["24 Hours", "7 Days", "30 Days", "All Time"]}
-              activeTab={
-                timeRange === "24h" ? "24 Hours" :
-                timeRange === "7d" ? "7 Days" :
-                timeRange === "30d" ? "30 Days" :
-                "All Time"
+        <div className="flex items-center gap-3">
+          <AnimatedTabs
+            tabs={["24 Hours", "7 Days", "30 Days", "All Time"]}
+            activeTab={
+              timeRange === "24h" ? "24 Hours" :
+              timeRange === "7d" ? "7 Days" :
+              timeRange === "30d" ? "30 Days" :
+              "All Time"
+            }
+            onTabChange={(tab) => {
+              const mapping: Record<string, TimeRange> = {
+                "24 Hours": "24h",
+                "7 Days": "7d",
+                "30 Days": "30d",
+                "All Time": "all",
               }
-              onTabChange={(tab) => {
-                const mapping: Record<string, TimeRange> = {
-                  "24 Hours": "24h",
-                  "7 Days": "7d",
-                  "30 Days": "30d",
-                  "All Time": "all",
-                }
-                setTimeRange(mapping[tab])
-              }}
-            />
-            {isRefetching && (
-              <Badge variant="outline" className="text-xs">
-                <Activity className="mr-1 h-3 w-3 animate-pulse" />
-                Updating...
-              </Badge>
-            )}
-          </div>
-
-          {/* Real-time Toggle */}
-          <div className="flex items-center gap-2">
-            <Switch
-              id="realtime"
-              checked={realtimeEnabled}
-              onCheckedChange={setRealtimeEnabled}
-            />
-            <Label htmlFor="realtime" className="flex items-center gap-2 cursor-pointer">
-              <Radio className={`h-4 w-4 ${realtimeEnabled ? 'text-green-500' : 'text-muted-foreground'}`} />
-              Real-time Updates
-            </Label>
-            {lastUpdate && realtimeEnabled && (
-              <Badge variant="outline" className="text-xs">
-                Updated {lastUpdate.toLocaleTimeString()}
-              </Badge>
-            )}
-          </div>
+              setTimeRange(mapping[tab])
+            }}
+          />
+          {isRefetching && (
+            <Badge variant="outline" className="text-xs">
+              <Activity className="mr-1 h-3 w-3 animate-pulse" />
+              Updating...
+            </Badge>
+          )}
+          {lastUpdate && (
+            <Badge variant="outline" className="text-xs">
+              Updated {lastUpdate.toLocaleTimeString()}
+            </Badge>
+          )}
         </div>
 
         <ScrollArea className="h-[calc(100vh-12rem)]">
