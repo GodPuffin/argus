@@ -50,6 +50,7 @@ const STATS_TIME_RANGE_KEY = "stats-time-range"
 type TabType = 'Events' | 'Jobs'
 const STATS_ACTIVE_TAB_KEY = "stats-active-tab"
 
+
 export default function StatsPage() {
   const [activeTab, setActiveTab] = useState<TabType>(() => {
     // Load saved tab from localStorage
