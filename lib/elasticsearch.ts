@@ -44,6 +44,9 @@ export const esClient = isElasticsearchConfigured()
 // Index Management
 // ============================================================================
 
+// Hybrid Search Index Mapping
+// Combines AI-powered semantic search with traditional lexical search
+// Reference: https://www.elastic.co/docs/solutions/search/hybrid-semantic-text
 const INDEX_MAPPING = {
   mappings: {
     properties: {
@@ -64,13 +67,20 @@ const INDEX_MAPPING = {
           keyword: { type: 'keyword' }
         }
       },
+      
+      // Text fields with semantic_text multi-fields for hybrid search
       title: {
         type: 'text',
         analyzer: 'standard',
         fields: {
-          keyword: { type: 'keyword' }
+          keyword: { type: 'keyword' },
+          semantic: {
+            type: 'semantic_text',
+            inference_id: '.elser-2-elasticsearch'
+          }
         }
       },
+      
       created_at: { 
         type: 'date' 
       },
@@ -84,7 +94,13 @@ const INDEX_MAPPING = {
       // Event-specific fields
       description: {
         type: 'text',
-        analyzer: 'standard'
+        analyzer: 'standard',
+        fields: {
+          semantic: {
+            type: 'semantic_text',
+            inference_id: '.elser-2-elasticsearch'
+          }
+        }
       },
       severity: {
         type: 'keyword'
@@ -103,10 +119,22 @@ const INDEX_MAPPING = {
       // Analysis-specific fields
       summary: {
         type: 'text',
-        analyzer: 'standard'
+        analyzer: 'standard',
+        fields: {
+          semantic: {
+            type: 'semantic_text',
+            inference_id: '.elser-2-elasticsearch'
+          }
+        }
       },
       tags: { 
-        type: 'keyword' 
+        type: 'keyword',
+        fields: {
+          semantic: {
+            type: 'semantic_text',
+            inference_id: '.elser-2-elasticsearch'
+          }
+        }
       },
       entities: {
         type: 'object',
@@ -158,6 +186,8 @@ async function checkIndexExists(): Promise<boolean> {
 // Search Operations
 // ============================================================================
 
+// Build hybrid search query combining semantic and lexical search
+// Reference: https://www.elastic.co/docs/solutions/search/hybrid-semantic-text
 function buildSearchQuery(query: string, filters?: SearchFilters) {
   // Use match_all for wildcard searches (when only filters are present)
   const isWildcard = query === '*'
@@ -168,34 +198,43 @@ function buildSearchQuery(query: string, filters?: SearchFilters) {
         must: isWildcard ? [
           { match_all: {} }
         ] : [
+          // Hybrid search: combine semantic and lexical search
           {
-            multi_match: {
-              query,
-              fields: [
-                'title^3',           // Boost title matches by 3x
-                'camera_name^2',     // Boost camera name matches by 2x
-                'description^1.5',   // Boost description
-                'summary^1.5',       // Boost summary
-                'tags^1.2',          // Boost tags slightly
-                'event_type'
+            bool: {
+              should: [
+                // Lexical search on text fields
+                {
+                  multi_match: {
+                    query,
+                    fields: [
+                      'title^3',
+                      'description^2',
+                      'summary^2',
+                      'tags^1.5',
+                      'camera_name'
+                    ],
+                    type: 'best_fields',
+                    fuzziness: 'AUTO'
+                  }
+                },
+                // Semantic search on semantic_text subfields
+                // Uses ELSER embeddings for AI-powered meaning-based search
+                {
+                  bool: {
+                    should: [
+                      { match: { 'title.semantic': query } },
+                      { match: { 'description.semantic': query } },
+                      { match: { 'summary.semantic': query } },
+                      { match: { 'tags.semantic': query } }
+                    ]
+                  }
+                }
               ],
-              type: 'best_fields',
-              fuzziness: 'AUTO'   // Automatic fuzzy matching for typos
+              minimum_should_match: 1
             }
           }
         ]
       }
-    },
-    highlight: {
-      fields: {
-        title: { pre_tags: ['<mark>'], post_tags: ['</mark>'] },
-        camera_name: { pre_tags: ['<mark>'], post_tags: ['</mark>'] },
-        description: { pre_tags: ['<mark>'], post_tags: ['</mark>'] },
-        summary: { pre_tags: ['<mark>'], post_tags: ['</mark>'] },
-        tags: { pre_tags: ['<mark>'], post_tags: ['</mark>'] }
-      },
-      fragment_size: 150,
-      number_of_fragments: 3
     },
     size: SEARCH_RESULT_SIZE,
     sort: [
@@ -261,11 +300,11 @@ function parseSearchResponse(response: any): SearchResult {
   }
 }
 
+// Hybrid search combining AI-powered semantic search with traditional lexical search
 export async function searchContent(
   query: string,
   filters?: SearchFilters
 ): Promise<SearchResult> {
-  // Check if Elasticsearch is configured
   if (!esClient) {
     console.warn('[Elasticsearch] Client not configured. Returning empty results.')
     return {
@@ -303,6 +342,24 @@ export async function searchContent(
 }
 
 // ============================================================================
+// Utility Functions
+// ============================================================================
+
+export async function ensureIndexExists(): Promise<void> {
+  if (!esClient) return
+
+  const exists = await checkIndexExists()
+  if (!exists) {
+    console.log(`[Elasticsearch] Index '${ELASTICSEARCH_INDEX}' does not exist. Creating...`)
+    await createContentIndex()
+  }
+}
+
+export function isConfigured(): boolean {
+  return esClient !== null
+}
+
+// ============================================================================
 // Document Operations
 // ============================================================================
 
@@ -314,6 +371,9 @@ export async function indexDocument(
     console.warn('[Elasticsearch] Client not configured. Skipping indexing.')
     return
   }
+
+  // Ensure index exists with proper mapping before indexing
+  await ensureIndexExists()
 
   try {
     await esClient.index({
@@ -395,6 +455,9 @@ export async function bulkIndexDocuments(
     return
   }
 
+  // Ensure index exists with proper mapping before bulk indexing
+  await ensureIndexExists()
+
   try {
     const body = documents.flatMap(({ id, document }) => [
       { index: { _index: ELASTICSEARCH_INDEX, _id: id } },
@@ -415,22 +478,4 @@ export async function bulkIndexDocuments(
     console.error('[Elasticsearch] Bulk indexing error:', error)
     throw new Error('Failed to bulk index documents')
   }
-}
-
-// ============================================================================
-// Utility Functions
-// ============================================================================
-
-export async function ensureIndexExists(): Promise<void> {
-  if (!esClient) return
-
-  const exists = await checkIndexExists()
-  if (!exists) {
-    console.log(`[Elasticsearch] Index '${ELASTICSEARCH_INDEX}' does not exist. Creating...`)
-    await createContentIndex()
-  }
-}
-
-export function isConfigured(): boolean {
-  return esClient !== null
 }

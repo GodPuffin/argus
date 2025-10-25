@@ -11,7 +11,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Argus - Browser Streaming Platform",
+  title: "Argus",
   description:
     "Stream live from your browser to Mux RTMP and watch recorded streams",
 };
