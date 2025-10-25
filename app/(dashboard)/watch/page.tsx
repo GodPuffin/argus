@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { SiteHeader } from "@/components/site-header"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AnimatedTabs } from "@/components/ui/animated-tabs"
 import { CameraGrid } from "@/components/watch/camera-grid"
 import { RecordingGrid } from "@/components/watch/recording-grid"
 import { useCamerasRealtime } from "@/hooks/use-cameras-realtime"
@@ -13,7 +13,6 @@ const WATCH_TAB_STORAGE_KEY = "watch-last-tab";
 
 export default function WatchPage() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   
   const { cameras, loading: loadingCameras } = useCamerasRealtime();
   const { assets, loading: loadingAssets } = useAssetsRealtime();
@@ -33,7 +32,9 @@ export default function WatchPage() {
     }
   }, [searchParams]);
   
-  const handleTabChange = (value: string) => {
+  const handleTabChange = (tab: string) => {
+    // Map display name to internal value
+    const value = tab === "Live Cameras" ? "cameras" : "recordings";
     setActiveTab(value);
     localStorage.setItem(WATCH_TAB_STORAGE_KEY, value);
   };
@@ -114,30 +115,31 @@ export default function WatchPage() {
     <div className="flex flex-1 flex-col overflow-hidden">
       <SiteHeader title="Watch" />
       <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6 overflow-hidden">
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col flex-1 overflow-hidden">
-          <TabsList>
-            <TabsTrigger value="cameras">Live Cameras</TabsTrigger>
-            <TabsTrigger value="recordings">Recordings</TabsTrigger>
-          </TabsList>
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <AnimatedTabs
+            tabs={["Live Cameras", "Recordings"]}
+            activeTab={activeTab === "cameras" ? "Live Cameras" : "Recordings"}
+            onTabChange={handleTabChange}
+          />
 
-          <TabsContent value="cameras" className="flex-1 mt-4 overflow-hidden">
-            <CameraGrid
-              cameras={cameras}
-              loading={loadingCameras}
-              onRename={handleRenameCamera}
-              onDelete={handleDeleteCamera}
-            />
-          </TabsContent>
-
-          <TabsContent value="recordings" className="flex-1 mt-4 overflow-hidden">
-            <RecordingGrid
-              assets={assets}
-              loading={loadingAssets}
-              onUpdate={handleUpdateAsset}
-              onDelete={handleDeleteAsset}
-            />
-          </TabsContent>
-        </Tabs>
+          <div className="flex-1 mt-4 overflow-hidden">
+            {activeTab === "cameras" ? (
+              <CameraGrid
+                cameras={cameras}
+                loading={loadingCameras}
+                onRename={handleRenameCamera}
+                onDelete={handleDeleteCamera}
+              />
+            ) : (
+              <RecordingGrid
+                assets={assets}
+                loading={loadingAssets}
+                onUpdate={handleUpdateAsset}
+                onDelete={handleDeleteAsset}
+              />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
