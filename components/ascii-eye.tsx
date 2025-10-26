@@ -81,9 +81,6 @@ interface CharData {
 export const AsciiEye = memo(function AsciiEye() {
   const spansRef = useRef<HTMLSpanElement[]>([]);
   const nonWhitespaceIndicesRef = useRef<number[]>([]);
-  const rafIdRef = useRef<number | undefined>(undefined);
-  const lastColorUpdateRef = useRef<number>(0);
-  const lastScrambleUpdateRef = useRef<number>(0);
   const scrambleTimeoutRef = useRef<number | undefined>(undefined);
 
   // Memoize character data - only parse once
@@ -132,86 +129,64 @@ export const AsciiEye = memo(function AsciiEye() {
     return data;
   }, []);
 
-  // Optimized animation loop using requestAnimationFrame
+  // Use setInterval instead of RAF for much better performance
   useEffect(() => {
-    let isActive = true;
+    let colorInterval: NodeJS.Timeout | undefined;
+    let scrambleInterval: NodeJS.Timeout | undefined;
+    
+    // Color update - every 2000ms (increased from 800ms)
+    colorInterval = setInterval(() => {
+      // Update only a small batch of characters
+      const batchSize = Math.min(50, Math.ceil(nonWhitespaceIndicesRef.current.length / 10));
+      const startIdx = Math.floor(Math.random() * (nonWhitespaceIndicesRef.current.length - batchSize));
+      
+      for (let i = startIdx; i < startIdx + batchSize && i < nonWhitespaceIndicesRef.current.length; i++) {
+        const idx = nonWhitespaceIndicesRef.current[i];
+        const char = charData[idx];
+        const span = spansRef.current[idx];
+        
+        if (span) {
+          const newColor = getRandomColor(char.isDarkChar);
+          span.style.color = newColor;
+        }
+      }
+    }, 2000);
 
-    const animate = (timestamp: number) => {
-      if (!isActive) return;
-
-      // Color update - every 800ms, but only update a batch of characters
-      if (timestamp - lastColorUpdateRef.current >= 800) {
-        lastColorUpdateRef.current = timestamp;
-
-        // Batch update colors - only update a subset for better performance
-        const batchSize = Math.ceil(nonWhitespaceIndicesRef.current.length / 3);
-        const startIdx = Math.floor(
-          Math.random() * (nonWhitespaceIndicesRef.current.length - batchSize),
-        );
-
-        for (
-          let i = startIdx;
-          i < startIdx + batchSize &&
-          i < nonWhitespaceIndicesRef.current.length;
-          i++
-        ) {
-          const idx = nonWhitespaceIndicesRef.current[i];
-          const char = charData[idx];
-          const span = spansRef.current[idx];
-
-          if (span) {
-            const newColor = getRandomColor(char.isDarkChar);
-            span.style.color = newColor;
-          }
+    // Character scrambling - every 2000ms (increased from 1000ms)
+    scrambleInterval = setInterval(() => {
+      const numToScramble = 10; // Reduced from 15-20
+      const scrambledIndices: number[] = [];
+      
+      // Scramble random characters
+      for (let i = 0; i < numToScramble; i++) {
+        const randomIdx = Math.floor(Math.random() * nonWhitespaceIndicesRef.current.length);
+        const idx = nonWhitespaceIndicesRef.current[randomIdx];
+        scrambledIndices.push(idx);
+        
+        const span = spansRef.current[idx];
+        if (span) {
+          span.textContent = getRandomBrailleChar();
         }
       }
 
-      // Character scrambling - every 1000ms
-      if (timestamp - lastScrambleUpdateRef.current >= 1000) {
-        lastScrambleUpdateRef.current = timestamp;
-
-        const numToScramble = 15 + Math.floor(Math.random() * 5);
-        const scrambledIndices: number[] = [];
-
-        // Scramble random characters
-        for (let i = 0; i < numToScramble; i++) {
-          const randomIdx = Math.floor(
-            Math.random() * nonWhitespaceIndicesRef.current.length,
-          );
-          const idx = nonWhitespaceIndicesRef.current[randomIdx];
-          scrambledIndices.push(idx);
-
+      // Reset scrambled characters after delay
+      if (scrambleTimeoutRef.current) {
+        window.clearTimeout(scrambleTimeoutRef.current);
+      }
+      
+      scrambleTimeoutRef.current = window.setTimeout(() => {
+        scrambledIndices.forEach((idx) => {
           const span = spansRef.current[idx];
           if (span) {
-            span.textContent = getRandomBrailleChar();
+            span.textContent = charData[idx].originalChar;
           }
-        }
-
-        // Reset scrambled characters after delay
-        if (scrambleTimeoutRef.current) {
-          window.clearTimeout(scrambleTimeoutRef.current);
-        }
-
-        scrambleTimeoutRef.current = window.setTimeout(() => {
-          scrambledIndices.forEach((idx) => {
-            const span = spansRef.current[idx];
-            if (span) {
-              span.textContent = charData[idx].originalChar;
-            }
-          });
-        }, 150);
-      }
-
-      rafIdRef.current = requestAnimationFrame(animate);
-    };
-
-    rafIdRef.current = requestAnimationFrame(animate);
+        });
+      }, 150);
+    }, 2000);
 
     return () => {
-      isActive = false;
-      if (rafIdRef.current) {
-        cancelAnimationFrame(rafIdRef.current);
-      }
+      if (colorInterval) clearInterval(colorInterval);
+      if (scrambleInterval) clearInterval(scrambleInterval);
       if (scrambleTimeoutRef.current) {
         window.clearTimeout(scrambleTimeoutRef.current);
       }
