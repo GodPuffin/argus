@@ -5,6 +5,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts"
 import { Users } from "lucide-react"
 import { ChartBackground } from "./chart-background"
+import { OCCUPANCY_COLOR } from "@/lib/chart-colors"
 
 interface OccupancyChartProps {
   data: Array<{ timestamp: number; count: number }>
@@ -13,7 +14,7 @@ interface OccupancyChartProps {
 const chartConfig = {
   count: {
     label: "People Count",
-    color: "hsl(0, 82%, 60%)",
+    color: OCCUPANCY_COLOR,
   },
 }
 

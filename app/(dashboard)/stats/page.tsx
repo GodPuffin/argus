@@ -7,11 +7,20 @@ import { AnimatedTabs } from "@/components/ui/animated-tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { 
   Activity, 
   CheckCircle2, 
   TrendingUp,
-  Radio
+  Radio,
+  ChevronDown,
+  Clock
 } from "lucide-react"
 
 // Chart components
@@ -135,25 +144,47 @@ export default function StatsPage() {
             />
           </div>
           
-          <div key="time-tabs">
-            <AnimatedTabs
-              tabs={["24 Hours", "7 Days", "30 Days", "All Time"]}
-              activeTab={
-                timeRange === "24h" ? "24 Hours" :
-                timeRange === "7d" ? "7 Days" :
-                timeRange === "30d" ? "30 Days" :
-                "All Time"
-              }
-              onTabChange={(tab) => {
-                const mapping: Record<string, TimeRange> = {
-                  "24 Hours": "24h",
-                  "7 Days": "7d",
-                  "30 Days": "30d",
-                  "All Time": "all",
-                }
-                setTimeRange(mapping[tab])
-              }}
-            />
+          <div key="time-filter">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Clock className="h-4 w-4" />
+                  <span>
+                    {timeRange === "24h" ? "24 Hours" :
+                     timeRange === "7d" ? "7 Days" :
+                     timeRange === "30d" ? "30 Days" :
+                     "All Time"}
+                  </span>
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[160px]">
+                <DropdownMenuItem
+                  onClick={() => setTimeRange("24h")}
+                  className={timeRange === "24h" ? "bg-accent" : ""}
+                >
+                  24 Hours
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setTimeRange("7d")}
+                  className={timeRange === "7d" ? "bg-accent" : ""}
+                >
+                  7 Days
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setTimeRange("30d")}
+                  className={timeRange === "30d" ? "bg-accent" : ""}
+                >
+                  30 Days
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setTimeRange("all")}
+                  className={timeRange === "all" ? "bg-accent" : ""}
+                >
+                  All Time
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
