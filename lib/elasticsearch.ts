@@ -24,6 +24,10 @@ export type {
 
 const ELASTICSEARCH_INDEX = 'content'
 const SEARCH_RESULT_SIZE = 20
+// Minimum score threshold for search results to filter out low-relevance matches
+// Especially important for semantic search (ELSER) which can match weakly to many documents
+// Typical ELSER scores: 5-15 for strong matches, 1-5 for weak matches, <1 for very weak
+const MIN_SEARCH_SCORE = 1.5
 
 const isElasticsearchConfigured = (): boolean => {
   return !!(process.env.ELASTICSEARCH_URL && process.env.ELASTICSEARCH_API_KEY)
@@ -236,6 +240,8 @@ function buildSearchQuery(query: string, filters?: SearchFilters) {
         ]
       }
     },
+    // Filter out low-relevance results (skip for wildcard searches)
+    min_score: isWildcard ? undefined : MIN_SEARCH_SCORE,
     size: SEARCH_RESULT_SIZE,
     sort: [
       '_score',
