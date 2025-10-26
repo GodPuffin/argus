@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "nodemon server.js",
     "build": "next build",
-    "start": "NODE_ENV=production node server.js",
-    "lint": "biome check",
+    "start": "dotenv -e .env.prod -- cross-env NODE_ENV=production node server.js",
+    "lint": "biome check --write",
     "format": "biome format --write"
   },
   "nodemonConfig": {
@@ -134,6 +134,8 @@
     "@types/react-dom": "^19",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/ws": "^8.18.1",
+    "cross-env": "^7.0.3",
+    "dotenv-cli": "^8.0.0",
     "nodemon": "^3.1.10",
     "sass": "^1.93.2",
     "tailwindcss": "^4",

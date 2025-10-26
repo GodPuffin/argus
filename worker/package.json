@@ -5,7 +5,7 @@
   "type": "module",
   "main": "analysis-worker.ts",
   "scripts": {
-    "start": "tsx analysis-worker.ts",
+    "start": "dotenv -e ../.env.prod -- tsx analysis-worker.ts",
     "dev": "tsx watch analysis-worker.ts",
     "monitor": "tsx monitor-queue.ts"
   },
@@ -22,6 +22,7 @@
   "devDependencies": {
     "@types/fluent-ffmpeg": "^2.1.27",
     "@types/node": "^20",
+    "dotenv-cli": "^8.0.0",
     "tsx": "^4.7.0",
     "typescript": "^5"
   }
