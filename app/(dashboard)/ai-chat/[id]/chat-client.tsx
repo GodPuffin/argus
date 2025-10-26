@@ -26,6 +26,7 @@ import { Response } from "@/components/ai-elements/response";
 import { Tool, ToolHeader, ToolContent, ToolOutput } from "@/components/ai-elements/tool";
 import { Reasoning, ReasoningTrigger, ReasoningContent } from "@/components/ai-elements/reasoning";
 import { EventCard } from "@/components/ai-elements/event-card";
+import { AssetDisplay } from "@/components/ai-elements/asset";
 import { ChatHistoryDropdown } from "@/components/chat-history-dropdown";
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/react";
@@ -43,6 +44,7 @@ const TOOL_NAME_MAP: Record<string, string> = {
   platform_core_index_explorer: "Explore Index",
   displayEvent: "Event",
   displayEventById: "Event",
+  displayAsset: "Video Asset",
 };
 
 interface ChatClientProps {
@@ -79,14 +81,16 @@ export default function ChatClient({ id, initialMessages }: ChatClientProps) {
         <Conversation className="flex-1 overflow-y-auto">
           <ConversationContent className="mx-auto w-full max-w-4xl p-4">
             {messages.length === 0 && (
-              <div className="flex h-full items-center justify-center">
-                <div className="text-center">
-                  <h2 className="mb-2 font-medium text-2xl text-muted-foreground">
-                    Start a conversation
-                  </h2>
-                  <p className="text-muted-foreground text-sm">
-                    Ask me anything about your video streams
-                  </p>
+              <div className="flex h-full min-h-[400px] items-center justify-center">
+                <div className="flex flex-col items-center justify-center h-full w-full">
+                  <div className="text-center">
+                    <h2 className="mb-2 font-medium text-2xl text-muted-foreground">
+                      Start a conversation
+                    </h2>
+                    <p className="text-muted-foreground text-sm">
+                      Ask me anything about your surveillance footage
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -139,6 +143,37 @@ export default function ChatClient({ id, initialMessages }: ChatClientProps) {
                         return (
                           <div key={index} className="my-2 text-sm text-destructive">
                             Error loading event: {(part as any).errorText}
+                          </div>
+                        );
+                      }
+                      
+                      return null;
+                    }
+                    
+                    // Render asset display tools with AssetDisplay
+                    if (part.type === "tool-displayAsset") {
+                      const state = (part as any).state;
+                      
+                      if (state === "input-available") {
+                        return (
+                          <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground my-2">
+                            <div className="animate-pulse">Loading video...</div>
+                          </div>
+                        );
+                      }
+                      
+                      if (state === "output-available") {
+                        return (
+                          <div key={index} className="my-3">
+                            <AssetDisplay {...(part as any).output} />
+                          </div>
+                        );
+                      }
+                      
+                      if (state === "output-error") {
+                        return (
+                          <div key={index} className="my-2 text-sm text-destructive">
+                            Error loading video: {(part as any).errorText}
                           </div>
                         );
                       }

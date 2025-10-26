@@ -94,9 +94,27 @@ export const displayEventById = tool({
   },
 });
 
+/**
+ * Tool 3: Display a video asset inline
+ * Use this when you want to show a video player for an asset
+ */
+export const displayAsset = tool({
+  description: "Display a video asset inline with a player and controls. Shows the video in the chat with an option to open the full viewer. Use this when you want to show a user a specific video recording.",
+  inputSchema: z.object({
+    asset_id: z.string().describe("The video asset ID to display"),
+  }),
+  execute: async function ({ asset_id }) {
+    // Passthrough - return data as-is for UI rendering
+    return {
+      asset_id,
+    };
+  },
+});
+
 // Export tools object
 export const aiTools = {
   displayEvent,
   displayEventById,
+  displayAsset,
 };
 

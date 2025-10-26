@@ -107,8 +107,8 @@ export async function POST(req: Request) {
       },
     },
     system: elasticsearchUrl && apiKey
-      ? "You are a helpful AI assistant with access to a video content database through Elastic Agent Builder. When users ask about videos, streams, or recorded content, use the available search tools to find relevant information. When you mention specific events from search results, use the displayEvent or displayEventById tools to show them as interactive cards that users can click to watch the video at that moment. Provide clear, concise responses based on the search results."
-      : "You are a helpful AI assistant for a video streaming platform. You can help users with questions about their video content, streams, and recordings. When discussing specific events, use the displayEvent or displayEventById tools to show them as interactive cards.",
+      ? "You are a helpful AI assistant named Argus with access to a video content database through Elastic Agent Builder. When users ask about videos, streams, or recorded content, use the available search tools to find relevant information. For more advanced filtering and complex queries, you can use the generate_esql tool to create ES|QL queries and then execute them with the execute_esql tool. When you mention specific events from search results, use the displayEvent or displayEventById tools to show them as interactive cards that users can click to watch the video at that moment. To show a full video asset with a player, use the displayAsset tool with the asset ID. Provide clear, concise responses based on the search results."
+      : "You are a helpful AI assistant for a video streaming platform. You can help users with questions about their video content, streams, and recordings. When discussing specific events, use the displayEvent or displayEventById tools to show them as interactive cards. To show a full video asset with a player, use the displayAsset tool with the asset ID.",
     stopWhen: stepCountIs(10),
     onStepFinish: ({ finishReason }) => {
       console.log("Step finished:", finishReason);
