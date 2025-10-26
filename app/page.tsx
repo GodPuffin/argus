@@ -13,10 +13,14 @@ import DecryptedText from "@/components/fancy/text/decrypted-text";
 import { NavigationMenu } from "@/components/ui/navigation-menu";
 import { LuxeButton } from "@/components/ui/luxe-button";
 import { ModelsSection } from "@/components/models-section";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const loadContent = async () => {
@@ -181,23 +185,68 @@ export default function Home() {
         />
       </div>
 
-      <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-center p-2 sm:p-4">
+      {/* Desktop Navigation */}
+      <div className="hidden md:flex fixed top-0 left-0 right-0 z-20 items-center justify-center p-4">
         <NavigationMenu>
-          <NavigationMenuList className="flex-wrap justify-center gap-1 sm:gap-2">
+          <NavigationMenuList>
             <NavigationMenuItem>
-              <NavigationMenuLink href="#overview" className="text-sm sm:text-base">Overview</NavigationMenuLink>
+              <NavigationMenuLink href="#overview">Overview</NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <NavigationMenuLink href="#models" className="text-sm sm:text-base">Models</NavigationMenuLink>
+              <NavigationMenuLink href="#models">Models</NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <NavigationMenuLink href="#features" className="text-sm sm:text-base">Features</NavigationMenuLink>
+              <NavigationMenuLink href="#features">Features</NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <NavigationMenuLink href="/watch" className="text-sm sm:text-base">Dashboard</NavigationMenuLink>
+              <NavigationMenuLink href="/watch">Dashboard</NavigationMenuLink>
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
+      </div>
+
+      {/* Mobile Navigation */}
+      <div className="md:hidden fixed top-4 right-4 z-20">
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="icon" className="bg-background/80 backdrop-blur-sm">
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-[250px] sm:w-[300px]">
+            <nav className="flex flex-col gap-4 mt-8">
+              <Link 
+                href="#overview" 
+                className="text-lg font-medium hover:text-primary transition-colors py-2 border-b border-border"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Overview
+              </Link>
+              <Link 
+                href="#models" 
+                className="text-lg font-medium hover:text-primary transition-colors py-2 border-b border-border"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Models
+              </Link>
+              <Link 
+                href="#features" 
+                className="text-lg font-medium hover:text-primary transition-colors py-2 border-b border-border"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Features
+              </Link>
+              <Link 
+                href="/watch" 
+                className="text-lg font-medium hover:text-primary transition-colors py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Dashboard
+              </Link>
+            </nav>
+          </SheetContent>
+        </Sheet>
       </div>
 
       <main id="overview" className="w-full min-h-screen flex items-center justify-center lg:justify-between overflow-hidden relative [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-mt-24">
