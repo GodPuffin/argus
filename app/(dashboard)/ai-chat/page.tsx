@@ -25,6 +25,7 @@ import {
 import { Response } from "@/components/ai-elements/response";
 import { Tool, ToolHeader, ToolContent, ToolOutput } from "@/components/ai-elements/tool";
 import { Reasoning, ReasoningTrigger, ReasoningContent } from "@/components/ai-elements/reasoning";
+import { EventCard } from "@/components/ai-elements/event-card";
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
@@ -39,6 +40,8 @@ const TOOL_NAME_MAP: Record<string, string> = {
   platform_core_get_index_mapping: "Get Index Mapping",
   platform_core_list_indices: "List Indices",
   platform_core_index_explorer: "Explore Index",
+  displayEvent: "Event",
+  displayEventById: "Event",
 };
 
 export default function AIChatPage() {
@@ -90,6 +93,37 @@ export default function AIChatPage() {
                           <ReasoningContent>{(part as any).text}</ReasoningContent>
                         </Reasoning>
                       );
+                    }
+                    
+                    // Render event display tools with EventCard
+                    if (part.type === "tool-displayEvent" || part.type === "tool-displayEventById") {
+                      const state = (part as any).state;
+                      
+                      if (state === "input-available") {
+                        return (
+                          <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground my-2">
+                            <div className="animate-pulse">Loading event...</div>
+                          </div>
+                        );
+                      }
+                      
+                      if (state === "output-available") {
+                        return (
+                          <div key={index} className="my-3">
+                            <EventCard {...(part as any).output} />
+                          </div>
+                        );
+                      }
+                      
+                      if (state === "output-error") {
+                        return (
+                          <div key={index} className="my-2 text-sm text-destructive">
+                            Error loading event: {(part as any).errorText}
+                          </div>
+                        );
+                      }
+                      
+                      return null;
                     }
                     
                     // Render tool invocations (both static and dynamic)

@@ -2,6 +2,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { groq } from "@ai-sdk/groq";
 import { experimental_createMCPClient } from "@ai-sdk/mcp";
 import { streamText, convertToModelMessages, stepCountIs } from "ai";
+import { aiTools } from "@/lib/ai-tools";
 
 export const maxDuration = 30;
 
@@ -10,7 +11,7 @@ export async function POST(req: Request) {
 
   // Initialize MCP client for Elastic Agent Builder
   let mcpClient: Awaited<ReturnType<typeof experimental_createMCPClient>> | undefined;
-  let tools = {};
+  let tools = { ...aiTools };
 
   const elasticsearchUrl = process.env.ELASTICSEARCH_URL;
   const apiKey = process.env.ELASTICSEARCH_API_KEY;
@@ -32,8 +33,9 @@ export async function POST(req: Request) {
         },
       });
 
-      // Get all available tools from the MCP server
-      tools = await mcpClient.tools();
+      // Get all available tools from the MCP server and merge with AI tools
+      const mcpTools = await mcpClient.tools();
+      tools = { ...aiTools, ...mcpTools };
       console.log("Connected to Elastic MCP server, tools:", Object.keys(tools));
     } catch (error) {
       console.error("Failed to connect to Elastic MCP server:", error);
@@ -104,8 +106,8 @@ export async function POST(req: Request) {
       },
     },
     system: elasticsearchUrl && apiKey
-      ? "You are a helpful AI assistant with access to a video content database through Elastic Agent Builder. When users ask about videos, streams, or recorded content, use the available search tools to find relevant information. Provide clear, concise responses based on the search results."
-      : "You are a helpful AI assistant for a video streaming platform. You can help users with questions about their video content, streams, and recordings.",
+      ? "You are a helpful AI assistant with access to a video content database through Elastic Agent Builder. When users ask about videos, streams, or recorded content, use the available search tools to find relevant information. When you mention specific events from search results, use the displayEvent or displayEventById tools to show them as interactive cards that users can click to watch the video at that moment. Provide clear, concise responses based on the search results."
+      : "You are a helpful AI assistant for a video streaming platform. You can help users with questions about their video content, streams, and recordings. When discussing specific events, use the displayEvent or displayEventById tools to show them as interactive cards.",
     stopWhen: stepCountIs(10),
     onStepFinish: ({ finishReason }) => {
       console.log("Step finished:", finishReason);
