@@ -1,6 +1,7 @@
 'use client'
 
 import Link from "next/link";
+import Image from "next/image";
 import { AsciiEye } from "@/components/ascii-eye";
 import { useState, useEffect } from 'react';
 import TextType from "@/components/text-type"
@@ -12,6 +13,8 @@ import {
   NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
 import Dither from "@/components/dither";
+import { BrowserComponent } from "@/components/browser-component";
+import { FeaturesAlternating } from "@/components/features-alternating";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
@@ -33,6 +36,113 @@ export default function Home() {
 
     loadContent();
   }, []);
+
+  const featuresContent = [
+    {
+      title: "Live Dashboard",
+      description: "Dashboard showcasing all current RTMP streams with automated video asset creation.",
+      content: (
+        <div className="space-y-4">
+          <BrowserComponent url="argus.io/dashboard" className="h-auto">
+            <Image 
+              src="/assets/argusdash.webp" 
+              alt="Argus Dashboard"
+              height={1080}
+              width={1920}
+              className="w-full h-auto object-contain"
+            />
+          </BrowserComponent>
+        </div>
+      ),
+    },
+    {
+      title: "Entity & Event Detection",
+      description: "Entity and event detection with AI-powered analysis.",
+      content: (
+        <div className="space-y-4">
+          <BrowserComponent url="argus.io/watch/{asset_id}" className="h-auto">
+            <Image 
+              src="/assets/argusdetection.webp" 
+              alt="Argus Detection"
+              height={1080}
+              width={1920}
+              className="w-full h-auto object-contain"
+              priority
+              unoptimized
+            />
+          </BrowserComponent>
+        </div>
+      ),
+    },
+    {
+      title: "Analytics & Statistics",
+      description: "Comprehensive stats from all events and anomalies detected.",
+      content: (
+        <div className="space-y-4">
+          <BrowserComponent url="argus.io/stats" className="h-auto">
+            <Image 
+              src="/assets/argusstats.webp" 
+              alt="Argus Statistics"
+              height={1080}
+              width={1920}
+              className="w-full h-auto object-contain"
+            />
+          </BrowserComponent>
+        </div>
+      ),
+    },
+    {
+      title: "Automated Reports",
+      description: "Auto-generated editable rich incident reports based on detected events.",
+      content: (
+        <div className="space-y-4">
+          <BrowserComponent url="argus.io/reports" className="h-auto">
+            <Image 
+              src="/assets/argusreports.webp" 
+              alt="Argus Reports"
+              height={1080}
+              width={1920}
+              className="w-full h-auto object-contain"
+            />
+          </BrowserComponent>
+        </div>
+      ),
+    },
+    {
+      title: "Elasticsearch Agent",
+      description: "Search through all detected anomalies and events with powerful Elasticsearch Agent integration.",
+      content: (
+        <div className="space-y-4">
+          <BrowserComponent url="argus.io/search" className="h-auto">
+            <Image 
+              src="/assets/argussearch.webp" 
+              alt="Argus Search"
+              height={1080}
+              width={1920}
+              className="w-full h-auto object-contain"
+            />
+          </BrowserComponent>
+        </div>
+      ),
+    },
+    {
+      title: "AI Assistant",
+      description: "Search for specific event types, ask questions, generate reports, and more.",
+      content: (
+        <div className="space-y-4">
+          <BrowserComponent url="argus.io/chat" className="h-auto">
+            <Image 
+              src="/assets/arguschat.webp" 
+              alt="Argus Chat"
+              height={1080}
+              width={1920}
+              className="w-full h-auto object-contain"
+            />
+          </BrowserComponent>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <>
@@ -56,6 +166,20 @@ export default function Home() {
         </div>
       )}
 
+      {/* Dither background - covers entire page */}
+      <div className="fixed inset-0 z-0">
+        <Dither
+          waveColor={[0.18, 0.08, 0.08]}
+          disableAnimation={false}
+          enableMouseInteraction={false}
+          mouseRadius={1}
+          colorNum={4}
+          waveAmplitude={0.1}
+          waveFrequency={1}
+          waveSpeed={0.05}
+        />
+      </div>
+
       {/* Navigation Menu */}
       <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-center p-4 ">
         <NavigationMenu>
@@ -74,25 +198,12 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <main className="w-full min-h-screen flex items-center justify-between overflow-hidden relative">
-        {/* Dither background */}
-        <div className="absolute inset-0 z-0">
-          <Dither
-            waveColor={[0.18, 0.08, 0.08]}
-            disableAnimation={false}
-            enableMouseInteraction={true}
-            mouseRadius={1}
-            colorNum={4}
-            waveAmplitude={0.1}
-            waveFrequency={1}
-            waveSpeed={0.1}
-          />
-        </div>
+      <main className="w-full min-h-screen flex items-center justify-between overflow-hidden relative [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 
         {/* Left side - Main content */}
         <div className="z-10 ml-0 w-1/3 flex items-start justify-center relative pointer-events-none ">
           <div className="text-left">
-            <h1 className="text-7xl mt-0 font-bold mb-4 text-primary-invert pb-4">ARGUS</h1>
+            <h1 className="text-7xl mt-0 font-bold mb-4 pb-4">ARGUS</h1>
             <LuxeButton variant="animated-border" className="pointer-events-auto px-4 py-2 text-base">
               <Link href="/watch">Open Argus</Link>
             </LuxeButton>
@@ -106,6 +217,17 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      {/* Features Section */}
+      <section id="features" className="w-full py-20 relative z-10">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-4 text-foreground">Features</h2>
+          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+            Discover the powerful capabilities that make Argus the ultimate surveillance and monitoring solution.
+          </p>
+          <FeaturesAlternating features={featuresContent} />
+        </div>
+      </section>
     </>
   );
 }

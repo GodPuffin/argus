@@ -59,7 +59,7 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --primary: oklch(0 0 0);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -103,7 +103,7 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
+  --primary: oklch(1 0 0);
   --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -135,6 +135,7 @@
   --main-muted: oklch(0.168 0 0);
   --main-background: oklch(0.145 0 0);
   --primary-muted: oklch(0.708 0 0);
+  --primary-invert: oklch(0 0 0);
 }
 
 
@@ -147,7 +148,11 @@
   html,
   body,
   #__next {
-    @apply h-full overflow-hidden;
+    @apply h-full;
+  }
+  
+  body {
+    @apply overflow-x-hidden overflow-y-auto;
   }
   
   body {
