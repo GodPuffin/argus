@@ -3,7 +3,7 @@
  * Use these in your Next.js API routes or components
  */
 
-import { supabase } from "./supabase";
+import { supabase, type Entity, type EntityType } from "./supabase";
 
 export interface AnalysisJobSummary {
   total: number;
@@ -18,7 +18,7 @@ export interface AnalysisResult {
   job_id: number;
   summary: string;
   tags: string[];
-  entities: any[];
+  entities: Entity[];
   raw: any;
   created_at: string;
   // Joined from job
@@ -37,7 +37,7 @@ export interface AnalysisEvent {
   severity: "Minor" | "Medium" | "High";
   type: "Crime" | "Medical Emergency" | "Traffic Incident" | "Property Damage" | "Safety Hazard" | "Suspicious Activity" | "Normal Activity" | "Camera Interference";
   timestamp_seconds: number;
-  affected_entities: any[];
+  affected_entities: Entity[];
   created_at: string;
 }
 
@@ -387,5 +387,108 @@ export async function getCriticalEvents(limit = 20): Promise<AnalysisEvent[]> {
   }
 
   return data || [];
+}
+
+/**
+ * Get entity statistics - count of each entity type across all analysis results
+ */
+export async function getEntityStatistics(): Promise<Array<{ type: EntityType; count: number }>> {
+  const { data, error } = await supabase
+    .from("ai_analysis_results")
+    .select("entities");
+
+  if (error) {
+    throw error;
+  }
+
+  const entityCounts = new Map<EntityType, number>();
+
+  for (const row of data || []) {
+    const entities = (row.entities || []) as Entity[];
+    for (const entity of entities) {
+      entityCounts.set(entity.type, (entityCounts.get(entity.type) || 0) + 1);
+    }
+  }
+
+  return Array.from(entityCounts.entries())
+    .map(([type, count]) => ({ type, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+/**
+ * Get entity statistics for a specific asset
+ */
+export async function getEntityStatisticsForAsset(
+  assetId: string
+): Promise<Array<{ type: EntityType; count: number; entities: Entity[] }>> {
+  // Get all analysis results for this asset
+  const { data: jobs, error: jobsError } = await supabase
+    .from("ai_analysis_jobs")
+    .select("id")
+    .eq("source_id", assetId);
+
+  if (jobsError) {
+    throw jobsError;
+  }
+
+  const jobIds = (jobs || []).map((j) => j.id);
+
+  if (jobIds.length === 0) {
+    return [];
+  }
+
+  const { data: results, error: resultsError } = await supabase
+    .from("ai_analysis_results")
+    .select("entities")
+    .in("job_id", jobIds);
+
+  if (resultsError) {
+    throw resultsError;
+  }
+
+  const entityByType = new Map<EntityType, Entity[]>();
+
+  for (const row of results || []) {
+    const entities = (row.entities || []) as Entity[];
+    for (const entity of entities) {
+      const existing = entityByType.get(entity.type) || [];
+      existing.push(entity);
+      entityByType.set(entity.type, existing);
+    }
+  }
+
+  return Array.from(entityByType.entries())
+    .map(([type, entities]) => ({
+      type,
+      count: entities.length,
+      entities,
+    }))
+    .sort((a, b) => b.count - a.count);
+}
+
+/**
+ * Get entity statistics from events (affected entities)
+ */
+export async function getEntityStatisticsFromEvents(): Promise<Array<{ type: EntityType; count: number }>> {
+  const { data, error } = await supabase
+    .from("ai_analysis_events")
+    .select("affected_entities");
+
+  if (error) {
+    throw error;
+  }
+
+  const entityCounts = new Map<EntityType, number>();
+
+  for (const row of data || []) {
+    const entities = (row.affected_entities || []) as Entity[];
+    for (const entity of entities) {
+      entityCounts.set(entity.type, (entityCounts.get(entity.type) || 0) + 1);
+    }
+  }
+
+  return Array.from(entityCounts.entries())
+    .map(([type, count]) => ({ type, count }))
+    .sort((a, b) => b.count - a.count);
 }
 

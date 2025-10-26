@@ -16,6 +16,42 @@ export type DocumentType = 'event' | 'analysis'
 export type AssetType = 'live' | 'vod'
 
 /**
+ * Entity types detected in video analysis
+ * Matches the public.entity_type enum in the database
+ */
+export type EntityType = 
+  | 'person'
+  | 'vehicle'
+  | 'car'
+  | 'truck'
+  | 'bus'
+  | 'motorcycle'
+  | 'bicycle'
+  | 'animal'
+  | 'pet'
+  | 'dog'
+  | 'cat'
+  | 'package'
+  | 'bag'
+  | 'backpack'
+  | 'weapon'
+  | 'phone'
+  | 'laptop'
+  | 'object'
+  | 'location'
+  | 'activity'
+  | 'other';
+
+/**
+ * Entity detected in video analysis
+ */
+export interface Entity {
+  type: EntityType;
+  name: string;
+  confidence: number;
+}
+
+/**
  * Event severity levels
  */
 export type EventSeverity = 'Minor' | 'Medium' | 'High'
@@ -86,7 +122,7 @@ export interface EventDocument extends BaseDocument {
   /** Timestamp in seconds from asset start */
   timestamp_seconds: number
   /** Entities involved in the event */
-  affected_entities: any[]
+  affected_entities: Entity[]
   /** Optional tags */
   tags?: string[]
 }
@@ -101,7 +137,7 @@ export interface AnalysisDocument extends BaseDocument {
   /** Tags from analysis */
   tags: string[]
   /** Entities detected in segment */
-  entities: any[]
+  entities: Entity[]
   /** Start time in seconds from asset start */
   asset_start_seconds: number
   /** End time in seconds from asset start */

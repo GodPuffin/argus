@@ -2,6 +2,42 @@
  * Type definitions for AI Analysis Worker
  */
 
+/**
+ * Entity types detected in video analysis
+ * Matches the public.entity_type enum in the database
+ */
+export type EntityType = 
+  | 'person'
+  | 'vehicle'
+  | 'car'
+  | 'truck'
+  | 'bus'
+  | 'motorcycle'
+  | 'bicycle'
+  | 'animal'
+  | 'pet'
+  | 'dog'
+  | 'cat'
+  | 'package'
+  | 'bag'
+  | 'backpack'
+  | 'weapon'
+  | 'phone'
+  | 'laptop'
+  | 'object'
+  | 'location'
+  | 'activity'
+  | 'other';
+
+/**
+ * Entity detected in video analysis
+ */
+export interface Entity {
+  type: EntityType;
+  name: string;
+  confidence: number;
+}
+
 export interface AnalysisJob {
   id: number;
   source_type: "vod" | "live";
@@ -23,7 +59,7 @@ export interface AnalysisResult {
   job_id: number;
   summary: string;
   tags: string[];
-  entities: any[];
+  entities: Entity[];
   transcript_ref: string | null;
   embeddings_ref: string | null;
   raw: any;
@@ -42,7 +78,7 @@ export interface Event {
 export interface GeminiAnalysisResponse {
   summary: string;
   tags: string[];
-  entities: any[];
+  entities: Entity[];
   events: Event[];
   raw: any;
 }

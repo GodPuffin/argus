@@ -10,7 +10,7 @@ import { fetchAndTransmuxSegment } from "./ffmpeg-transmux.js";
 import { analyzeVideoWithGemini } from "./gemini-client.js";
 import { analyzeVideoWithRoboflow } from "./roboflow-detector.js";
 import { startSegmentScheduler } from "./segment-scheduler.js";
-import type { AnalysisJob, RoboflowAnalysisResponse } from "./types.js";
+import type { AnalysisJob, RoboflowAnalysisResponse, Entity, Event as AnalysisEvent } from "./types.js";
 
 // Configuration
 const SUPABASE_URL = process.env.SUPABASE_URL!;
@@ -105,13 +105,7 @@ async function dequeueJob(): Promise<AnalysisJob | null> {
  */
 async function markJobSucceeded(
   job: AnalysisJob,
-  result: {
-    summary: string;
-    tags: string[];
-    entities: any[];
-    events: any[];
-    raw: any;
-  },
+  result: import("./types.js").GeminiAnalysisResponse,
   detections?: RoboflowAnalysisResponse,
 ) {
   // Insert Gemini result

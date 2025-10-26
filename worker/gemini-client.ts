@@ -11,7 +11,32 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
-import type { GeminiAnalysisResponse } from "./types.js";
+import type { GeminiAnalysisResponse, EntityType } from "./types.js";
+
+// Define entity types enum for Zod schema
+const entityTypeEnum: [EntityType, ...EntityType[]] = [
+  'person',
+  'vehicle',
+  'car',
+  'truck',
+  'bus',
+  'motorcycle',
+  'bicycle',
+  'animal',
+  'pet',
+  'dog',
+  'cat',
+  'package',
+  'bag',
+  'backpack',
+  'weapon',
+  'phone',
+  'laptop',
+  'object',
+  'location',
+  'activity',
+  'other',
+];
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
@@ -32,7 +57,7 @@ const analysisSchema = z.object({
   tags: z.array(z.string()).max(10).describe("Relevant tags and keywords"),
   entities: z.array(
     z.object({
-      type: z.string().describe("Entity type: person, object, location, activity, etc."),
+      type: z.enum(entityTypeEnum).describe("Entity type - must be one of: person, vehicle, car, truck, bus, motorcycle, bicycle, animal, pet, dog, cat, package, bag, backpack, weapon, phone, laptop, object, location, activity, or other"),
       name: z.string().describe("Name or description of the entity"),
       confidence: z.number().min(0).max(1).describe("Confidence score 0-1"),
     }),
@@ -137,7 +162,13 @@ export async function analyzeVideoWithGemini(
             text: `Analyze this video segment and provide:
 1. A concise summary (2-3 sentences) of what is happening.
 2. Relevant tags or keywords (up to 10).
-3. Detected people, objects, locations, and activities with confidence scores.
+3. Detected entities with confidence scores. For entity types, use one of these standardized categories:
+   - People: 'person'
+   - Vehicles: 'vehicle' (generic), 'car', 'truck', 'bus', 'motorcycle', 'bicycle'
+   - Animals: 'animal' (generic), 'pet', 'dog', 'cat'
+   - Objects: 'package', 'bag', 'backpack', 'weapon', 'phone', 'laptop', 'object' (generic)
+   - Other: 'location', 'activity', 'other'
+   Use the most specific category that applies (e.g., 'car' instead of 'vehicle', 'dog' instead of 'pet').
 4. Notable events with detailed information:
 
 IMPORTANT: Only describe events that are genuinely noteworthy and would matter to a human reviewer. If nothing significant happens, simply return no events. Avoid flagging trivial or routine actions.

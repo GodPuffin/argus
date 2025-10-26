@@ -12,6 +12,38 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Client for both frontend and backend (no RLS in demo project)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Entity types detected in video analysis
+// Matches the public.entity_type enum in the database
+export type EntityType = 
+  | 'person'
+  | 'vehicle'
+  | 'car'
+  | 'truck'
+  | 'bus'
+  | 'motorcycle'
+  | 'bicycle'
+  | 'animal'
+  | 'pet'
+  | 'dog'
+  | 'cat'
+  | 'package'
+  | 'bag'
+  | 'backpack'
+  | 'weapon'
+  | 'phone'
+  | 'laptop'
+  | 'object'
+  | 'location'
+  | 'activity'
+  | 'other';
+
+// Entity detected in video analysis
+export interface Entity {
+  type: EntityType;
+  name: string;
+  confidence: number;
+}
+
 // Database types
 // Camera is now based on mux.live_streams table with camera-specific fields
 export interface Camera {
@@ -105,7 +137,7 @@ export interface AIAnalysisResult {
   job_id: number;
   summary: string | null;
   tags: string[] | any;
-  entities: any[] | any;
+  entities: Entity[] | any;
   transcript_ref: string | null;
   embeddings_ref: string | null;
   raw: any;
@@ -121,7 +153,7 @@ export interface AIAnalysisEvent {
   severity: "Minor" | "Medium" | "High";
   type: "Crime" | "Medical Emergency" | "Traffic Incident" | "Property Damage" | "Safety Hazard" | "Suspicious Activity" | "Normal Activity" | "Camera Interference";
   timestamp_seconds: number;
-  affected_entities: any[] | any;
+  affected_entities: Entity[] | any;
   created_at: string;
 }
 
