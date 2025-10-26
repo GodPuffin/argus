@@ -3,15 +3,18 @@
 import React, { useEffect, useState, useRef } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { StreamControls } from "@/components/stream/stream-controls";
+import { ExternalStreamSetup } from "@/components/stream/external-stream-setup";
 import { NetworkStats } from "@/components/stream/network-stats";
 import { VideoDisplay } from "@/components/stream/video-display";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { useStreamState } from "@/hooks/use-stream-state";
 import { useStreamManager } from "@/hooks/use-stream-manager";
 import { useCameraRealtime } from "@/hooks/use-camera-realtime";
 
 export default function StreamPage() {
   const state = useStreamState();
+  const [streamType, setStreamType] = useState<"From Browser" | "From Other">("From Browser");
   const inputStreamRef = useRef<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -286,45 +289,94 @@ export default function StreamPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const isBrowserStream = streamType === "From Browser";
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <SiteHeader title="Stream" />
       <ScrollArea className="flex min-h-0 flex-1">
         <div className="@container/main flex min-h-0 flex-col gap-4 p-4 md:gap-6 md:p-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <StreamControls
-              cameraName={state.cameraName}
-              editingName={state.editingName}
-              editNameValue={state.editNameValue}
-              streaming={state.streaming}
-              connected={state.connected}
-              loadingStream={state.loadingStream}
-              streamError={state.streamError}
-              textOverlay={state.textOverlay}
-              cameraEnabled={state.cameraEnabled}
-              streamKey={state.streamKey}
-              onEditNameChange={state.setEditNameValue}
-              onSaveName={saveCameraName}
-              onCancelEdit={cancelEditName}
-              onStartEdit={() => state.setEditingName(true)}
-              onTextOverlayChange={state.setTextOverlay}
-              onEnableCamera={enableCamera}
-              onStartStreaming={startStreaming}
-              onStopStreaming={stopStreaming}
-              onRetryStream={streamManager.createMuxStream}
-            />
-            <NetworkStats
-              dataRate={state.dataRate}
-              dataHistory={state.dataHistory}
-              streaming={state.streaming}
+          <div className="flex justify-center">
+            <AnimatedTabs
+              tabs={["From Browser", "From Other"]}
+              activeTab={streamType}
+              onTabChange={(tab) => setStreamType(tab as "From Browser" | "From Other")}
             />
           </div>
 
-          <VideoDisplay
-            videoRef={videoRef}
-            canvasRef={canvasRef}
-            cameraEnabled={state.cameraEnabled}
-          />
+          {isBrowserStream ? (
+            <>
+              <div className="grid gap-4 md:grid-cols-2">
+                <StreamControls
+                  cameraName={state.cameraName}
+                  editingName={state.editingName}
+                  editNameValue={state.editNameValue}
+                  streaming={state.streaming}
+                  connected={state.connected}
+                  loadingStream={state.loadingStream}
+                  streamError={state.streamError}
+                  textOverlay={state.textOverlay}
+                  cameraEnabled={state.cameraEnabled}
+                  streamKey={state.streamKey}
+                  streamType="browser"
+                  onEditNameChange={state.setEditNameValue}
+                  onSaveName={saveCameraName}
+                  onCancelEdit={cancelEditName}
+                  onStartEdit={() => state.setEditingName(true)}
+                  onTextOverlayChange={state.setTextOverlay}
+                  onEnableCamera={enableCamera}
+                  onStartStreaming={startStreaming}
+                  onStopStreaming={stopStreaming}
+                  onRetryStream={streamManager.createMuxStream}
+                />
+                <NetworkStats
+                  dataRate={state.dataRate}
+                  dataHistory={state.dataHistory}
+                  streaming={state.streaming}
+                />
+              </div>
+
+              <VideoDisplay
+                videoRef={videoRef}
+                canvasRef={canvasRef}
+                cameraEnabled={state.cameraEnabled}
+              />
+            </>
+          ) : (
+            <>
+              <ExternalStreamSetup
+                streamKey={state.streamKey}
+                streamId={state.streamId}
+                loadingStream={state.loadingStream}
+                streamError={state.streamError}
+                onRetryStream={streamManager.createMuxStream}
+              />
+              <div className="max-w-md mx-auto w-full">
+                <StreamControls
+                  cameraName={state.cameraName}
+                  editingName={state.editingName}
+                  editNameValue={state.editNameValue}
+                  streaming={state.streaming}
+                  connected={state.connected}
+                  loadingStream={state.loadingStream}
+                  streamError={state.streamError}
+                  textOverlay={state.textOverlay}
+                  cameraEnabled={state.cameraEnabled}
+                  streamKey={state.streamKey}
+                  streamType="external"
+                  onEditNameChange={state.setEditNameValue}
+                  onSaveName={saveCameraName}
+                  onCancelEdit={cancelEditName}
+                  onStartEdit={() => state.setEditingName(true)}
+                  onTextOverlayChange={state.setTextOverlay}
+                  onEnableCamera={enableCamera}
+                  onStartStreaming={startStreaming}
+                  onStopStreaming={stopStreaming}
+                  onRetryStream={streamManager.createMuxStream}
+                />
+              </div>
+            </>
+          )}
         </div>
       </ScrollArea>
     </div>
