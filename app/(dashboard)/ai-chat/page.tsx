@@ -13,13 +13,28 @@ export default function NewChatPage() {
     if (hasCreatedChat.current) return;
     hasCreatedChat.current = true;
 
+    // Create AbortController to cancel request on unmount
+    const controller = new AbortController();
+
     // Create a new chat and redirect to it
-    fetch("/api/chat/new", { method: "POST" })
+    fetch("/api/chat/new", { 
+      method: "POST",
+      signal: controller.signal 
+    })
       .then((r) => r.json())
       .then(({ id }) => router.push(`/ai-chat/${id}`))
       .catch((error) => {
+        // Ignore AbortError - this is expected when component unmounts
+        if (error.name === 'AbortError') {
+          return;
+        }
         console.error("Error creating new chat:", error);
       });
+
+    // Cleanup: abort the request if component unmounts
+    return () => {
+      controller.abort();
+    };
   }, [router]);
 
   return (

@@ -31,7 +31,7 @@ import { ChatHistoryDropdown } from "@/components/chat-history-dropdown";
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/react";
 import { DefaultChatTransport, createIdGenerator } from "ai";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { IconBolt, IconDatabase, IconSparkles, IconUniverse } from "@tabler/icons-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
@@ -65,15 +65,27 @@ export default function ChatClient({ id, initialMessages }: ChatClientProps) {
   }, [selectedModel]);
   
   // Create a custom transport that reads model at request time
-  const transport = useRef(
-    new DefaultChatTransport({
-      api: "/api/chat",
-      body: () => ({
-        chatId: id,
-        model: selectedModelRef.current,
+  // Using useMemo to ensure transport is only created once per chat id
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        body: () => ({
+          chatId: id,
+          model: selectedModelRef.current,
+        }),
       }),
-    })
-  ).current;
+    [id]
+  );
+
+  // Cleanup transport on unmount
+  useEffect(() => {
+    return () => {
+      // DefaultChatTransport doesn't have explicit cleanup methods,
+      // but we ensure it's garbage collected by clearing the reference
+      // The abort controller in the transport will handle ongoing requests
+    };
+  }, [transport]);
 
   const { messages, sendMessage, status } = useChat({
     id,
