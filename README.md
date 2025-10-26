@@ -1,4 +1,3 @@
-📸
+# Argus
 
-### 3 env files required
-in /, /worker, and /supabase/functions
+Realtime Video surveillance and analysis platform with AI-powered features.

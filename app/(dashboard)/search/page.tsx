@@ -241,7 +241,7 @@ export default function SearchPage() {
   return (
     <div className="flex flex-1 flex-col min-h-0">
       <SiteHeader title="Search" />
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="@container/main flex flex-col gap-4 p-4 md:gap-6 md:p-6">
           <Card>
           <CardHeader>
@@ -463,6 +463,11 @@ export default function SearchPage() {
                     ? (firstResult.camera_name || 'Live Stream')
                     : 'Video'
                   
+                  // Sort hits by score descending and limit to top 3
+                  const sortedHits = [...hits].sort((a, b) => b.score - a.score)
+                  const displayedHits = sortedHits.slice(0, 3)
+                  const remainingCount = hits.length - 3
+                  
                   return (
                   <div key={assetId} className="space-y-2">
                     {/* Asset Header */}
@@ -472,7 +477,7 @@ export default function SearchPage() {
                     
                     {/* Results for this asset */}
                     <div className="space-y-3">
-                      {hits.map((hit) => {
+                      {displayedHits.map((hit) => {
                         const source = hit.source
                         const isEvent = source.doc_type === 'event'
                         const eventDoc = isEvent ? source as EventDocument : null
@@ -566,6 +571,13 @@ export default function SearchPage() {
                           </Card>
                         )
                       })}
+                      
+                      {/* Show +X others if there are more than 3 results */}
+                      {remainingCount > 0 && (
+                        <div className="text-sm text-muted-foreground text-center py-2">
+                          +{remainingCount} other{remainingCount > 1 ? 's' : ''}
+                        </div>
+                      )}
                     </div>
                   </div>
                   )

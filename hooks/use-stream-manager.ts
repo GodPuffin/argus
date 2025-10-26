@@ -70,7 +70,7 @@ export function useStreamManager(props: UseStreamManagerProps) {
     return id;
   };
 
-  const createMuxStream = async () => {
+  const createMuxStream = async (signal?: AbortSignal) => {
     setLoadingStream(true);
     setStreamError("");
 
@@ -81,6 +81,7 @@ export function useStreamManager(props: UseStreamManagerProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ browserId }),
+        signal,
       });
 
       if (!response.ok) {
@@ -102,6 +103,10 @@ export function useStreamManager(props: UseStreamManagerProps) {
         console.log("Stream created:", data);
       }
     } catch (error) {
+      // Ignore AbortError - this is expected when the request is cancelled
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
       console.error("Error creating stream:", error);
       setStreamError(
         error instanceof Error ? error.message : "Failed to create stream",
@@ -119,9 +124,18 @@ export function useStreamManager(props: UseStreamManagerProps) {
 
   // Create/fetch stream once we have browser ID
   useEffect(() => {
-    if (browserId) {
-      createMuxStream();
+    if (!browserId) {
+      return;
     }
+
+    // Create AbortController to cancel request on unmount or browserId change
+    const controller = new AbortController();
+    createMuxStream(controller.signal);
+
+    // Cleanup: abort the request if component unmounts or browserId changes
+    return () => {
+      controller.abort();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [browserId]);
 
