@@ -58,36 +58,38 @@ export default function ChatClient({ id, initialMessages }: ChatClientProps) {
   const [selectedModel, setSelectedModel] = useState("claude-haiku-4.5");
   const [input, setInput] = useState("");
   const selectedModelRef = useRef(selectedModel);
-  
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   // Keep ref in sync with state
   useEffect(() => {
     selectedModelRef.current = selectedModel;
   }, [selectedModel]);
-  
+
   // Create a custom transport that reads model at request time
   const transportRef = useRef<DefaultChatTransport | null>(null);
-  
-  if (!transportRef.current) {
-    transportRef.current = new DefaultChatTransport({
-      api: "/api/chat",
-      body: () => ({
-        chatId: id,
-        model: selectedModelRef.current,
-      }),
-    });
-  }
-  
-  const transport = transportRef.current;
-  
-  // Cleanup transport on unmount
+
+  // Initialize transport in useEffect for better React compatibility
   useEffect(() => {
+    if (!transportRef.current) {
+      transportRef.current = new DefaultChatTransport({
+        api: "/api/chat",
+        body: () => ({
+          chatId: id,
+          model: selectedModelRef.current,
+        }),
+      });
+    }
+
+    // Cleanup: abort any ongoing requests and clear transport
     return () => {
-      if (transportRef.current) {
-        // Abort any ongoing requests
-        transportRef.current = null;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
+      transportRef.current = null;
     };
-  }, []);
+  }, [id]);
+
+  const transport = transportRef.current;
 
   const { messages, sendMessage, status } = useChat({
     id,
