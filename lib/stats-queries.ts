@@ -60,6 +60,24 @@ export interface StatsData {
   
   // Processing volume
   processingVolume: Array<{ date: string; volume: number }>;
+  
+  // Elasticsearch metrics
+  esMetrics: {
+    eventSeverity: Array<{ severity: string; count: number }>;
+    eventTypes: Array<{ type: string; count: number }>;
+    eventTimeline: Array<{ date: string; count: number }>;
+    topEntities: Array<{ entity: string; count: number; type?: string }>;
+    entityTypes: Array<{ type: string; count: number }>;
+    assetTypes: Array<{ type: 'live' | 'vod'; count: number }>;
+    cameraEventPatterns: Array<{
+      camera_name: string;
+      camera_id: string;
+      high: number;
+      medium: number;
+      minor: number;
+      total: number;
+    }>;
+  };
 }
 
 /**
