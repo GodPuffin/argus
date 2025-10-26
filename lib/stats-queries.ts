@@ -12,7 +12,8 @@ export interface TimeRange {
   label: string;
 }
 
-export interface StatsData {
+// Supabase-only stats (without Elasticsearch metrics)
+export interface SupabaseStats {
   // Job statistics
   jobStats: {
     total: number;
@@ -61,6 +62,12 @@ export interface StatsData {
   // Processing volume
   processingVolume: Array<{ date: string; volume: number }>;
   
+  // Asset duration distribution
+  assetDurations: Array<{ range: string; count: number }>;
+}
+
+// Combined stats (Supabase + Elasticsearch)
+export interface StatsData extends SupabaseStats {
   // Elasticsearch metrics
   esMetrics: {
     eventSeverity: Array<{ severity: string; count: number }>;
@@ -111,9 +118,10 @@ export function getTimeRange(filter: '24h' | '7d' | '30d' | 'all'): TimeRange | 
 }
 
 /**
- * Get comprehensive statistics for the dashboard
+ * Get comprehensive statistics for the dashboard (Supabase only)
+ * Note: Elasticsearch metrics are fetched separately by the API route
  */
-export async function getStats(timeFilter: '24h' | '7d' | '30d' | 'all' = 'all'): Promise<StatsData> {
+export async function getStats(timeFilter: '24h' | '7d' | '30d' | 'all' = 'all'): Promise<SupabaseStats> {
   const timeRange = getTimeRange(timeFilter);
   
   // Fetch job stats
@@ -142,6 +150,7 @@ export async function getStats(timeFilter: '24h' | '7d' | '30d' | 'all' = 'all')
   const detectionsTimeline = await getDetectionsTimeline(timeRange);
   const occupancyData = await getOccupancyData(timeRange);
   const processingVolume = await getProcessingVolume(timeRange);
+  const assetDurations = await getAssetDurationDistribution(timeRange);
   
   return {
     jobStats: {
@@ -157,6 +166,7 @@ export async function getStats(timeFilter: '24h' | '7d' | '30d' | 'all' = 'all')
     detectionsTimeline,
     occupancyData,
     processingVolume,
+    assetDurations,
   };
 }
 
@@ -164,7 +174,7 @@ export async function getStats(timeFilter: '24h' | '7d' | '30d' | 'all' = 'all')
  * Get asset statistics
  */
 async function getAssetStats(timeRange: TimeRange | null) {
-  let query = supabase.from("assets").select("status");
+  let query = supabase.schema("mux").from("assets").select("status");
   
   if (timeRange) {
     query = query.gte("created_at", timeRange.start.toISOString());
@@ -198,6 +208,7 @@ async function getAssetStats(timeRange: TimeRange | null) {
  */
 async function getStreamStats() {
   const { data, error } = await supabase
+    .schema("mux")
     .from("live_streams")
     .select("status");
   
@@ -227,10 +238,10 @@ async function getStreamStats() {
  */
 async function getCameraActivity(timeRange: TimeRange | null) {
   // Get jobs with their source (camera) information
+  // Note: Both 'live' and 'vod' source_type can reference live_streams
   let jobsQuery = supabase
     .from("ai_analysis_jobs")
-    .select("source_id, source_type")
-    .eq("source_type", "live");
+    .select("source_id, source_type");
   
   if (timeRange) {
     jobsQuery = jobsQuery.gte("created_at", timeRange.start.toISOString());
@@ -243,11 +254,27 @@ async function getCameraActivity(timeRange: TimeRange | null) {
     return [];
   }
   
-  // Count jobs per camera
+  // Get all live stream IDs to check which jobs reference cameras
+  const { data: allStreams, error: allStreamsError } = await supabase
+    .schema("mux")
+    .from("live_streams")
+    .select("id, camera_name");
+  
+  if (allStreamsError) {
+    console.error("Error fetching all streams:", allStreamsError);
+    return [];
+  }
+  
+  const streamIds = new Set((allStreams || []).map(s => s.id));
+  
+  // Count jobs per camera (only jobs that reference live_streams)
   const cameraJobCounts = new Map<string, number>();
   for (const job of jobs || []) {
-    const cameraId = job.source_id;
-    cameraJobCounts.set(cameraId, (cameraJobCounts.get(cameraId) || 0) + 1);
+    const sourceId = job.source_id;
+    // Check if this job's source_id is a live stream
+    if (streamIds.has(sourceId)) {
+      cameraJobCounts.set(sourceId, (cameraJobCounts.get(sourceId) || 0) + 1);
+    }
   }
   
   // Get camera names from live_streams
@@ -257,6 +284,7 @@ async function getCameraActivity(timeRange: TimeRange | null) {
   }
   
   const { data: streams, error: streamsError } = await supabase
+    .schema("mux")
     .from("live_streams")
     .select("id, camera_name")
     .in("id", cameraIds);
@@ -469,5 +497,56 @@ async function getProcessingVolume(timeRange: TimeRange | null) {
   return Array.from(grouped.entries())
     .map(([date, volume]) => ({ date, volume }))
     .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * Get asset duration distribution (clip/recording lengths)
+ */
+async function getAssetDurationDistribution(timeRange: TimeRange | null) {
+  let query = supabase
+    .schema("mux")
+    .from("assets")
+    .select("duration_seconds")
+    .not("duration_seconds", "is", null)
+    .eq("status", "ready");
+  
+  if (timeRange) {
+    query = query.gte("created_at", timeRange.start.toISOString());
+  }
+  
+  const { data, error } = await query;
+  
+  if (error) {
+    console.error("Error fetching asset durations:", error);
+    return [];
+  }
+  
+  // Create duration bins: 0-30s, 30s-1m, 1-5m, 5-15m, 15-30m, 30m-1h, 1h+
+  const bins = [
+    { range: "0-30s", count: 0, min: 0, max: 30 },
+    { range: "30s-1m", count: 0, min: 30, max: 60 },
+    { range: "1-5m", count: 0, min: 60, max: 300 },
+    { range: "5-15m", count: 0, min: 300, max: 900 },
+    { range: "15-30m", count: 0, min: 900, max: 1800 },
+    { range: "30m-1h", count: 0, min: 1800, max: 3600 },
+    { range: "1h+", count: 0, min: 3600, max: Infinity },
+  ];
+  
+  for (const asset of data || []) {
+    const duration = asset.duration_seconds;
+    if (typeof duration === 'number' && duration >= 0) {
+      for (const bin of bins) {
+        if (duration >= bin.min && duration < bin.max) {
+          bin.count++;
+          break;
+        }
+      }
+    }
+  }
+  
+  // Return only bins with data and remove min/max properties
+  return bins
+    .filter(bin => bin.count > 0)
+    .map(({ range, count }) => ({ range, count }));
 }
 

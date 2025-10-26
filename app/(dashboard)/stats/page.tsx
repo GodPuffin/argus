@@ -36,8 +36,9 @@ import { ProcessingVolumeChart } from "@/components/stats/processing-volume-char
 import { EventSeverityChart } from "@/components/stats/event-severity-chart"
 import { EventTypeChart } from "@/components/stats/event-type-chart"
 import { TopEntitiesChart } from "@/components/stats/top-entities-chart"
-import { CameraEventHeatmap } from "@/components/stats/camera-event-heatmap"
+import { CameraActivityChart } from "@/components/stats/camera-activity-chart"
 import { EntityTypeChart } from "@/components/stats/entity-type-chart"
+import { AssetDurationChart } from "@/components/stats/asset-duration-chart"
 
 // Hooks
 import { useStatsRealtime } from "@/hooks/use-stats-realtime"
@@ -133,62 +134,62 @@ export default function StatsPage() {
         )}
       </SiteHeader>
       
-      <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-        {/* Controls */}
-        <div className="flex items-center justify-between gap-3">
-          <div key="section-tabs">
-            <AnimatedTabs
-              tabs={["Events", "Jobs"]}
-              activeTab={activeTab}
-              onTabChange={(tab) => setActiveTab(tab as TabType)}
-            />
+      <ScrollArea className="h-[calc(100vh-9rem)]">
+        <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+          {/* Controls */}
+          <div className="flex items-center justify-between gap-3">
+            <div key="section-tabs">
+              <AnimatedTabs
+                tabs={["Events", "Jobs"]}
+                activeTab={activeTab}
+                onTabChange={(tab) => setActiveTab(tab as TabType)}
+              />
+            </div>
+            
+            <div key="time-filter">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Clock className="h-4 w-4" />
+                    <span>
+                      {timeRange === "24h" ? "24 Hours" :
+                       timeRange === "7d" ? "7 Days" :
+                       timeRange === "30d" ? "30 Days" :
+                       "All Time"}
+                    </span>
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[160px]">
+                  <DropdownMenuItem
+                    onClick={() => setTimeRange("24h")}
+                    className={timeRange === "24h" ? "bg-accent" : ""}
+                  >
+                    24 Hours
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setTimeRange("7d")}
+                    className={timeRange === "7d" ? "bg-accent" : ""}
+                  >
+                    7 Days
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setTimeRange("30d")}
+                    className={timeRange === "30d" ? "bg-accent" : ""}
+                  >
+                    30 Days
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setTimeRange("all")}
+                    className={timeRange === "all" ? "bg-accent" : ""}
+                  >
+                    All Time
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
-          
-          <div key="time-filter">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  <Clock className="h-4 w-4" />
-                  <span>
-                    {timeRange === "24h" ? "24 Hours" :
-                     timeRange === "7d" ? "7 Days" :
-                     timeRange === "30d" ? "30 Days" :
-                     "All Time"}
-                  </span>
-                  <ChevronDown className="h-4 w-4 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[160px]">
-                <DropdownMenuItem
-                  onClick={() => setTimeRange("24h")}
-                  className={timeRange === "24h" ? "bg-accent" : ""}
-                >
-                  24 Hours
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setTimeRange("7d")}
-                  className={timeRange === "7d" ? "bg-accent" : ""}
-                >
-                  7 Days
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setTimeRange("30d")}
-                  className={timeRange === "30d" ? "bg-accent" : ""}
-                >
-                  30 Days
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setTimeRange("all")}
-                  className={timeRange === "all" ? "bg-accent" : ""}
-                >
-                  All Time
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
 
-        <ScrollArea className="h-[calc(100vh-12rem)]">
           <div className="space-y-6">
             {/* Key Metrics Cards - Events Tab */}
             {activeTab === 'Events' && loading ? (
@@ -377,12 +378,12 @@ export default function StatsPage() {
                 {/* Top Entities */}
                 <TopEntitiesChart data={stats.esMetrics.topEntities} />
 
-                {/* Camera Event Patterns */}
-                <CameraEventHeatmap data={stats.esMetrics.cameraEventPatterns} />
+                {/* Recording Length Distribution */}
+                <AssetDurationChart data={stats.assetDurations} />
 
                 {/* Top AI Analysis Tags */}
                 <TopTagsChart data={stats.topTags} />
-                
+
                 {/* Occupancy Over Time */}
                 <div className="md:col-span-2">
                   <div className="md:col-span-1">
@@ -446,8 +447,8 @@ export default function StatsPage() {
               </Card>
             )}
           </div>
-        </ScrollArea>
-      </div>
+        </div>
+      </ScrollArea>
     </div>
   )
 }
