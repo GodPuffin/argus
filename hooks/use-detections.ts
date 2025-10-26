@@ -34,6 +34,9 @@ export function useDetections(
       return;
     }
 
+    // Create AbortController to cancel request on unmount or dependency change
+    const controller = new AbortController();
+
     const fetchDetections = async () => {
       try {
         setLoading(true);
@@ -43,7 +46,9 @@ export function useDetections(
         if (startTime !== undefined) params.append("startTime", startTime.toString());
         if (endTime !== undefined) params.append("endTime", endTime.toString());
 
-        const response = await fetch(`/api/detections?${params.toString()}`);
+        const response = await fetch(`/api/detections?${params.toString()}`, {
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           throw new Error(`Failed to fetch detections: ${response.statusText}`);
@@ -52,6 +57,10 @@ export function useDetections(
         const data = await response.json();
         setDetections(data.detections || []);
       } catch (err) {
+        // Ignore AbortError - this is expected when the request is cancelled
+        if (err instanceof Error && err.name === 'AbortError') {
+          return;
+        }
         console.error("Error fetching detections:", err);
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
@@ -60,6 +69,11 @@ export function useDetections(
     };
 
     fetchDetections();
+
+    // Cleanup: abort the request if component unmounts or dependencies change
+    return () => {
+      controller.abort();
+    };
   }, [sourceId, enabled, startTime, endTime]);
 
   return { detections, loading, error };
