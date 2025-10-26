@@ -383,7 +383,6 @@ export default function StatsPage() {
 
                 {/* Top AI Analysis Tags */}
                 <TopTagsChart data={stats.topTags} />
-
                 {/* Occupancy Over Time */}
                 <div className="md:col-span-2">
                   <div className="md:col-span-1">
