@@ -24,13 +24,19 @@ export async function fetchAndTransmuxSegment(hlsUrl: string): Promise<Buffer> {
       "-protocol_whitelist",
       "file,http,https,tcp,tls",
 
-      // Increase HLS timeout and retries
+      // Increase HLS timeout and retries for better stability
       "-reconnect",
       "1",
       "-reconnect_streamed",
       "1",
       "-reconnect_delay_max",
       "5",
+      "-reconnect_at_eof",
+      "1",
+      "-multiple_requests",
+      "1",
+      "-timeout",
+      "10000000", // 10 second timeout in microseconds
 
       // HLS specific options
       "-live_start_index",

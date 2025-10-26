@@ -11,16 +11,27 @@ const getRecorderSettings = () => {
     video: "",
     audio: "",
   };
-  if (MediaRecorder.isTypeSupported("video/mp4")) {
+  
+  // Prefer WebM for streaming - it handles continuous streams better than MP4
+  // MP4 chunks have complete container metadata that can confuse streaming parsers
+  if (MediaRecorder.isTypeSupported("video/webm;codecs=h264,opus")) {
+    settings.format = "webm";
+    settings.video = "h264";
+    settings.audio = "opus";
+  } else if (MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")) {
+    settings.format = "webm";
+    settings.video = "vp8";
+    settings.audio = "opus";
+  } else if (MediaRecorder.isTypeSupported("video/mp4")) {
+    // Fallback to MP4 if WebM not supported
     settings.format = "mp4";
     settings.video = "h264";
     settings.audio = "aac";
   } else {
+    // Last resort
     settings.format = "webm";
     settings.audio = "opus";
-    settings.video = MediaRecorder.isTypeSupported("video/webm;codecs=h264")
-      ? "h264"
-      : "vp8";
+    settings.video = "vp8";
   }
   return settings;
 };

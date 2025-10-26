@@ -169,8 +169,11 @@ export default function StreamPage() {
       return;
     }
 
+    console.log("🚀 Starting streaming process...");
     state.setStreaming(true);
     const settings = streamManager.getRecorderSettings();
+    console.log("📹 MediaRecorder settings:", settings);
+    
     const protocol = window.location.protocol.replace("http", "ws");
     const wsUrl = new URL(`${protocol}//${window.location.host}/rtmp`);
     wsUrl.searchParams.set("format", settings.format);
@@ -178,7 +181,7 @@ export default function StreamPage() {
     wsUrl.searchParams.set("audio", settings.audio);
     wsUrl.searchParams.set("key", state.streamKey);
 
-    console.log("Connecting to streaming server with settings:", settings);
+    console.log("🔌 Connecting to streaming server:", wsUrl.toString().replace(state.streamKey, "***"));
     wsRef.current = new WebSocket(wsUrl.toString());
 
     wsRef.current.addEventListener("open", () => {
@@ -208,49 +211,88 @@ export default function StreamPage() {
       mediaRecorderRef.current.addEventListener("dataavailable", (e) => {
         if (e.data && e.data.size > 0) {
           if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-            wsRef.current.send(e.data);
+            try {
+              wsRef.current.send(e.data);
+              
+              bytesSentRef.current += e.data.size;
+              const now = Date.now();
+              const timeDiff = (now - lastUpdateTimeRef.current) / 1000;
 
-            bytesSentRef.current += e.data.size;
-            const now = Date.now();
-            const timeDiff = (now - lastUpdateTimeRef.current) / 1000;
+              if (timeDiff >= 1) {
+                const rate = bytesSentRef.current / timeDiff / 1024;
+                const roundedRate = Math.round(rate);
+                state.setDataRate(roundedRate);
 
-            if (timeDiff >= 1) {
-              const rate = bytesSentRef.current / timeDiff / 1024;
-              const roundedRate = Math.round(rate);
-              state.setDataRate(roundedRate);
+                const currentTime = new Date().toLocaleTimeString("en-US", {
+                  hour12: false,
+                  minute: "2-digit",
+                  second: "2-digit",
+                });
+                state.setDataHistory((prev) => {
+                  const newData = [
+                    ...prev,
+                    { time: currentTime, rate: roundedRate },
+                  ];
+                  return newData.slice(-30);
+                });
 
-              const currentTime = new Date().toLocaleTimeString("en-US", {
-                hour12: false,
-                minute: "2-digit",
-                second: "2-digit",
-              });
-              state.setDataHistory((prev) => {
-                const newData = [
-                  ...prev,
-                  { time: currentTime, rate: roundedRate },
-                ];
-                return newData.slice(-30);
-              });
-
-              bytesSentRef.current = 0;
-              lastUpdateTimeRef.current = now;
+                bytesSentRef.current = 0;
+                lastUpdateTimeRef.current = now;
+              }
+            } catch (error) {
+              console.error("Error sending data to WebSocket:", error);
+              // Stop streaming if we can't send data
+              if (mediaRecorderRef.current?.state === "recording") {
+                mediaRecorderRef.current.stop();
+              }
             }
           } else {
-            console.warn("WebSocket not ready, dropping chunk");
+            console.warn("WebSocket not ready, dropping chunk", {
+              exists: !!wsRef.current,
+              readyState: wsRef.current?.readyState,
+            });
           }
+        } else {
+          console.warn("Received empty data chunk from MediaRecorder");
         }
       });
 
       mediaRecorderRef.current.addEventListener("stop", () => {
-        console.log("MediaRecorder stopped");
+        console.log("MediaRecorder stopped", {
+          state: mediaRecorderRef.current?.state,
+          wsState: wsRef.current?.readyState,
+          streaming: state.streaming,
+        });
         stopStreaming();
-        if (wsRef.current) {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
           wsRef.current.close();
         }
       });
 
       mediaRecorderRef.current.addEventListener("error", (e) => {
         console.error("MediaRecorder error:", e);
+        console.error("MediaRecorder error details:", {
+          error: e,
+          state: mediaRecorderRef.current?.state,
+          mimeType: mediaRecorderRef.current?.mimeType,
+        });
+      });
+      
+      mediaRecorderRef.current.addEventListener("start", () => {
+        console.log("MediaRecorder started event", {
+          state: mediaRecorderRef.current?.state,
+          mimeType: mediaRecorderRef.current?.mimeType,
+          videoBitsPerSecond: mediaRecorderRef.current?.videoBitsPerSecond,
+          audioBitsPerSecond: mediaRecorderRef.current?.audioBitsPerSecond,
+        });
+      });
+
+      mediaRecorderRef.current.addEventListener("pause", () => {
+        console.log("MediaRecorder paused");
+      });
+
+      mediaRecorderRef.current.addEventListener("resume", () => {
+        console.log("MediaRecorder resumed");
       });
 
       console.log("✓ Starting MediaRecorder in 100ms...");
@@ -259,14 +301,20 @@ export default function StreamPage() {
           mediaRecorderRef.current &&
           mediaRecorderRef.current.state === "inactive"
         ) {
-          mediaRecorderRef.current.start(100);
+          // Request data chunks every 250ms instead of 100ms
+          // This reduces overhead and improves stability while maintaining low latency
+          mediaRecorderRef.current.start(250);
           console.log("✓ MediaRecorder started!");
         }
       }, 100);
     });
 
-    wsRef.current.addEventListener("close", () => {
-      console.log("WebSocket disconnected");
+    wsRef.current.addEventListener("close", (event) => {
+      console.log("WebSocket disconnected", {
+        code: event.code,
+        reason: event.reason,
+        wasClean: event.wasClean,
+      });
       state.setConnected(false);
       stopStreaming();
     });
@@ -285,10 +333,20 @@ export default function StreamPage() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      console.log("StreamPage unmounting - cleaning up");
       if (requestAnimationRef.current) {
         cancelAnimationFrame(requestAnimationRef.current);
       }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+        console.log("Stopping MediaRecorder on unmount");
+        mediaRecorderRef.current.stop();
+      }
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        console.log("Closing WebSocket on unmount");
+        wsRef.current.close();
+      }
       if (inputStreamRef.current) {
+        console.log("Stopping camera tracks on unmount");
         inputStreamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
