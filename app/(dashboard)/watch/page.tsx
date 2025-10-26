@@ -112,17 +112,17 @@ export default function WatchPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
+    <div className="flex flex-1 flex-col min-h-0">
       <SiteHeader title="Watch" />
-      <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6 overflow-hidden">
-        <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6 min-h-0">
+        <div className="flex flex-col flex-1 min-h-0">
           <AnimatedTabs
             tabs={["Live Cameras", "Recordings"]}
             activeTab={activeTab === "cameras" ? "Live Cameras" : "Recordings"}
             onTabChange={handleTabChange}
           />
 
-          <div className="flex-1 mt-4 overflow-hidden">
+          <div className="flex-1 mt-4 min-h-0">
             {activeTab === "cameras" ? (
               <CameraGrid
                 cameras={cameras}

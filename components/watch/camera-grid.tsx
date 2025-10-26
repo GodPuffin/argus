@@ -47,15 +47,15 @@ export function CameraGrid({ cameras, loading, onRename, onDelete }: CameraGridP
   });
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="mb-4">
+    <div className="flex flex-col h-full min-h-0">
+      <div className="mb-4 flex-shrink-0">
         <h2 className="text-2xl font-bold">Live Cameras</h2>
         <p className="text-sm text-muted-foreground">
           {cameras.filter(c => c.status === "active").length} of {cameras.length} cameras streaming
         </p>
       </div>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pr-4">
           {sortedCameras.map((camera) => (
             <CameraCard

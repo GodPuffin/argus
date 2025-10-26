@@ -342,8 +342,8 @@ export function DetectionOverlay({
         const labelY = y - 6;
 
         // Use stable key based on detection properties (not index)
-        const detectionKey = `${detection.class}-${Math.round(detection.bbox.x * 100)}-${Math.round(detection.bbox.y * 100)}-${Math.round(detection.bbox.width * 100)}-${Math.round(detection.bbox.height * 100)}`;
-
+        const detectionKey = `${detection.class}-${Math.round(detection.bbox.x * 1000)}-${Math.round(detection.bbox.y * 1000)}-${Math.round(detection.bbox.width * 1000)}-${Math.round(detection.bbox.height * 1000)}-${detection.persisted ? 'p' : 'a'}-${Math.round(detection.age * 100)}-${idx}`;
+        
         return (
           <g key={detectionKey} opacity={opacity}>
             {/* Bounding box */}

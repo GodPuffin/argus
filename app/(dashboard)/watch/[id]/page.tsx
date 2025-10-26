@@ -391,7 +391,7 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
   const isProcessing = asset.status !== "ready" && asset.status !== "errored";
 
   return (
-    <div className="flex flex-col h-screen bg-background overflow-hidden">
+    <div className="flex flex-col h-screen bg-background min-h-0">
       {/* Header with back button and video info */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex-shrink-0">
         <div className="flex items-center justify-between h-14 px-4 max-w-full">
@@ -418,7 +418,7 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {/* Scrollable content */}
-      <ScrollArea className="flex-1" ref={scrollAreaRef}>
+      <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
         <div className="flex flex-col">
           {/* Video player container */}
           <div 
