@@ -15,6 +15,7 @@ import {
 import Dither from "@/components/dither";
 import { BrowserComponent } from "@/components/browser-component";
 import { FeaturesAlternating } from "@/components/features-alternating";
+import { ModelsSection } from "@/components/models-section";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
@@ -226,6 +227,15 @@ export default function Home() {
             Discover the powerful capabilities that make Argus the ultimate surveillance and monitoring solution.
           </p>
           <FeaturesAlternating features={featuresContent} />
+        </div>
+      </section>
+
+      {/* AI Models Section */}
+      <section id="models" className="w-full py-20 relative z-10">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-6 text-foreground">Technology for the Future  </h2>
+          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">Argus is built on the latest and greatest technologies to deliver the best possible experience for you and your team.</p>
+          <ModelsSection />
         </div>
       </section>
     </>
