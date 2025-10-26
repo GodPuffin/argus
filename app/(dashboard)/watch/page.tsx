@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { CameraGrid } from "@/components/watch/camera-grid";
@@ -11,7 +11,7 @@ import { useCamerasRealtime } from "@/hooks/use-cameras-realtime";
 
 const WATCH_TAB_STORAGE_KEY = "watch-last-tab";
 
-export default function WatchPage() {
+function WatchContent() {
   const searchParams = useSearchParams();
 
   const { cameras, loading: loadingCameras } = useCamerasRealtime();
@@ -141,5 +141,23 @@ export default function WatchPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function WatchPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-1 flex-col min-h-0">
+        <SiteHeader title="Watch" />
+        <div className="flex-1 min-h-0 flex items-center justify-center">
+          <div className="text-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading watch...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <WatchContent />
+    </Suspense>
   );
 }

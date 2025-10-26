@@ -9,7 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, Suspense } from "react";
 import type { DateRange } from "react-day-picker";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
@@ -72,7 +72,7 @@ const EVENT_TYPES: EventType[] = [
 
 const SEVERITIES: EventSeverity[] = ["Minor", "Medium", "High"];
 
-export default function SearchPage() {
+function SearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -725,5 +725,23 @@ export default function SearchPage() {
         </div>
       </ScrollArea>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-1 flex-col min-h-0">
+        <SiteHeader title="Search" />
+        <div className="flex-1 min-h-0 flex items-center justify-center">
+          <div className="text-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading search...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <SearchContent />
+    </Suspense>
   );
 }
