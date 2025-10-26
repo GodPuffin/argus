@@ -16,11 +16,11 @@ const aiModels = [
 
 export function ModelsSection() {
   return (
-    <div className="w-full max-w-[80%] mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+    <div className="w-full max-w-[95%] lg:max-w-[80%] mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
         {/* Left: Text with Highlighter */}
-        <div className="space-y-6">
-          <p className="text-lg leading-loose">
+        <div className="space-y-4 lg:space-y-6">
+          <p className="text-base lg:text-lg leading-relaxed lg:leading-loose">
             Argus leverages the{" "}
             <TextHighlighter
               triggerType="inView"
@@ -79,7 +79,7 @@ export function ModelsSection() {
             <br />
 
            </p>
-          <p className="text-lg leading-loose">
+          <p className="text-base lg:text-lg leading-relaxed lg:leading-loose">
             Built on a {" "}
             <TextHighlighter
               triggerType="inView"
@@ -115,7 +115,7 @@ export function ModelsSection() {
             and resilient delivery while segments are scheduled and analyzed at the edge.
           </p>
 
-          <p className="text-lg leading-loose">
+          <p className="text-base lg:text-lg leading-relaxed lg:leading-loose">
             Detections from {" "}
             <TextHighlighter
               triggerType="inView"
@@ -161,15 +161,15 @@ export function ModelsSection() {
         </div>
 
         {/* Right: AI Models List */}
-        <div className="space-y-6 lg:pl-12">
-          <div className="mb-4 text-right">
-            <Badge variant="secondary" className="mb-6">
+        <div className="space-y-4 lg:space-y-6 lg:pl-12">
+          <div className="mb-2 lg:mb-4 text-center lg:text-right">
+            <Badge variant="secondary" className="mb-4 lg:mb-6">
               Powered by
             </Badge>
           </div>
-          <div className="space-y-8 text-right">
+          <div className="space-y-4 lg:space-y-8 text-center lg:text-right">
             {aiModels.map((model, index) => (
-              <div key={index} className="text-2xl font-semibold">
+              <div key={index} className="text-xl lg:text-2xl font-semibold">
                 <ScrambleHover
                   text={model}
                   sequential={true}
