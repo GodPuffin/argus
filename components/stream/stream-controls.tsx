@@ -17,6 +17,7 @@ interface StreamControlsProps {
   textOverlay: string;
   cameraEnabled: boolean;
   streamKey: string;
+  streamType?: "browser" | "external";
   onEditNameChange: (value: string) => void;
   onSaveName: () => void;
   onCancelEdit: () => void;
@@ -39,6 +40,7 @@ export function StreamControls({
   textOverlay,
   cameraEnabled,
   streamKey,
+  streamType = "browser",
   onEditNameChange,
   onSaveName,
   onCancelEdit,
@@ -49,6 +51,7 @@ export function StreamControls({
   onStopStreaming,
   onRetryStream,
 }: StreamControlsProps) {
+  const isBrowserStream = streamType === "browser";
   return (
     <Card>
       <CardHeader>
@@ -125,47 +128,51 @@ export function StreamControls({
           </div>
         )}
 
-        <div className="space-y-2">
-          <Label htmlFor="overlay">Text Overlay</Label>
-          <Input
-            id="overlay"
-            type="text"
-            value={textOverlay}
-            onChange={(e) => onTextOverlayChange(e.target.value)}
-            placeholder="Live from Argus!"
-          />
-        </div>
+        {isBrowserStream && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="overlay">Text Overlay</Label>
+              <Input
+                id="overlay"
+                type="text"
+                value={textOverlay}
+                onChange={(e) => onTextOverlayChange(e.target.value)}
+                placeholder="Live from Argus!"
+              />
+            </div>
 
-        {!cameraEnabled ? (
-          <Button
-            onClick={onEnableCamera}
-            disabled={!streamKey || loadingStream}
-            className="w-full"
-            size="lg"
-          >
-            <IconVideo className="mr-2 size-5" />
-            Enable Camera
-          </Button>
-        ) : streaming ? (
-          <Button
-            onClick={onStopStreaming}
-            variant="destructive"
-            className="w-full"
-            size="lg"
-          >
-            <IconVideoOff className="mr-2 size-5" />
-            Stop Streaming
-          </Button>
-        ) : (
-          <Button
-            onClick={onStartStreaming}
-            disabled={!streamKey}
-            className="w-full"
-            size="lg"
-          >
-            <IconVideo className="mr-2 size-5" />
-            Start Streaming
-          </Button>
+            {!cameraEnabled ? (
+              <Button
+                onClick={onEnableCamera}
+                disabled={!streamKey || loadingStream}
+                className="w-full"
+                size="lg"
+              >
+                <IconVideo className="mr-2 size-5" />
+                Enable Camera
+              </Button>
+            ) : streaming ? (
+              <Button
+                onClick={onStopStreaming}
+                variant="destructive"
+                className="w-full"
+                size="lg"
+              >
+                <IconVideoOff className="mr-2 size-5" />
+                Stop Streaming
+              </Button>
+            ) : (
+              <Button
+                onClick={onStartStreaming}
+                disabled={!streamKey}
+                className="w-full"
+                size="lg"
+              >
+                <IconVideo className="mr-2 size-5" />
+                Start Streaming
+              </Button>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
