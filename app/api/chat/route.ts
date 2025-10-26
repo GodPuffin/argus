@@ -1,13 +1,14 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { groq } from "@ai-sdk/groq";
 import { experimental_createMCPClient } from "@ai-sdk/mcp";
-import { streamText, convertToModelMessages, stepCountIs } from "ai";
+import { streamText, convertToModelMessages, stepCountIs, createIdGenerator } from "ai";
 import { aiTools } from "@/lib/ai-tools";
+import { loadChat, saveChat } from "@/lib/chat-store";
 
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const { messages, model: selectedModel } = await req.json();
+  const { messages, chatId, model: selectedModel } = await req.json();
 
   // Initialize MCP client for Elastic Agent Builder
   let mcpClient: Awaited<ReturnType<typeof experimental_createMCPClient>> | undefined;
@@ -117,6 +118,18 @@ export async function POST(req: Request) {
     },
   });
 
-  return result.toUIMessageStreamResponse();
+  // Consume stream to ensure completion even if client disconnects
+  result.consumeStream();
+
+  return result.toUIMessageStreamResponse({
+    originalMessages: messages,
+    generateMessageId: createIdGenerator({
+      prefix: "msg",
+      size: 16,
+    }),
+    onFinish: async ({ messages: finishedMessages }) => {
+      await saveChat({ chatId, messages: finishedMessages });
+    },
+  });
 }
 
