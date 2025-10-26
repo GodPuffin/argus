@@ -5,6 +5,7 @@ import Image from "next/image";
 import { AsciiEye } from "@/components/ascii-eye";
 import { useState, useEffect } from 'react';
 import TextType from "@/components/text-type"
+import DecryptedText from "@/components/fancy/text/decrypted-text";
 import { LuxeButton } from "@/components/ui/luxe-button";
 import {
   NavigationMenu,
@@ -155,20 +156,24 @@ export default function Home() {
             fadeOut ? 'opacity-0' : 'opacity-100'
           }`}
         >
-          <TextType
-            text="WELCOME TO ARGUS"
-            className="text-type text-6xl md:text-8xl font-bold text-white tracking-wider"
-            initialDelay={0}
-            pauseDuration={1000}
-            deletingSpeed={50}
-            loop={false}
-            typingSpeed={120}
-            showCursor={false}
-          />
+          <div className="flex flex-col items-center gap-6">
+            <DecryptedText
+              text="ARGUS"
+              revealDurationMs={1400}
+              scrambleSpeed={24}
+              className="text-6xl md:text-8xl font-extrabold tracking-widest text-white"
+            />
+            <DecryptedText
+              text="Computer Vision • Analytics • AI Assistant"
+              revealDurationMs={1600}
+              scrambleSpeed={28}
+              className="text-white/70 text-base md:text-lg tracking-wide"
+            />
+          </div>
         </div>
       )}
 
-      <div className="fixed inset-0 z-0">
+      <div className="fixed inset-0 z-0 bg-gradient-to-b from-background via-muted/30 to-background">
         <Dither
           waveColor={[0.15, 0.03, 0.03]}
           disableAnimation={false}
