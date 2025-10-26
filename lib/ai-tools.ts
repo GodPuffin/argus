@@ -111,10 +111,91 @@ export const displayAsset = tool({
   },
 });
 
+/**
+ * Tool 4: Create a report
+ * Use this to create documentation or analysis reports with markdown content
+ */
+export const createReport = tool({
+  description: "Create a new report with the given title and markdown content. Use this to generate documentation, analysis summaries, or investigation reports. The report will be saved and a preview link will be shown to the user.",
+  inputSchema: z.object({
+    title: z.string().describe("The title of the report"),
+    markdown: z.string().describe("The markdown content for the report. Use proper markdown formatting with headings, lists, bold/italic text, etc."),
+  }),
+  execute: async function ({ title, markdown }) {
+    // Import required modules
+    const { marked } = await import("marked");
+    const { generateJSON } = await import("@tiptap/html");
+    const StarterKit = (await import("@tiptap/starter-kit")).default;
+    const Underline = (await import("@tiptap/extension-underline")).default;
+    const Link = (await import("@tiptap/extension-link")).default;
+    const TaskList = (await import("@tiptap/extension-task-list")).default;
+    const TaskItem = (await import("@tiptap/extension-task-item")).default;
+    const ListItem = (await import("@tiptap/extension-list-item")).default;
+    
+    // Convert markdown to HTML first
+    let content = { type: "doc", content: [{ type: "paragraph" }] };
+    try {
+      // Configure marked to preserve line breaks and use GFM (GitHub Flavored Markdown)
+      marked.setOptions({
+        breaks: true,
+        gfm: true,
+      });
+      
+      const html = await marked(markdown);
+      
+      // Convert HTML to Tiptap JSON with all extensions
+      content = generateJSON(html, [
+        StarterKit.configure({
+          listItem: false, // We use custom ListItem
+        }),
+        ListItem,
+        Underline,
+        Link,
+        TaskList,
+        TaskItem,
+      ]);
+    } catch (err) {
+      console.error("Error converting markdown:", err);
+      // If conversion fails, create a simple paragraph with the markdown text
+      content = {
+        type: "doc",
+        content: [{
+          type: "paragraph",
+          content: [{
+            type: "text",
+            text: markdown
+          }]
+        }]
+      };
+    }
+
+    const { data: report, error } = await supabase
+      .from("reports")
+      .insert({
+        title,
+        content,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to create report: ${error.message}`);
+    }
+
+    // Return report data for UI rendering
+    return {
+      id: report.id,
+      title: report.title,
+      created_at: report.created_at,
+    };
+  },
+});
+
 // Export tools object
 export const aiTools = {
   displayEvent,
   displayEventById,
   displayAsset,
+  createReport,
 };
 

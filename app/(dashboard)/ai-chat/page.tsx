@@ -34,6 +34,7 @@ export default function NewChatPage() {
     // Cleanup: abort the request if component unmounts
     return () => {
       controller.abort();
+      hasCreatedChat.current = false;
     };
   }, [router]);
 

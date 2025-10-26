@@ -27,6 +27,7 @@ import { Tool, ToolHeader, ToolContent, ToolOutput } from "@/components/ai-eleme
 import { Reasoning, ReasoningTrigger, ReasoningContent } from "@/components/ai-elements/reasoning";
 import { EventCard } from "@/components/ai-elements/event-card";
 import { AssetDisplay } from "@/components/ai-elements/asset";
+import { Report } from "@/components/ai-elements/report";
 import { ChatHistoryDropdown } from "@/components/chat-history-dropdown";
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/react";
@@ -47,6 +48,7 @@ const TOOL_NAME_MAP: Record<string, string> = {
   displayEvent: "Event",
   displayEventById: "Event",
   displayAsset: "Video Asset",
+  createReport: "Create Report",
 };
 
 interface ChatClientProps {
@@ -199,6 +201,37 @@ export default function ChatClient({ id, initialMessages }: ChatClientProps) {
                         return (
                           <div key={index} className="my-2 text-sm text-destructive">
                             Error loading video: {(part as any).errorText}
+                          </div>
+                        );
+                      }
+                      
+                      return null;
+                    }
+                    
+                    // Render report creation tool with Report preview
+                    if (part.type === "tool-createReport") {
+                      const state = (part as any).state;
+                      
+                      if (state === "input-available") {
+                        return (
+                          <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground my-2">
+                            <div className="animate-pulse">Creating report...</div>
+                          </div>
+                        );
+                      }
+                      
+                      if (state === "output-available") {
+                        return (
+                          <div key={index} className="my-3">
+                            <Report data={(part as any).output} />
+                          </div>
+                        );
+                      }
+                      
+                      if (state === "output-error") {
+                        return (
+                          <div key={index} className="my-2 text-sm text-destructive">
+                            Error creating report: {(part as any).errorText}
                           </div>
                         );
                       }

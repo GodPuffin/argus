@@ -125,3 +125,11 @@ export interface AIAnalysisEvent {
   created_at: string;
 }
 
+export interface Report {
+  id: string;
+  title: string;
+  content: any; // Tiptap JSON content
+  created_at: string;
+  updated_at: string;
+}
+
