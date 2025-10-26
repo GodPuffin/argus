@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/ui/shadcn-io/spinner";
 
 export default function NewChatPage() {
   const router = useRouter();
+  const hasCreatedChat = useRef(false);
 
   useEffect(() => {
+    // Prevent double creation in development mode (React Strict Mode)
+    if (hasCreatedChat.current) return;
+    hasCreatedChat.current = true;
+
     // Create a new chat and redirect to it
     fetch("/api/chat/new", { method: "POST" })
       .then((r) => r.json())

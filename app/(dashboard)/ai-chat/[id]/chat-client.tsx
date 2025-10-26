@@ -31,7 +31,9 @@ import { ChatHistoryDropdown } from "@/components/chat-history-dropdown";
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/react";
 import { DefaultChatTransport, createIdGenerator } from "ai";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { IconBolt, IconDatabase, IconSparkles, IconUniverse } from "@tabler/icons-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 // Human-readable tool names
 const TOOL_NAME_MAP: Record<string, string> = {
@@ -55,6 +57,23 @@ interface ChatClientProps {
 export default function ChatClient({ id, initialMessages }: ChatClientProps) {
   const [selectedModel, setSelectedModel] = useState("claude-haiku-4.5");
   const [input, setInput] = useState("");
+  const selectedModelRef = useRef(selectedModel);
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    selectedModelRef.current = selectedModel;
+  }, [selectedModel]);
+  
+  // Create a custom transport that reads model at request time
+  const transport = useRef(
+    new DefaultChatTransport({
+      api: "/api/chat",
+      body: () => ({
+        chatId: id,
+        model: selectedModelRef.current,
+      }),
+    })
+  ).current;
 
   const { messages, sendMessage, status } = useChat({
     id,
@@ -63,13 +82,7 @@ export default function ChatClient({ id, initialMessages }: ChatClientProps) {
       prefix: "msgc",
       size: 16,
     }),
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      body: {
-        chatId: id,
-        model: selectedModel,
-      },
-    }),
+    transport,
   });
 
   return (
@@ -256,15 +269,55 @@ export default function ChatClient({ id, initialMessages }: ChatClientProps) {
                       <PromptInputModelSelectValue />
                     </PromptInputModelSelectTrigger>
                     <PromptInputModelSelectContent>
-                      <PromptInputModelSelectItem value="claude-sonnet-4.5">
-                        Claude Sonnet 4.5
-                      </PromptInputModelSelectItem>
-                      <PromptInputModelSelectItem value="claude-haiku-4.5">
-                        Claude Haiku 4.5
-                      </PromptInputModelSelectItem>
-                      <PromptInputModelSelectItem value="kimi-k2">
-                        Kimi K2
-                      </PromptInputModelSelectItem>
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <PromptInputModelSelectItem value="claude-sonnet-4.5">
+                              <IconUniverse className="size-4 mr-2" />
+                              Claude Sonnet 4.5
+                            </PromptInputModelSelectItem>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">
+                            Advanced reasoning, complex analysis, and deep thinking capabilities
+                          </TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <PromptInputModelSelectItem value="claude-haiku-4.5">
+                              <IconSparkles className="size-4 mr-2" />
+                              Claude Haiku 4.5
+                            </PromptInputModelSelectItem>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">
+                            Fast, efficient responses with excellent accuracy
+                          </TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <PromptInputModelSelectItem value="kimi-k2">
+                              <IconBolt className="size-4 mr-2" />
+                              Kimi K2 (Provided by Groq)
+                            </PromptInputModelSelectItem>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">
+                            High-performance alternative with rapid response times
+                          </TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <PromptInputModelSelectItem value="stateful-argus">
+                              <IconDatabase className="size-4 mr-2" />
+                              Stateful (Letta Agent)
+                            </PromptInputModelSelectItem>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">
+                            Long-term memory, file system access, and self-improvement capabilities
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </PromptInputModelSelectContent>
                   </PromptInputModelSelect>
                 </PromptInputTools>
