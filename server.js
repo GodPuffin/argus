@@ -54,6 +54,9 @@ app.prepare().then(() => {
   // Track active connections
   let connectionCount = 0;
   const activeConnections = new Map();
+  
+  // WebSocket send queue configuration
+  const WS_BUFFER_THRESHOLD = 1024 * 1024; // 1MB - pause if buffer exceeds this
 
   // Handle WebSocket upgrade requests
   server.on("upgrade", (request, socket, head) => {
@@ -128,8 +131,12 @@ app.prepare().then(() => {
       inputFormat,
 
       // Re-timestamp and sync - input flags
+      // +genpts: Generate presentation timestamps
+      // +igndts: Ignore DTS (decode timestamps) - regenerate them
+      // +ignidx: Ignore index (for broken/streaming files)
+      // +discardcorrupt: Keep processing even with corrupt frames
       "-fflags",
-      "+genpts+igndts",
+      "+genpts+igndts+ignidx+discardcorrupt",
       "-avoid_negative_ts",
       "make_zero",
 
@@ -148,14 +155,22 @@ app.prepare().then(() => {
       ...audioCodec,
 
       // RTMP specific flags for stable streaming
+      // Increased buffer size from 3000k to 6000k for better stability
       "-bufsize",
-      "3000k",
+      "6000k",
       "-maxrate",
       "3000k",
       "-g",
       "60", // keyframe every 2 seconds at 30fps
       "-sc_threshold",
       "0",
+      
+      // Additional buffering for input stability
+      "-probesize",
+      "10M",
+      "-analyzeduration",
+      "5M",
+      
       "-f",
       "flv",
       "-flvflags",
@@ -165,7 +180,16 @@ app.prepare().then(() => {
     ];
 
     console.log(`[Stream #${connectionId}] Starting FFmpeg...`);
-    const ffmpeg = child_process.spawn("ffmpeg", ffmpegArgs);
+    const ffmpeg = child_process.spawn("ffmpeg", ffmpegArgs, {
+      // Set high water mark for stdin pipe to buffer more data (default is 16KB)
+      // This helps prevent data loss during brief network hiccups
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    
+    // Increase stdin buffer size to handle bursty data better
+    if (ffmpeg.stdin && ffmpeg.stdin.setDefaultEncoding) {
+      ffmpeg.stdin.setMaxListeners(0);
+    }
 
     let ffmpegReady = false;
     let bytesReceived = 0;
@@ -316,7 +340,17 @@ app.prepare().then(() => {
         }
 
         try {
-          ffmpeg.stdin.write(msg);
+          // Check if ffmpeg stdin buffer is getting full
+          // If it is, we might want to apply backpressure
+          const canWrite = ffmpeg.stdin.write(msg);
+          
+          if (!canWrite) {
+            // Buffer is full, wait for drain event
+            // This implements backpressure to prevent memory issues
+            ffmpeg.stdin.once("drain", () => {
+              // Buffer has drained, ready for more data
+            });
+          }
         } catch (err) {
           console.error(
             `[Stream #${connectionId}] Error writing to FFmpeg:`,

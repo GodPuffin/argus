@@ -16,7 +16,7 @@ export function Report({ data }: { data: ReportData }) {
   };
 
   return (
-    <div className="my-4 overflow-hidden rounded-lg border bg-card">
+    <div className="my-4 w-full max-w-md overflow-hidden rounded-lg border bg-card">
       <div className="border-b bg-muted/50 p-3">
         <div className="flex items-center gap-2">
           <IconFileText className="h-5 w-5 text-muted-foreground" />
