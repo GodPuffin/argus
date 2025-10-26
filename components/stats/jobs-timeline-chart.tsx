@@ -5,6 +5,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLe
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts"
 import { TrendingUp } from "lucide-react"
 import { ChartBackground } from "./chart-background"
+import { JOBS_TIMELINE_COLORS } from "@/lib/chart-colors"
 
 interface JobsTimelineChartProps {
   data: Array<{ date: string; created: number; succeeded: number; failed: number }>
@@ -13,15 +14,15 @@ interface JobsTimelineChartProps {
 const chartConfig = {
   created: {
     label: "Created",
-    color: "hsl(20, 80%, 58%)",
+    color: JOBS_TIMELINE_COLORS.created,
   },
   succeeded: {
     label: "Succeeded",
-    color: "hsl(142, 70%, 45%)",
+    color: JOBS_TIMELINE_COLORS.succeeded,
   },
   failed: {
     label: "Failed",
-    color: "hsl(0, 80%, 55%)",
+    color: JOBS_TIMELINE_COLORS.failed,
   },
 }
 

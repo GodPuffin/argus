@@ -1,23 +1,30 @@
 "use client"
 
 import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts"
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts"
 import { ChartBackground } from "./chart-background"
+import { getTagColor } from "@/lib/chart-colors"
 
 interface TopTagsChartProps {
   data: Array<{ tag: string; count: number }>
 }
 
-const chartConfig = {
-  count: {
-    label: "Count",
-    color: "hsl(0, 80%, 60%)",
-  },
-}
-
 export function TopTagsChart({ data }: TopTagsChartProps) {
-  const chartData = data.slice(0, 10)
+  const chartData = data.slice(0, 10).map(item => ({
+    tag: item.tag,
+    count: item.count,
+    fill: getTagColor(item.tag)
+  }))
+  
+  // Build chart config dynamically
+  const chartConfig = chartData.reduce((acc, item) => {
+    acc[item.tag] = {
+      label: item.tag,
+      color: item.fill
+    }
+    return acc
+  }, {} as Record<string, { label: string; color: string }>)
 
   return (
     <Card variant="revealed-pointer">
@@ -31,30 +38,35 @@ export function TopTagsChart({ data }: TopTagsChartProps) {
         <ChartBackground>
           {chartData.length > 0 ? (
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
-            <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 10 }}>
+            <BarChart data={chartData} margin={{ left: 10, right: 10, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
               <XAxis 
-                type="number" 
+                dataKey="tag" 
                 stroke="hsl(var(--muted-foreground))"
                 fontSize={12}
+                angle={-45}
+                textAnchor="end"
+                height={80}
               />
               <YAxis 
-                dataKey="tag" 
-                type="category" 
-                width={90} 
+                type="number"
                 stroke="hsl(var(--muted-foreground))"
                 fontSize={12}
               />
               <ChartTooltip 
                 cursor={{ fill: 'hsl(var(--muted))' }}
-                content={<ChartTooltipContent />} 
+                content={<ChartTooltipContent hideLabel />} 
               />
               <Bar 
-                dataKey="count" 
-                fill={chartConfig.count.color} 
-                radius={[0, 4, 4, 0]}
+                dataKey="count"
+                radius={[4, 4, 0, 0]}
                 animationDuration={800}
-              />
+              >
+                {chartData.map((entry) => (
+                  <Cell key={entry.tag} fill={entry.fill} />
+                ))}
+              </Bar>
+              <ChartLegend content={<ChartLegendContent />} />
             </BarChart>
           </ChartContainer>
           ) : (

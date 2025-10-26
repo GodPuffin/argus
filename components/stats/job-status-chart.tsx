@@ -4,6 +4,7 @@ import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription a
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { PieChart, Pie, Cell, Legend, ResponsiveContainer } from "recharts"
 import { ChartBackground } from "./chart-background"
+import { JOB_STATUS_COLORS } from "@/lib/chart-colors"
 
 interface JobStatusChartProps {
   data: {
@@ -18,23 +19,23 @@ interface JobStatusChartProps {
 const chartConfig = {
   queued: {
     label: "Queued",
-    color: "hsl(0, 70%, 88%)", // Light red
+    color: JOB_STATUS_COLORS.queued,
   },
   processing: {
     label: "Processing",
-    color: "hsl(14, 80%, 70%)", // Orange-red
+    color: JOB_STATUS_COLORS.processing,
   },
   succeeded: {
     label: "Succeeded",
-    color: "hsl(142, 70%, 45%)", // Green for success
+    color: JOB_STATUS_COLORS.succeeded,
   },
   failed: {
     label: "Failed",
-    color: "hsl(0, 80%, 55%)", // Medium red
+    color: JOB_STATUS_COLORS.failed,
   },
   dead: {
     label: "Dead",
-    color: "hsl(0, 60%, 30%)", // Dark red
+    color: JOB_STATUS_COLORS.dead,
   },
 }
 

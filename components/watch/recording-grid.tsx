@@ -123,8 +123,8 @@ export function RecordingGrid({ assets, loading, onUpdate, onDelete }: Recording
   });
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="mb-4">
+    <div className="flex flex-col h-full min-h-0">
+      <div className="mb-4 flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <h2 className="text-2xl font-bold">Your Recordings</h2>
@@ -169,7 +169,7 @@ export function RecordingGrid({ assets, loading, onUpdate, onDelete }: Recording
         </p>
       </div>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pr-4">
           {sortedAssets.map((asset) => (
             <RecordingCard 

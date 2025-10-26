@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar"
+import { CommandMenu } from "@/components/command-menu"
 import {
   SidebarInset,
   SidebarProvider,
@@ -22,6 +23,7 @@ export default function DashboardLayout({
       <SidebarInset className="flex min-h-0 flex-1 overflow-hidden">
         {children}
       </SidebarInset>
+      <CommandMenu />
     </SidebarProvider>
   )
 }

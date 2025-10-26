@@ -5,6 +5,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts"
 import { Users } from "lucide-react"
 import { ChartBackground } from "./chart-background"
+import { OCCUPANCY_COLOR } from "@/lib/chart-colors"
 
 interface OccupancyChartProps {
   data: Array<{ timestamp: number; count: number }>
@@ -12,23 +13,48 @@ interface OccupancyChartProps {
 
 const chartConfig = {
   count: {
-    label: "People Count",
-    color: "hsl(0, 82%, 60%)",
+    label: "Detected",
+    color: OCCUPANCY_COLOR,
   },
 }
 
 export function OccupancyChart({ data }: OccupancyChartProps) {
   // Sample data points for visualization (take every nth point to avoid clutter)
   const sampleRate = Math.max(1, Math.floor(data.length / 100))
-  const chartData = data
-    .filter((_, index) => index % sampleRate === 0)
-    .map(item => ({
-      time: new Date(item.timestamp * 1000).toLocaleTimeString('en-US', { 
+  const sampledData = data.filter((_, index) => index % sampleRate === 0)
+  
+  // Check if data spans multiple days
+  const timestamps = sampledData.map(d => d.timestamp * 1000)
+  const minTime = Math.min(...timestamps)
+  const maxTime = Math.max(...timestamps)
+  const spansDays = (maxTime - minTime) > 24 * 60 * 60 * 1000
+  
+  const chartData = sampledData.map(item => {
+    const date = new Date(item.timestamp * 1000)
+    let timeLabel: string
+    
+    if (spansDays) {
+      // Show date and time for multi-day spans
+      timeLabel = date.toLocaleString('en-US', { 
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    } else {
+      // Show just time for single-day spans
+      timeLabel = date.toLocaleTimeString('en-US', { 
         hour: '2-digit', 
-        minute: '2-digit' 
-      }),
+        minute: '2-digit',
+        second: '2-digit'
+      })
+    }
+    
+    return {
+      time: timeLabel,
       count: item.count,
-    }))
+    }
+  })
 
   const maxOccupancy = Math.max(...data.map(d => d.count), 0)
   const avgOccupancy = data.length > 0 
@@ -67,7 +93,11 @@ export function OccupancyChart({ data }: OccupancyChartProps) {
                 <XAxis 
                   dataKey="time" 
                   stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
+                  fontSize={11}
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                  interval="preserveStartEnd"
                 />
                 <YAxis 
                   stroke="hsl(var(--muted-foreground))"
