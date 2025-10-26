@@ -40,25 +40,29 @@ export function CriticalEventsMonitor() {
 function showCriticalEventToast(event: AIAnalysisEvent, router: ReturnType<typeof useRouter>) {
   toast.warning(
     <div className="flex flex-col gap-2 max-w-sm">
-      <div className="font-semibold">{event.name}</div>
+      <div className="flex items-center gap-2">
+        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getSeverityBadgeStyles(event.severity)}`}>
+          {event.severity}
+        </span>
+        <div className="font-semibold">{event.name}</div>
+      </div>
       <div className="text-sm text-muted-foreground line-clamp-2">{event.description}</div>
       <div className="flex items-center justify-between mt-1">
         <span className="text-xs text-muted-foreground">
           {formatTimestamp(event.timestamp_seconds)}
         </span>
-        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getSeverityBadgeStyles(event.severity)}`}>
-          {event.severity}
-        </span>
+        <button
+          onClick={() => {
+            router.push(`/watch/${event.asset_id}?timestamp=${event.timestamp_seconds}`);
+          }}
+          className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+        >
+          View Video
+        </button>
       </div>
     </div>,
     {
       duration: 8000,
-      action: {
-        label: "View Video",
-        onClick: () => {
-          router.push(`/watch/${event.asset_id}?timestamp=${event.timestamp_seconds}`);
-        },
-      },
     }
   );
 }
