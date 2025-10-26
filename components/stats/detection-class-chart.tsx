@@ -4,26 +4,17 @@ import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription a
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { PieChart, Pie, Cell, Legend } from "recharts"
 import { ChartBackground } from "./chart-background"
+import { DETECTION_CLASS_COLORS } from "@/lib/chart-colors"
 
 interface DetectionClassChartProps {
   data: Array<{ class: string; count: number }>
 }
 
-const COLORS = [
-  "hsl(0, 85%, 65%)",   // Bright red
-  "hsl(10, 85%, 60%)",  // Red-orange
-  "hsl(20, 80%, 58%)",  // Orange-red
-  "hsl(30, 75%, 55%)",  // Deep orange
-  "hsl(0, 70%, 45%)",   // Dark red
-  "hsl(355, 75%, 50%)", // Crimson
-  "hsl(15, 70%, 52%)",  // Burnt sienna
-]
-
 export function DetectionClassChart({ data }: DetectionClassChartProps) {
   const chartData = data.map((item, index) => ({
     name: item.class,
     value: item.count,
-    fill: COLORS[index % COLORS.length],
+    fill: DETECTION_CLASS_COLORS[index % DETECTION_CLASS_COLORS.length],
   }))
 
   const total = data.reduce((sum, item) => sum + item.count, 0)

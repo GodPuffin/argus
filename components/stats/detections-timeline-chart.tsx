@@ -4,6 +4,7 @@ import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription a
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts"
 import { ChartBackground } from "./chart-background"
+import { DETECTIONS_TIMELINE_COLORS } from "@/lib/chart-colors"
 
 interface DetectionsTimelineChartProps {
   data: Array<{ date: string; detections: number; frames: number }>
@@ -12,11 +13,11 @@ interface DetectionsTimelineChartProps {
 const chartConfig = {
   detections: {
     label: "Detections",
-    color: "hsl(0, 85%, 62%)",
+    color: DETECTIONS_TIMELINE_COLORS.detections,
   },
   frames: {
     label: "Frames",
-    color: "hsl(25, 75%, 55%)",
+    color: DETECTIONS_TIMELINE_COLORS.frames,
   },
 }
 

@@ -4,21 +4,11 @@ import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription a
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts"
 import { ChartBackground } from "./chart-background"
+import { EVENT_TYPE_COLORS } from "@/lib/chart-colors"
 
 interface EventTypeChartProps {
   data: Array<{ type: string; count: number }>
 }
-
-const EVENT_TYPE_COLORS = [
-  "hsl(0, 80%, 60%)",
-  "hsl(30, 75%, 55%)",
-  "hsl(142, 70%, 45%)",
-  "hsl(220, 70%, 50%)",
-  "hsl(280, 65%, 60%)",
-  "hsl(160, 60%, 45%)",
-  "hsl(45, 93%, 47%)",
-  "hsl(330, 70%, 55%)",
-]
 
 export function EventTypeChart({ data }: EventTypeChartProps) {
   const chartData = data.slice(0, 8).map((item, index) => ({
