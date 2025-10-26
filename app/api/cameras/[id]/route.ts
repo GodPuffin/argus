@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
 const MUX_TOKEN_ID = process.env.MUX_TOKEN_ID;
@@ -129,4 +129,3 @@ export async function DELETE(
     );
   }
 }
-

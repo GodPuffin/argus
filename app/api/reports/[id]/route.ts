@@ -1,14 +1,14 @@
+import { type NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { NextRequest, NextResponse } from "next/server";
 
 // GET /api/reports/[id] - Get a specific report
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
-    
+
     const { data: report, error } = await supabase
       .from("reports")
       .select("*")
@@ -17,10 +17,7 @@ export async function GET(
 
     if (error) {
       console.error("Error fetching report:", error);
-      return NextResponse.json(
-        { error: "Report not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Report not found" }, { status: 404 });
     }
 
     return NextResponse.json({ report });
@@ -28,7 +25,7 @@ export async function GET(
     console.error("Error in GET /api/reports/[id]:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -36,7 +33,7 @@ export async function GET(
 // PATCH /api/reports/[id] - Update a report
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -58,7 +55,7 @@ export async function PATCH(
       console.error("Error updating report:", error);
       return NextResponse.json(
         { error: "Failed to update report" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -67,7 +64,7 @@ export async function PATCH(
     console.error("Error in PATCH /api/reports/[id]:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -75,21 +72,18 @@ export async function PATCH(
 // DELETE /api/reports/[id] - Delete a report
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
 
-    const { error } = await supabase
-      .from("reports")
-      .delete()
-      .eq("id", id);
+    const { error } = await supabase.from("reports").delete().eq("id", id);
 
     if (error) {
       console.error("Error deleting report:", error);
       return NextResponse.json(
         { error: "Failed to delete report" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -98,8 +92,7 @@ export async function DELETE(
     console.error("Error in DELETE /api/reports/[id]:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

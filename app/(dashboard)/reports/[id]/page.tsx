@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { IconAlertCircle, IconLoader2 } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
-import { SiteHeader } from "@/components/site-header";
-import { TiptapEditor } from "@/components/reports/tiptap-editor";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { ReportDropdown } from "@/components/reports/report-dropdown";
+import { TiptapEditor } from "@/components/reports/tiptap-editor";
+import { SiteHeader } from "@/components/site-header";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useReportsRealtime } from "@/hooks/use-reports-realtime";
 import type { Report } from "@/lib/supabase";
-import { IconLoader2, IconAlertCircle } from "@tabler/icons-react";
-import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useDebounce } from "@/hooks/use-debounce";
 
 export default function ReportEditorPage() {
   const params = useParams();
@@ -79,7 +79,7 @@ export default function ReportEditorPage() {
   // Save title changes
   const handleTitleChange = async (newTitle: string) => {
     setTitle(newTitle);
-    
+
     try {
       const response = await fetch(`/api/reports/${reportId}`, {
         method: "PATCH",
@@ -132,10 +132,7 @@ export default function ReportEditorPage() {
             <p className="mt-2 text-muted-foreground">
               {error || "The report you're looking for doesn't exist"}
             </p>
-            <Button
-              onClick={() => router.push("/reports")}
-              className="mt-4"
-            >
+            <Button onClick={() => router.push("/reports")} className="mt-4">
               Back to Reports
             </Button>
           </div>
@@ -169,13 +166,9 @@ export default function ReportEditorPage() {
               placeholder="Report Title"
             />
           </div>
-          <TiptapEditor
-            content={content}
-            onUpdate={setContent}
-          />
+          <TiptapEditor content={content} onUpdate={setContent} />
         </div>
       </div>
     </div>
   );
 }
-

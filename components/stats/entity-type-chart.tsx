@@ -1,13 +1,25 @@
-"use client"
+"use client";
 
-import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card"
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
-import { PieChart, Pie } from "recharts"
-import { ChartBackground } from "./chart-background"
-import { ENTITY_TYPE_COLORS, getEntityTypeColor } from "@/lib/chart-colors"
+import { Pie, PieChart } from "recharts";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import {
+  LuxeCard as Card,
+  LuxeCardContent as CardContent,
+  LuxeCardDescription as CardDescription,
+  LuxeCardHeader as CardHeader,
+  LuxeCardTitle as CardTitle,
+} from "@/components/ui/luxe-card";
+import { ENTITY_TYPE_COLORS, getEntityTypeColor } from "@/lib/chart-colors";
+import { ChartBackground } from "./chart-background";
 
 interface EntityTypeChartProps {
-  data: Array<{ type: string; count: number }>
+  data: Array<{ type: string; count: number }>;
 }
 
 const chartConfig = {
@@ -35,33 +47,38 @@ const chartConfig = {
     label: "Unknown",
     color: ENTITY_TYPE_COLORS.unknown,
   },
-}
+};
 
 export function EntityTypeChart({ data }: EntityTypeChartProps) {
-  const chartData = data.map(item => ({
+  const chartData = data.map((item) => ({
     name: item.type,
     value: item.count,
-    fill: getEntityTypeColor(item.type)
-  }))
+    fill: getEntityTypeColor(item.type),
+  }));
 
-  const total = data.reduce((sum, item) => sum + item.count, 0)
+  const total = data.reduce((sum, item) => sum + item.count, 0);
 
   return (
     <Card variant="revealed-pointer">
       <CardHeader>
         <CardTitle>Entity Type Distribution</CardTitle>
         <CardDescription>
-          {total > 0 ? `Total ${total.toLocaleString()} entities detected` : "No entities yet"}
+          {total > 0
+            ? `Total ${total.toLocaleString()} entities detected`
+            : "No entities yet"}
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-6">
         <ChartBackground>
           {total > 0 ? (
-            <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[300px] w-full">
+            <ChartContainer
+              config={chartConfig}
+              className="mx-auto aspect-square max-h-[300px] w-full"
+            >
               <PieChart>
-                <ChartTooltip 
+                <ChartTooltip
                   cursor={false}
-                  content={<ChartTooltipContent hideLabel />} 
+                  content={<ChartTooltipContent hideLabel />}
                 />
                 <Pie
                   data={chartData}
@@ -73,8 +90,8 @@ export function EntityTypeChart({ data }: EntityTypeChartProps) {
                   outerRadius={90}
                   strokeWidth={2}
                   stroke="hsl(var(--background))"
-                  label={({ name, percent }) => 
-                    percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''
+                  label={({ name, percent }) =>
+                    percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ""
                   }
                   labelLine={false}
                 />
@@ -89,6 +106,5 @@ export function EntityTypeChart({ data }: EntityTypeChartProps) {
         </ChartBackground>
       </CardContent>
     </Card>
-  )
+  );
 }
-

@@ -5,8 +5,8 @@
 
 import ffmpeg from "fluent-ffmpeg";
 import fs from "fs/promises";
-import path from "path";
 import os from "os";
+import path from "path";
 
 export interface VideoFrame {
   timestamp: number; // Seconds from video start
@@ -56,15 +56,16 @@ export async function extractFramesAtFps(
     for (let i = 0; i < frameFiles.length; i++) {
       const framePath = path.join(tempDir, frameFiles[i]);
       const buffer = await fs.readFile(framePath);
-      const timestamp = (i / fps) + timestampOffset;
+      const timestamp = i / fps + timestampOffset;
       frames.push({ timestamp, buffer });
     }
 
-    console.log(`Extracted ${frames.length} frames at ${fps} FPS (offset: ${timestampOffset}s)`);
+    console.log(
+      `Extracted ${frames.length} frames at ${fps} FPS (offset: ${timestampOffset}s)`,
+    );
     return frames;
   } finally {
     // Cleanup temp directory
     await fs.rm(tempDir, { recursive: true, force: true });
   }
 }
-

@@ -56,7 +56,7 @@ export function getEventStatusBadgeVariant(status: EventStatus): BadgeVariant {
 export function formatEventType(type: EventType): string {
   return type
     .split("_")
-    .map(word => word.charAt(0) + word.slice(1).toLowerCase())
+    .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
     .join(" ");
 }
 
@@ -116,4 +116,3 @@ export function generateMockEvents(assetId: string): Event[] {
     },
   ];
 }
-

@@ -1,23 +1,18 @@
-'use client'
+"use client";
 
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { AsciiEye } from "@/components/ascii-eye";
-import { useState, useEffect } from 'react';
-import TextType from "@/components/text-type"
-import DecryptedText from "@/components/fancy/text/decrypted-text";
-import { LuxeButton } from "@/components/ui/luxe-button";
-import {
-  NavigationMenu,
-  NavigationMenuList,
-  NavigationMenuItem,
-  NavigationMenuLink,
-} from "@/components/ui/navigation-menu";
-import Dither from "@/components/dither";
-import { BrowserComponent } from "@/components/browser-component";
+import Dither from '@/components/dither'
 import { FeaturesAlternating } from "@/components/features-alternating";
-import { ModelsSection } from "@/components/models-section";
+import { NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { SiteFooter } from "@/components/site-footer";
+import { BrowserComponent } from "@/components/browser-component";
+import DecryptedText from "@/components/fancy/text/decrypted-text";
+import { NavigationMenu } from "@/components/ui/navigation-menu";
+import { LuxeButton } from "@/components/ui/luxe-button";
+import { ModelsSection } from "@/components/models-section";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
@@ -27,13 +22,13 @@ export default function Home() {
     const loadContent = async () => {
       // Wait for typing animation to complete
       // "WELCOME TO ARGUS" = ~17 chars * 50ms = 850ms + 2000ms pause = ~2850ms
-      await new Promise(resolve => setTimeout(resolve, 3500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 3500));
+
       // Start fade out animation
       setFadeOut(true);
-      
+
       // Remove loading screen after fade completes
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise((resolve) => setTimeout(resolve, 800));
       setIsLoading(false);
     };
 
@@ -151,9 +146,9 @@ export default function Home() {
     <>
       {/* Loading Screen */}
       {isLoading && (
-        <div 
+        <div
           className={`fixed inset-0 z-50 flex items-center justify-center bg-black transition-opacity duration-800 ${
-            fadeOut ? 'opacity-0' : 'opacity-100'
+            fadeOut ? "opacity-0" : "opacity-100"
           }`}
         >
           <div className="flex flex-col items-center gap-6">

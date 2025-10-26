@@ -1,26 +1,26 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { motion, useMotionTemplate, useMotionValue } from "framer-motion"
-import { cn } from "@/lib/utils"
+import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "revealed-pointer"
+  variant?: "default" | "revealed-pointer";
 }
 
 const LuxeCard = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = "default", children, ...props }, ref) => {
-    const mouseX = useMotionValue(0)
-    const mouseY = useMotionValue(0)
+    const mouseX = useMotionValue(0);
+    const mouseY = useMotionValue(0);
 
     if (variant === "revealed-pointer") {
       return (
         <div
           ref={ref}
           onMouseMove={(e) => {
-            const { left, top } = e.currentTarget.getBoundingClientRect()
-            mouseX.set(e.clientX - left)
-            mouseY.set(e.clientY - top)
+            const { left, top } = e.currentTarget.getBoundingClientRect();
+            mouseX.set(e.clientX - left);
+            mouseY.set(e.clientY - top);
           }}
           className="group relative overflow-hidden rounded-xl bg-border/50 p-px"
         >
@@ -34,13 +34,13 @@ const LuxeCard = React.forwardRef<HTMLDivElement, CardProps>(
             {...props}
             className={cn(
               "relative select-none rounded-xl bg-card h-[-webkit-fill-available]",
-              className
+              className,
             )}
           >
             {children}
           </div>
         </div>
-      )
+      );
     }
 
     return (
@@ -48,17 +48,17 @@ const LuxeCard = React.forwardRef<HTMLDivElement, CardProps>(
         ref={ref}
         className={cn(
           "rounded-xl border bg-card text-card-foreground shadow-sm",
-          className
+          className,
         )}
         {...props}
       >
         {children}
       </div>
-    )
-  }
-)
+    );
+  },
+);
 
-LuxeCard.displayName = "LuxeCard"
+LuxeCard.displayName = "LuxeCard";
 
 const LuxeCardHeader = React.forwardRef<
   HTMLDivElement,
@@ -69,8 +69,8 @@ const LuxeCardHeader = React.forwardRef<
     className={cn("flex flex-col space-y-1.5 p-6", className)}
     {...props}
   />
-))
-LuxeCardHeader.displayName = "LuxeCardHeader"
+));
+LuxeCardHeader.displayName = "LuxeCardHeader";
 
 const LuxeCardTitle = React.forwardRef<
   HTMLParagraphElement,
@@ -81,8 +81,8 @@ const LuxeCardTitle = React.forwardRef<
     className={cn("font-semibold leading-none tracking-tight", className)}
     {...props}
   />
-))
-LuxeCardTitle.displayName = "LuxeCardTitle"
+));
+LuxeCardTitle.displayName = "LuxeCardTitle";
 
 const LuxeCardDescription = React.forwardRef<
   HTMLParagraphElement,
@@ -93,16 +93,16 @@ const LuxeCardDescription = React.forwardRef<
     className={cn("text-sm text-muted-foreground", className)}
     {...props}
   />
-))
-LuxeCardDescription.displayName = "LuxeCardDescription"
+));
+LuxeCardDescription.displayName = "LuxeCardDescription";
 
 const LuxeCardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
   <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
-))
-LuxeCardContent.displayName = "LuxeCardContent"
+));
+LuxeCardContent.displayName = "LuxeCardContent";
 
 const LuxeCardFooter = React.forwardRef<
   HTMLDivElement,
@@ -113,8 +113,14 @@ const LuxeCardFooter = React.forwardRef<
     className={cn("flex items-center p-6 pt-0", className)}
     {...props}
   />
-))
-LuxeCardFooter.displayName = "LuxeCardFooter"
+));
+LuxeCardFooter.displayName = "LuxeCardFooter";
 
-export { LuxeCard, LuxeCardHeader, LuxeCardFooter, LuxeCardTitle, LuxeCardDescription, LuxeCardContent }
-
+export {
+  LuxeCard,
+  LuxeCardHeader,
+  LuxeCardFooter,
+  LuxeCardTitle,
+  LuxeCardDescription,
+  LuxeCardContent,
+};

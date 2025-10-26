@@ -2,7 +2,12 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { groq } from "@ai-sdk/groq";
 import { experimental_createMCPClient } from "@ai-sdk/mcp";
 import { lettaCloud } from "@letta-ai/vercel-ai-sdk-provider";
-import { streamText, convertToModelMessages, stepCountIs, createIdGenerator } from "ai";
+import {
+  convertToModelMessages,
+  createIdGenerator,
+  stepCountIs,
+  streamText,
+} from "ai";
 import { aiTools } from "@/lib/ai-tools";
 import { loadChat, saveChat } from "@/lib/chat-store";
 
@@ -12,7 +17,9 @@ export async function POST(req: Request) {
   const { messages, chatId, model: selectedModel } = await req.json();
 
   // Initialize MCP client for Elastic Agent Builder
-  let mcpClient: Awaited<ReturnType<typeof experimental_createMCPClient>> | undefined;
+  let mcpClient:
+    | Awaited<ReturnType<typeof experimental_createMCPClient>>
+    | undefined;
   let tools = { ...aiTools };
 
   const elasticsearchUrl = process.env.ELASTICSEARCH_URL;
@@ -38,7 +45,10 @@ export async function POST(req: Request) {
       // Get all available tools from the MCP server and merge with AI tools
       const mcpTools = await mcpClient.tools();
       tools = { ...aiTools, ...mcpTools };
-      console.log("Connected to Elastic MCP server, tools:", Object.keys(tools));
+      console.log(
+        "Connected to Elastic MCP server, tools:",
+        Object.keys(tools),
+      );
     } catch (error) {
       console.error("Failed to connect to Elastic MCP server:", error);
       // Continue without MCP tools if connection fails
@@ -46,10 +56,14 @@ export async function POST(req: Request) {
   }
 
   // Validate API keys
-  if (!process.env.ANTHROPIC_API_KEY && !process.env.GROQ_API_KEY && !process.env.LETTA_API_KEY) {
+  if (
+    !process.env.ANTHROPIC_API_KEY &&
+    !process.env.GROQ_API_KEY &&
+    !process.env.LETTA_API_KEY
+  ) {
     return new Response(
       "Missing API keys. Please configure ANTHROPIC_API_KEY, GROQ_API_KEY, or LETTA_API_KEY.",
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -86,7 +100,10 @@ export async function POST(req: Request) {
         return new Response("LETTA_API_KEY not configured", { status: 500 });
       }
       if (!process.env.LETTA_AGENT_ID) {
-        return new Response("LETTA_AGENT_ID not configured. Please set the ID of your 'stateful argus' agent.", { status: 500 });
+        return new Response(
+          "LETTA_AGENT_ID not configured. Please set the ID of your 'stateful argus' agent.",
+          { status: 500 },
+        );
       }
       model = lettaCloud();
       break;
@@ -102,7 +119,7 @@ export async function POST(req: Request) {
 
   // Convert UIMessages to ModelMessages
   const modelMessages = convertToModelMessages(messages);
-  
+
   // Configure provider-specific options
   const providerOptions: any = {
     anthropic: {
@@ -123,7 +140,7 @@ export async function POST(req: Request) {
       },
     };
   }
-  
+
   // Build streamText config
   const streamConfig: any = {
     model,
@@ -136,11 +153,12 @@ export async function POST(req: Request) {
   // Only add system prompt for non-Letta models
   // Letta agents use their own configured system prompt from Letta Cloud
   if (selectedModel !== "stateful-argus") {
-    streamConfig.system = elasticsearchUrl && apiKey
-      ? "You are a helpful AI assistant named Argus with access to a video content database through Elastic Agent Builder. When users ask about videos, streams, or recorded content, use the available search tools to find relevant information. For more advanced filtering and complex queries, you can use the generate_esql tool to create ES|QL queries and then execute them with the execute_esql tool. When you mention specific events from search results, use the displayEvent or displayEventById tools to show them as interactive cards that users can click to watch the video at that moment. To show a full video asset with a player, use the displayAsset tool with the asset ID. You can also create comprehensive reports using the createReport tool - use this to generate documentation, analysis summaries, or investigation reports with properly formatted markdown content. Provide clear, concise responses based on the search results."
-      : "You are a helpful AI assistant for a video streaming platform. You can help users with questions about their video content, streams, and recordings. When discussing specific events, use the displayEvent or displayEventById tools to show them as interactive cards. To show a full video asset with a player, use the displayAsset tool with the asset ID. You can also create comprehensive reports using the createReport tool - use this to generate documentation, analysis summaries, or investigation reports with properly formatted markdown content.";
+    streamConfig.system =
+      elasticsearchUrl && apiKey
+        ? "You are a helpful AI assistant named Argus with access to a video content database through Elastic Agent Builder. When users ask about videos, streams, or recorded content, use the available search tools to find relevant information. For more advanced filtering and complex queries, you can use the generate_esql tool to create ES|QL queries and then execute them with the execute_esql tool. When you mention specific events from search results, use the displayEvent or displayEventById tools to show them as interactive cards that users can click to watch the video at that moment. To show a full video asset with a player, use the displayAsset tool with the asset ID. You can also create comprehensive reports using the createReport tool - use this to generate documentation, analysis summaries, or investigation reports with properly formatted markdown content. Provide clear, concise responses based on the search results."
+        : "You are a helpful AI assistant for a video streaming platform. You can help users with questions about their video content, streams, and recordings. When discussing specific events, use the displayEvent or displayEventById tools to show them as interactive cards. To show a full video asset with a player, use the displayAsset tool with the asset ID. You can also create comprehensive reports using the createReport tool - use this to generate documentation, analysis summaries, or investigation reports with properly formatted markdown content.";
   }
-  
+
   const result = streamText(streamConfig);
 
   // Consume stream to ensure completion even if client disconnects
@@ -157,4 +175,3 @@ export async function POST(req: Request) {
     },
   });
 }
-

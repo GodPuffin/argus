@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { supabase, type Report } from "@/lib/supabase";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { useEffect, useState } from "react";
+import { type Report, supabase } from "@/lib/supabase";
 
 export function useReportsRealtime() {
   const [reports, setReports] = useState<Report[]>([]);
@@ -21,7 +21,9 @@ export function useReportsRealtime() {
         setError(null);
       } catch (err) {
         console.error("Error fetching reports:", err);
-        setError(err instanceof Error ? err.message : "Failed to fetch reports");
+        setError(
+          err instanceof Error ? err.message : "Failed to fetch reports",
+        );
       } finally {
         setLoading(false);
       }
@@ -49,21 +51,21 @@ export function useReportsRealtime() {
             const updatedReport = payload.new as Report;
             setReports((current) => {
               const updated = current.map((report) =>
-                report.id === updatedReport.id ? updatedReport : report
+                report.id === updatedReport.id ? updatedReport : report,
               );
               // Re-sort by updated_at
               return updated.sort(
                 (a, b) =>
                   new Date(b.updated_at).getTime() -
-                  new Date(a.updated_at).getTime()
+                  new Date(a.updated_at).getTime(),
               );
             });
           } else if (payload.eventType === "DELETE") {
             setReports((current) =>
-              current.filter((report) => report.id !== payload.old.id)
+              current.filter((report) => report.id !== payload.old.id),
             );
           }
-        }
+        },
       )
       .subscribe();
 
@@ -75,4 +77,3 @@ export function useReportsRealtime() {
 
   return { reports, loading, error };
 }
-

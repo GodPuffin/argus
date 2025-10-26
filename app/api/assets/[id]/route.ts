@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { deleteDocumentsByAssetId } from "@/lib/elasticsearch";
 
 const MUX_TOKEN_ID = process.env.MUX_TOKEN_ID;
@@ -7,12 +7,12 @@ const MUX_TOKEN_SECRET = process.env.MUX_TOKEN_SECRET;
 // PATCH - Update asset metadata
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   if (!MUX_TOKEN_ID || !MUX_TOKEN_SECRET) {
     return NextResponse.json(
       { error: "Mux credentials not configured" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -33,11 +33,11 @@ export async function PATCH(
           Authorization:
             "Basic " +
             Buffer.from(`${MUX_TOKEN_ID}:${MUX_TOKEN_SECRET}`).toString(
-              "base64"
+              "base64",
             ),
         },
         body: JSON.stringify(updateData),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -45,7 +45,7 @@ export async function PATCH(
       console.error("Mux API error:", errorData);
       return NextResponse.json(
         { error: "Failed to update asset", details: errorData },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -58,7 +58,7 @@ export async function PATCH(
         error: "Failed to update asset",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -66,12 +66,12 @@ export async function PATCH(
 // DELETE - Delete asset
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   if (!MUX_TOKEN_ID || !MUX_TOKEN_SECRET) {
     return NextResponse.json(
       { error: "Mux credentials not configured" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -84,10 +84,10 @@ export async function DELETE(
           Authorization:
             "Basic " +
             Buffer.from(`${MUX_TOKEN_ID}:${MUX_TOKEN_SECRET}`).toString(
-              "base64"
+              "base64",
             ),
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -95,17 +95,22 @@ export async function DELETE(
       console.error("Mux API error:", errorData);
       return NextResponse.json(
         { error: "Failed to delete asset", details: errorData },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
     // Delete Elasticsearch entries for this asset (best-effort, non-blocking)
     try {
       const deletedCount = await deleteDocumentsByAssetId(params.id);
-      console.log(`[Asset Delete] Deleted ${deletedCount} Elasticsearch documents for asset ${params.id}`);
+      console.log(
+        `[Asset Delete] Deleted ${deletedCount} Elasticsearch documents for asset ${params.id}`,
+      );
     } catch (esError) {
       // Log the error but don't fail the deletion
-      console.warn(`[Asset Delete] Failed to delete Elasticsearch entries for asset ${params.id}:`, esError);
+      console.warn(
+        `[Asset Delete] Failed to delete Elasticsearch entries for asset ${params.id}:`,
+        esError,
+      );
     }
 
     return NextResponse.json({ success: true });
@@ -116,7 +121,7 @@ export async function DELETE(
         error: "Failed to delete asset",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

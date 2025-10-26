@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { supabase, type Camera } from "@/lib/supabase";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { useEffect, useState } from "react";
+import { type Camera, supabase } from "@/lib/supabase";
 
 export function useCamerasRealtime() {
   const [cameras, setCameras] = useState<Camera[]>([]);
@@ -22,7 +22,9 @@ export function useCamerasRealtime() {
         setCameras(data || []);
       } catch (err) {
         console.error("Error fetching cameras:", err);
-        setError(err instanceof Error ? err.message : "Failed to fetch cameras");
+        setError(
+          err instanceof Error ? err.message : "Failed to fetch cameras",
+        );
       } finally {
         setLoading(false);
       }
@@ -55,13 +57,17 @@ export function useCamerasRealtime() {
             setCameras((current) => {
               if (!updatedCamera.browser_id) {
                 // browser_id was removed, filter it out
-                return current.filter((camera) => camera.id !== updatedCamera.id);
+                return current.filter(
+                  (camera) => camera.id !== updatedCamera.id,
+                );
               }
               // Update existing camera
-              const exists = current.some((camera) => camera.id === updatedCamera.id);
+              const exists = current.some(
+                (camera) => camera.id === updatedCamera.id,
+              );
               if (exists) {
                 return current.map((camera) =>
-                  camera.id === updatedCamera.id ? updatedCamera : camera
+                  camera.id === updatedCamera.id ? updatedCamera : camera,
                 );
               }
               // Camera was just given a browser_id, add it
@@ -69,10 +75,10 @@ export function useCamerasRealtime() {
             });
           } else if (payload.eventType === "DELETE") {
             setCameras((current) =>
-              current.filter((camera) => camera.id !== payload.old.id)
+              current.filter((camera) => camera.id !== payload.old.id),
             );
           }
-        }
+        },
       )
       .subscribe();
 
@@ -84,4 +90,3 @@ export function useCamerasRealtime() {
 
   return { cameras, loading, error };
 }
-

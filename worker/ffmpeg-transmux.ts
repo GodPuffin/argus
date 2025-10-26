@@ -4,18 +4,16 @@
  */
 
 import { spawn } from "node:child_process";
+import { randomBytes } from "node:crypto";
+import { readFile, unlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { randomBytes } from "node:crypto";
-import { unlink, readFile } from "node:fs/promises";
 
 /**
  * Fetch HLS stream and transmux to MP4
  * Uses ffmpeg with codec copy when possible to minimize processing time
  */
-export async function fetchAndTransmuxSegment(
-  hlsUrl: string,
-): Promise<Buffer> {
+export async function fetchAndTransmuxSegment(hlsUrl: string): Promise<Buffer> {
   // Generate temporary output file
   const tmpId = randomBytes(16).toString("hex");
   const outputPath = join(tmpdir(), `segment-${tmpId}.mp4`);
@@ -23,16 +21,21 @@ export async function fetchAndTransmuxSegment(
   return new Promise((resolve, reject) => {
     const ffmpegArgs = [
       // Protocol options for HLS
-      "-protocol_whitelist", "file,http,https,tcp,tls",
-      
+      "-protocol_whitelist",
+      "file,http,https,tcp,tls",
+
       // Increase HLS timeout and retries
-      "-reconnect", "1",
-      "-reconnect_streamed", "1", 
-      "-reconnect_delay_max", "5",
-      
+      "-reconnect",
+      "1",
+      "-reconnect_streamed",
+      "1",
+      "-reconnect_delay_max",
+      "5",
+
       // HLS specific options
-      "-live_start_index", "-1", // Read entire playlist
-      
+      "-live_start_index",
+      "-1", // Read entire playlist
+
       // Input from HLS
       "-i",
       hlsUrl,
@@ -67,7 +70,6 @@ export async function fetchAndTransmuxSegment(
     });
 
     ffmpeg.on("close", async (code) => {
-      
       if (code !== 0) {
         console.error(`FFmpeg failed with code ${code}:`);
         console.error(stderrOutput);
@@ -94,4 +96,3 @@ export async function fetchAndTransmuxSegment(
     });
   });
 }
-

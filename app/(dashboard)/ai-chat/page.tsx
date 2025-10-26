@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { Spinner } from "@/components/ui/shadcn-io/spinner";
 
 export default function NewChatPage() {
@@ -17,15 +17,15 @@ export default function NewChatPage() {
     const controller = new AbortController();
 
     // Create a new chat and redirect to it
-    fetch("/api/chat/new", { 
+    fetch("/api/chat/new", {
       method: "POST",
-      signal: controller.signal 
+      signal: controller.signal,
     })
       .then((r) => r.json())
       .then(({ id }) => router.push(`/ai-chat/${id}`))
       .catch((error) => {
         // Ignore AbortError - this is expected when component unmounts
-        if (error.name === 'AbortError') {
+        if (error.name === "AbortError") {
           return;
         }
         console.error("Error creating new chat:", error);
@@ -40,7 +40,10 @@ export default function NewChatPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <div className="flex items-center justify-center" style={{ height: "70vh" }}>
+      <div
+        className="flex items-center justify-center"
+        style={{ height: "70vh" }}
+      >
         <div className="text-center space-y-4">
           <Spinner variant="ring" size={48} className="mx-auto" />
           <p className="text-muted-foreground">Creating new chat...</p>

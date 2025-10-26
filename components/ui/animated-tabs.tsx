@@ -1,24 +1,29 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { motion } from "framer-motion"
-import { cn } from "@/lib/utils"
+import { motion } from "framer-motion";
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
 interface AnimatedTabsProps {
-  tabs: string[]
-  activeTab: string
-  onTabChange: (tab: string) => void
-  className?: string
+  tabs: string[];
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+  className?: string;
 }
 
-export function AnimatedTabs({ tabs, activeTab, onTabChange, className }: AnimatedTabsProps) {
-  const [hoveredTab, setHoveredTab] = React.useState<string | null>(null)
+export function AnimatedTabs({
+  tabs,
+  activeTab,
+  onTabChange,
+  className,
+}: AnimatedTabsProps) {
+  const [hoveredTab, setHoveredTab] = React.useState<string | null>(null);
 
   return (
     <div
       className={cn(
         "inline-flex h-10 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground",
-        className
+        className,
       )}
     >
       {tabs.map((tab) => (
@@ -29,7 +34,7 @@ export function AnimatedTabs({ tabs, activeTab, onTabChange, className }: Animat
           onMouseLeave={() => setHoveredTab(null)}
           className={cn(
             "relative inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-            activeTab === tab ? "text-foreground" : "hover:text-foreground/80"
+            activeTab === tab ? "text-foreground" : "hover:text-foreground/80",
           )}
         >
           {/* Hover effect */}
@@ -43,7 +48,7 @@ export function AnimatedTabs({ tabs, activeTab, onTabChange, className }: Animat
               transition={{ duration: 0.15 }}
             />
           )}
-          
+
           {/* Active tab background */}
           {activeTab === tab && (
             <motion.div
@@ -57,11 +62,10 @@ export function AnimatedTabs({ tabs, activeTab, onTabChange, className }: Animat
               }}
             />
           )}
-          
+
           <span className="relative z-10">{tab}</span>
         </button>
       ))}
     </div>
-  )
+  );
 }
-

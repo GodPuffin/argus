@@ -1,10 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { IconFileText, IconShare, IconTrash } from "@tabler/icons-react";
 import { formatDistanceToNow } from "date-fns";
-import { IconFileText, IconTrash, IconShare } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
-import type { Report } from "@/lib/supabase";
+import Link from "next/link";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -17,6 +15,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import type { Report } from "@/lib/supabase";
 
 interface ReportsListProps {
   reports: Report[];
@@ -64,7 +64,10 @@ export function ReportsList({ reports, onDelete }: ReportsListProps) {
               {report.title}
             </h3>
             <p className="text-muted-foreground text-sm">
-              Created {formatDistanceToNow(new Date(report.created_at), { addSuffix: true })}
+              Created{" "}
+              {formatDistanceToNow(new Date(report.created_at), {
+                addSuffix: true,
+              })}
             </p>
           </Link>
           <div className="flex gap-2 border-t p-2">
@@ -93,8 +96,8 @@ export function ReportsList({ reports, onDelete }: ReportsListProps) {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete Report</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to delete "{report.title}"? This action
-                      cannot be undone.
+                      Are you sure you want to delete "{report.title}"? This
+                      action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -115,4 +118,3 @@ export function ReportsList({ reports, onDelete }: ReportsListProps) {
     </div>
   );
 }
-

@@ -183,30 +183,32 @@ app.prepare().then(() => {
     ffmpeg.on("close", (code, signal) => {
       // Error code 4294957242 (unsigned) = -10054 (signed) = WSAECONNRESET on Windows
       // This is normal when Mux closes the connection during shutdown
-      const isExpectedShutdown = 
-        code === 0 || 
-        code === 255 || 
+      const isExpectedShutdown =
+        code === 0 ||
+        code === 255 ||
         code === 4294957242 || // Windows WSAECONNRESET
-        code === 3753488571;   // Other EOF errors
-      
+        code === 3753488571; // Other EOF errors
+
       const status = isExpectedShutdown ? "✓" : "✗";
       console.log(
         `[Stream #${connectionId}] ${status} FFmpeg closed. Code: ${code}, Signal: ${signal}, Bytes: ${Math.floor(bytesReceived / 1024)}KB`,
       );
-      
+
       if (!isExpectedShutdown) {
         console.warn(
           `[Stream #${connectionId}] Unexpected exit code. This may indicate an issue.`,
         );
       }
-      
+
       if (ws.readyState === ws.OPEN) {
-        ws.send(JSON.stringify({ 
-          type: "ffmpeg_closed", 
-          code, 
-          signal,
-          expected: isExpectedShutdown 
-        }));
+        ws.send(
+          JSON.stringify({
+            type: "ffmpeg_closed",
+            code,
+            signal,
+            expected: isExpectedShutdown,
+          }),
+        );
       }
       activeConnections.delete(connectionId);
       console.log(
@@ -234,7 +236,7 @@ app.prepare().then(() => {
     // FFmpeg outputs all of its messages to STDERR. Let's log them to the console.
     let stderrBuffer = "";
     let isShuttingDown = false;
-    
+
     ffmpeg.stderr.on("data", (data) => {
       const text = data.toString();
       stderrBuffer += text;
@@ -262,7 +264,7 @@ app.prepare().then(() => {
       }
 
       // Detect common shutdown errors (these are expected when Mux closes the stream)
-      const isShutdownError = 
+      const isShutdownError =
         text.includes("Error number -10054") || // Windows WSAECONNRESET
         text.includes("End of file") ||
         text.includes("Connection reset") ||
@@ -277,8 +279,14 @@ app.prepare().then(() => {
       ) {
         if (isShutdownError && (isShuttingDown || ws.readyState !== ws.OPEN)) {
           // Suppress expected shutdown errors - just log at debug level
-          if (text.includes("Error writing trailer") || text.includes("Error closing file")) {
-            console.log(`[Stream #${connectionId}] FFmpeg (shutdown):`, text.trim());
+          if (
+            text.includes("Error writing trailer") ||
+            text.includes("Error closing file")
+          ) {
+            console.log(
+              `[Stream #${connectionId}] FFmpeg (shutdown):`,
+              text.trim(),
+            );
           }
         } else {
           console.log(`[Stream #${connectionId}] FFmpeg:`, text.trim());
@@ -329,7 +337,7 @@ app.prepare().then(() => {
       const duration = conn
         ? ((Date.now() - conn.startTime) / 1000).toFixed(1)
         : "0.0";
-      
+
       console.log(
         `\n[Stream #${connectionId}] WebSocket closed. Duration: ${duration}s, Total: ${Math.floor(bytesReceived / 1024)}KB`,
       );
@@ -342,11 +350,9 @@ app.prepare().then(() => {
       try {
         // Close FFmpeg stdin immediately - don't wait for flush
         // Mux likely already closed the connection, so flushing will fail anyway
-        console.log(
-          `[Stream #${connectionId}] Closing FFmpeg stdin...`,
-        );
+        console.log(`[Stream #${connectionId}] Closing FFmpeg stdin...`);
         ffmpeg.stdin.end();
-        
+
         // Give FFmpeg a short time to exit cleanly
         setTimeout(() => {
           if (!ffmpeg.killed) {
@@ -354,7 +360,7 @@ app.prepare().then(() => {
               `[Stream #${connectionId}] FFmpeg still running, sending SIGINT...`,
             );
             ffmpeg.kill("SIGINT");
-            
+
             // Last resort: force kill if it doesn't respond to SIGINT
             setTimeout(() => {
               if (!ffmpeg.killed) {

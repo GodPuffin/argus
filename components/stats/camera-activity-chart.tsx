@@ -1,64 +1,83 @@
-"use client"
+"use client";
 
-import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts"
-import { ChartBackground } from "./chart-background"
-import { getColorblindSafeColor } from "@/lib/chart-colors"
+import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import {
+  LuxeCard as Card,
+  LuxeCardContent as CardContent,
+  LuxeCardDescription as CardDescription,
+  LuxeCardHeader as CardHeader,
+  LuxeCardTitle as CardTitle,
+} from "@/components/ui/luxe-card";
+import { getColorblindSafeColor } from "@/lib/chart-colors";
+import { ChartBackground } from "./chart-background";
 
 interface CameraActivityChartProps {
-  data: Array<{ camera_name: string; event_count: number; camera_id: string }>
+  data: Array<{ camera_name: string; event_count: number; camera_id: string }>;
 }
 
 export function CameraActivityChart({ data }: CameraActivityChartProps) {
   const chartData = data.slice(0, 10).map((item, index) => ({
     camera: item.camera_name,
     jobs: item.event_count,
-    fill: getColorblindSafeColor(index)
-  }))
-  
-  // Build chart config dynamically
-  const chartConfig = chartData.reduce((acc, item) => {
-    acc[item.camera] = {
-      label: item.camera,
-      color: item.fill
-    }
-    return acc
-  }, {} as Record<string, { label: string; color: string }>)
+    fill: getColorblindSafeColor(index),
+  }));
 
-  const total = data.reduce((sum, item) => sum + item.event_count, 0)
+  // Build chart config dynamically
+  const chartConfig = chartData.reduce(
+    (acc, item) => {
+      acc[item.camera] = {
+        label: item.camera,
+        color: item.fill,
+      };
+      return acc;
+    },
+    {} as Record<string, { label: string; color: string }>,
+  );
+
+  const total = data.reduce((sum, item) => sum + item.event_count, 0);
 
   return (
     <Card variant="revealed-pointer">
       <CardHeader>
         <CardTitle>Camera Analysis Activity</CardTitle>
         <CardDescription>
-          {total > 0 ? `AI jobs processed per camera (${total.toLocaleString()} total)` : "No camera activity yet"}
+          {total > 0
+            ? `AI jobs processed per camera (${total.toLocaleString()} total)`
+            : "No camera activity yet"}
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-6">
         <ChartBackground>
           {chartData.length > 0 ? (
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 10 }}>
+              <BarChart
+                data={chartData}
+                layout="vertical"
+                margin={{ left: 10, right: 10 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis 
-                  type="number" 
+                <XAxis
+                  type="number"
                   stroke="hsl(var(--muted-foreground))"
                   fontSize={12}
                 />
-                <YAxis 
-                  dataKey="camera" 
-                  type="category" 
-                  width={120} 
+                <YAxis
+                  dataKey="camera"
+                  type="category"
+                  width={120}
                   stroke="hsl(var(--muted-foreground))"
                   fontSize={12}
                 />
-                <ChartTooltip 
-                  cursor={{ fill: 'hsl(var(--muted))' }}
-                  content={<ChartTooltipContent hideLabel />} 
+                <ChartTooltip
+                  cursor={{ fill: "hsl(var(--muted))" }}
+                  content={<ChartTooltipContent hideLabel />}
                 />
-                <Bar 
+                <Bar
                   dataKey="jobs"
                   radius={[0, 4, 4, 0]}
                   animationDuration={800}
@@ -77,5 +96,5 @@ export function CameraActivityChart({ data }: CameraActivityChartProps) {
         </ChartBackground>
       </CardContent>
     </Card>
-  )
+  );
 }

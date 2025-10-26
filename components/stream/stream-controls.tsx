@@ -2,9 +2,15 @@
 
 import { IconPencil, IconVideo, IconVideoOff } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface StreamControlsProps {
   cameraName: string;
@@ -81,7 +87,9 @@ export function StreamControls({
             </>
           ) : (
             <>
-              <CardTitle className="flex-1">{cameraName || "Initializing..."}</CardTitle>
+              <CardTitle className="flex-1">
+                {cameraName || "Initializing..."}
+              </CardTitle>
               {cameraName && (
                 <Button
                   onClick={onStartEdit}
@@ -178,4 +186,3 @@ export function StreamControls({
     </Card>
   );
 }
-

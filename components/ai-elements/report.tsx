@@ -1,8 +1,8 @@
 "use client";
 
-import { IconFileText, IconExternalLink } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
+import { IconExternalLink, IconFileText } from "@tabler/icons-react";
 import { formatDistanceToNow } from "date-fns";
+import { Button } from "@/components/ui/button";
 
 interface ReportData {
   id: string;
@@ -26,7 +26,8 @@ export function Report({ data }: { data: ReportData }) {
       <div className="p-4">
         <h3 className="mb-2 font-semibold text-lg">{data.title}</h3>
         <p className="mb-4 text-muted-foreground text-sm">
-          Created {formatDistanceToNow(new Date(data.created_at), { addSuffix: true })}
+          Created{" "}
+          {formatDistanceToNow(new Date(data.created_at), { addSuffix: true })}
         </p>
         <Button onClick={handleOpen} className="w-full gap-2">
           <IconExternalLink className="h-4 w-4" />
@@ -36,4 +37,3 @@ export function Report({ data }: { data: ReportData }) {
     </div>
   );
 }
-

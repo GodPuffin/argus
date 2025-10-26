@@ -8,7 +8,11 @@ interface VideoDisplayProps {
   cameraEnabled: boolean;
 }
 
-export function VideoDisplay({ videoRef, canvasRef, cameraEnabled }: VideoDisplayProps) {
+export function VideoDisplay({
+  videoRef,
+  canvasRef,
+  cameraEnabled,
+}: VideoDisplayProps) {
   return (
     <div className="relative w-full max-w-5xl mx-auto min-h-[400px] rounded-lg overflow-hidden flex items-center justify-center">
       {!cameraEnabled && (
@@ -34,4 +38,3 @@ export function VideoDisplay({ videoRef, canvasRef, cameraEnabled }: VideoDispla
     </div>
   );
 }
-

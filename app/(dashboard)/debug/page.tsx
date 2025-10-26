@@ -1,16 +1,23 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function DebugPage() {
   const router = useRouter();
 
   const showRegularToast = () => {
     toast("Regular Toast", {
-      description: "This is a regular Sonner toast notification with JetBrains Mono font.",
+      description:
+        "This is a regular Sonner toast notification with JetBrains Mono font.",
     });
   };
 
@@ -54,16 +61,16 @@ export default function DebugPage() {
           <div className="font-semibold">Shoplifting Incident</div>
         </div>
         <div className="text-sm text-muted-foreground line-clamp-2">
-          A person wearing a blue jacket is seen taking a product from the shelf and concealing it without paying.
+          A person wearing a blue jacket is seen taking a product from the shelf
+          and concealing it without paying.
         </div>
         <div className="flex items-center justify-between mt-1">
-          <span className="text-xs text-muted-foreground">
-            0:05
-          </span>
+          <span className="text-xs text-muted-foreground">0:05</span>
           <button
             onClick={() => {
               toast.info("View Video clicked!", {
-                description: "This would navigate to the video at the specified timestamp.",
+                description:
+                  "This would navigate to the video at the specified timestamp.",
               });
             }}
             className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
@@ -74,7 +81,7 @@ export default function DebugPage() {
       </div>,
       {
         duration: 8000,
-      }
+      },
     );
   };
 
@@ -91,13 +98,12 @@ export default function DebugPage() {
           Individual loitering near high-value merchandise for extended period.
         </div>
         <div className="flex items-center justify-between mt-1">
-          <span className="text-xs text-muted-foreground">
-            2:34
-          </span>
+          <span className="text-xs text-muted-foreground">2:34</span>
           <button
             onClick={() => {
               toast.info("View Video clicked!", {
-                description: "This would navigate to the video at the specified timestamp.",
+                description:
+                  "This would navigate to the video at the specified timestamp.",
               });
             }}
             className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
@@ -108,7 +114,7 @@ export default function DebugPage() {
       </div>,
       {
         duration: 8000,
-      }
+      },
     );
   };
 
@@ -127,7 +133,8 @@ export default function DebugPage() {
           <CardHeader>
             <CardTitle>Sonner Toast Notifications</CardTitle>
             <CardDescription>
-              Test different types of toast notifications with JetBrains Mono font
+              Test different types of toast notifications with JetBrains Mono
+              font
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -156,18 +163,24 @@ export default function DebugPage() {
             </div>
 
             <div className="border-t pt-4">
-              <h3 className="text-sm font-semibold mb-3">Critical Event Toasts</h3>
+              <h3 className="text-sm font-semibold mb-3">
+                Critical Event Toasts
+              </h3>
               <div className="flex flex-wrap gap-2">
                 <Button onClick={showCriticalEventToast} variant="destructive">
                   Critical Event (High)
                 </Button>
-                <Button onClick={showCriticalEventMediumSeverity} variant="default">
+                <Button
+                  onClick={showCriticalEventMediumSeverity}
+                  variant="default"
+                >
                   Critical Event (Medium)
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                These toasts simulate the critical event notifications with badge on the left of title
-                and "View Video" button in the bottom right.
+                These toasts simulate the critical event notifications with
+                badge on the left of title and "View Video" button in the bottom
+                right.
               </p>
             </div>
           </CardContent>
@@ -191,4 +204,3 @@ export default function DebugPage() {
     </div>
   );
 }
-

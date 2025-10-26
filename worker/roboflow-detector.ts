@@ -1,8 +1,13 @@
 import axios from "axios";
 import { extractFramesAtFps, type VideoFrame } from "./ffmpeg-frames.js";
-import type { RoboflowAnalysisResponse, ObjectDetection, Detection } from "./types.js";
+import type {
+  Detection,
+  ObjectDetection,
+  RoboflowAnalysisResponse,
+} from "./types.js";
 
-const ROBOFLOW_API_URL = "https://serverless.roboflow.com/person-detection-j44uo/1";
+const ROBOFLOW_API_URL =
+  "https://serverless.roboflow.com/person-detection-j44uo/1";
 const ROBOFLOW_API_KEY = process.env.ROBOFLOW_API_KEY;
 if (!ROBOFLOW_API_KEY) {
   throw new Error("ROBOFLOW_API_KEY environment variable is required");
@@ -37,7 +42,7 @@ async function detectFrame(frameBuffer: Buffer): Promise<Detection[]> {
       {
         params: { api_key: ROBOFLOW_API_KEY },
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      }
+      },
     );
 
     const { predictions, image } = response.data;
@@ -82,12 +87,16 @@ export async function analyzeVideoWithRoboflow(
   segmentStartTime: number = 0,
 ): Promise<RoboflowAnalysisResponse> {
   console.log(
-    `Starting Roboflow detection at ${FRAME_RATE} FPS (confidence threshold: ${CONFIDENCE_THRESHOLD}, segment offset: ${segmentStartTime}s)...`
+    `Starting Roboflow detection at ${FRAME_RATE} FPS (confidence threshold: ${CONFIDENCE_THRESHOLD}, segment offset: ${segmentStartTime}s)...`,
   );
 
-  const frames = await extractFramesAtFps(videoBuffer, FRAME_RATE, segmentStartTime);
+  const frames = await extractFramesAtFps(
+    videoBuffer,
+    FRAME_RATE,
+    segmentStartTime,
+  );
   console.log(
-    `Processing ${frames.length} frames (timestamps: ${frames[0]?.timestamp.toFixed(2)}s - ${frames[frames.length - 1]?.timestamp.toFixed(2)}s)...`
+    `Processing ${frames.length} frames (timestamps: ${frames[0]?.timestamp.toFixed(2)}s - ${frames[frames.length - 1]?.timestamp.toFixed(2)}s)...`,
   );
 
   const objectDetections: ObjectDetection[] = [];
@@ -113,7 +122,7 @@ export async function analyzeVideoWithRoboflow(
 
       if ((i + 1) % 25 === 0) {
         console.log(
-          `Processed ${i + 1}/${frames.length} frames (${framesWithDetections} with detections)`
+          `Processed ${i + 1}/${frames.length} frames (${framesWithDetections} with detections)`,
         );
       }
     } catch (error) {
@@ -123,7 +132,7 @@ export async function analyzeVideoWithRoboflow(
 
   const coveragePercent = (framesWithDetections / frames.length) * 100;
   console.log(
-    `Roboflow complete: ${totalDetections} detections in ${framesWithDetections}/${frames.length} frames (${coveragePercent.toFixed(1)}% coverage)`
+    `Roboflow complete: ${totalDetections} detections in ${framesWithDetections}/${frames.length} frames (${coveragePercent.toFixed(1)}% coverage)`,
   );
 
   return {
@@ -132,4 +141,3 @@ export async function analyzeVideoWithRoboflow(
     totalDetections,
   };
 }
-

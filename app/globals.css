@@ -144,6 +144,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   html {
     scroll-behavior: smooth;
   }
@@ -180,13 +181,14 @@
   ::-webkit-scrollbar-thumb:hover {
     background-color: color-mix(in oklab, var(--muted-foreground) 65%, transparent);
   }
-  
+
   body {
     @apply bg-background text-foreground font-sans;
   }
 
   @keyframes breathe {
-    0%, 100% {
+    0%,
+    100% {
       transform: scale(1);
       opacity: 0.6;
     }
@@ -302,7 +304,11 @@
     @apply focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:border-ring;
   }
 
-  .ProseMirror ul[data-type="taskList"] li > label > input[type="checkbox"]:checked {
+  .ProseMirror
+    ul[data-type="taskList"]
+    li
+    > label
+    > input[type="checkbox"]:checked {
     @apply bg-primary border-primary;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
     background-size: 80%;

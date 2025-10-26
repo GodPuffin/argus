@@ -3,13 +3,13 @@
  * Multimodal video analysis using Gemini with structured output
  */
 
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { generateObject } from "ai";
-import { GoogleGenAI } from "@google/genai";
-import { writeFile, unlink } from "node:fs/promises";
+import { randomBytes } from "node:crypto";
+import { unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { randomBytes } from "node:crypto";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { GoogleGenAI } from "@google/genai";
+import { generateObject } from "ai";
 import { z } from "zod";
 import type { GeminiAnalysisResponse } from "./types.js";
 
@@ -28,34 +28,61 @@ const google = createGoogleGenerativeAI({ apiKey: GEMINI_API_KEY });
 
 // Define structured output schema
 const analysisSchema = z.object({
-  summary: z.string().describe("A concise 2-3 sentence summary of what is happening in the video"),
+  summary: z
+    .string()
+    .describe(
+      "A concise 2-3 sentence summary of what is happening in the video",
+    ),
   tags: z.array(z.string()).max(10).describe("Relevant tags and keywords"),
-  entities: z.array(
-    z.object({
-      type: z.string().describe("Entity type: person, object, location, activity, etc."),
-      name: z.string().describe("Name or description of the entity"),
-      confidence: z.number().min(0).max(1).describe("Confidence score 0-1"),
-    }),
-  ).describe("Detected entities in the video"),
-  events: z.array(
-    z.object({
-      name: z.string().describe("Event name or title"),
-      description: z.string().describe("Detailed description of what happened"),
-      severity: z.enum(["Minor", "Medium", "High"]).describe("Severity level of the event"),
-      type: z.enum([
-        "Crime",
-        "Medical Emergency",
-        "Traffic Incident",
-        "Property Damage",
-        "Safety Hazard",
-        "Suspicious Activity",
-        "Normal Activity",
-        "Camera Interference",
-      ]).describe("Type/category of the event"),
-      timestamp_seconds: z.number().min(0).max(60).describe("When the event occurred in seconds from the start of this clip (0-60)"),
-      affected_entity_ids: z.array(z.number()).optional().describe("Optional array of entity indices (0-based) from the entities array that are involved in this event"),
-    }),
-  ).describe("Notable events or actions that occurred in the video"),
+  entities: z
+    .array(
+      z.object({
+        type: z
+          .string()
+          .describe("Entity type: person, object, location, activity, etc."),
+        name: z.string().describe("Name or description of the entity"),
+        confidence: z.number().min(0).max(1).describe("Confidence score 0-1"),
+      }),
+    )
+    .describe("Detected entities in the video"),
+  events: z
+    .array(
+      z.object({
+        name: z.string().describe("Event name or title"),
+        description: z
+          .string()
+          .describe("Detailed description of what happened"),
+        severity: z
+          .enum(["Minor", "Medium", "High"])
+          .describe("Severity level of the event"),
+        type: z
+          .enum([
+            "Crime",
+            "Medical Emergency",
+            "Traffic Incident",
+            "Property Damage",
+            "Safety Hazard",
+            "Suspicious Activity",
+            "Normal Activity",
+            "Camera Interference",
+          ])
+          .describe("Type/category of the event"),
+        timestamp_seconds: z
+          .number()
+          .min(0)
+          .max(60)
+          .describe(
+            "When the event occurred in seconds from the start of this clip (0-60)",
+          ),
+        affected_entity_ids: z
+          .array(z.number())
+          .optional()
+          .describe(
+            "Optional array of entity indices (0-based) from the entities array that are involved in this event",
+          ),
+      }),
+    )
+    .describe("Notable events or actions that occurred in the video"),
 });
 
 /**
@@ -83,7 +110,9 @@ async function uploadVideoToGemini(
       },
     });
 
-    console.log(`Video uploaded: ${uploadResult.displayName} as ${uploadResult.uri}`);
+    console.log(
+      `Video uploaded: ${uploadResult.displayName} as ${uploadResult.uri}`,
+    );
 
     // Wait for file to be processed
     let file = await genai.files.get({ name: uploadResult.name! });
@@ -189,4 +218,3 @@ Be natural and specific in your analysis, as if you are describing the video to 
     raw: object,
   };
 }
-

@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 const CAMERA_CONSTRAINTS = {
   audio: true,
@@ -96,7 +96,7 @@ export function useStreamManager(props: UseStreamManagerProps) {
       setCameraName(data.cameraName || "");
       setCameraId(data.cameraId || "");
       setEditNameValue(data.cameraName || "");
-      
+
       if (data.isExisting) {
         console.log("Reusing existing stream:", data);
       } else {
@@ -104,7 +104,7 @@ export function useStreamManager(props: UseStreamManagerProps) {
       }
     } catch (error) {
       // Ignore AbortError - this is expected when the request is cancelled
-      if (error instanceof Error && error.name === 'AbortError') {
+      if (error instanceof Error && error.name === "AbortError") {
         return;
       }
       console.error("Error creating stream:", error);
@@ -146,4 +146,3 @@ export function useStreamManager(props: UseStreamManagerProps) {
     getRecorderMimeType,
   };
 }
-

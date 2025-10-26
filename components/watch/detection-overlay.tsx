@@ -1,14 +1,14 @@
 /**
  * Detection Overlay Component
- * 
+ *
  * Renders bounding boxes over detected objects in video with smooth interpolation.
- * 
+ *
  * Key features:
  * - Smooth 60fps interpolation between sparse detection frames
  * - Binary search for efficient frame lookup
  * - Closest-match detection tracking across frames
  * - Configurable confidence threshold, persistence time, and fade effects
- * 
+ *
  * Performance notes:
  * - Designed to work with sparse detection data (e.g., 1 frame per second)
  * - Uses requestAnimationFrame for smooth updates (implemented in parent component)
@@ -16,7 +16,7 @@
  */
 
 import { useMemo } from "react";
-import type { DetectionFrame, Detection } from "@/lib/detection-queries";
+import type { Detection, DetectionFrame } from "@/lib/detection-queries";
 
 interface DetectionOverlayProps {
   detections: DetectionFrame[];
@@ -48,12 +48,13 @@ function smoothstep(t: number): number {
 function findMatchingDetection(
   sourceDetection: Detection,
   candidateDetections: Detection[],
-  confidenceThreshold: number
+  confidenceThreshold: number,
 ): Detection | null {
   if (candidateDetections.length === 0) return null;
 
   const sourceCenterX = sourceDetection.bbox.x + sourceDetection.bbox.width / 2;
-  const sourceCenterY = sourceDetection.bbox.y + sourceDetection.bbox.height / 2;
+  const sourceCenterY =
+    sourceDetection.bbox.y + sourceDetection.bbox.height / 2;
 
   let closestDetection: Detection | null = null;
   let minDistance = Infinity;
@@ -65,8 +66,8 @@ function findMatchingDetection(
     const candidateCenterY = candidate.bbox.y + candidate.bbox.height / 2;
 
     const distance = Math.sqrt(
-      Math.pow(candidateCenterX - sourceCenterX, 2) +
-      Math.pow(candidateCenterY - sourceCenterY, 2)
+      (candidateCenterX - sourceCenterX) ** 2 +
+        (candidateCenterY - sourceCenterY) ** 2,
     );
 
     if (distance < minDistance) {
@@ -85,9 +86,10 @@ function getCurrentDetections(
     confidenceThreshold: number;
     persistenceTime: number;
     interpolationEnabled: boolean;
-  }
+  },
 ): ProcessedDetection[] {
-  const { confidenceThreshold, persistenceTime, interpolationEnabled } = options;
+  const { confidenceThreshold, persistenceTime, interpolationEnabled } =
+    options;
 
   if (detections.length === 0) return [];
 
@@ -109,7 +111,8 @@ function getCurrentDetections(
   }
 
   const prevFrame = prevFrameIdx >= 0 ? detections[prevFrameIdx] : null;
-  const nextFrame = prevFrameIdx + 1 < detections.length ? detections[prevFrameIdx + 1] : null;
+  const nextFrame =
+    prevFrameIdx + 1 < detections.length ? detections[prevFrameIdx + 1] : null;
 
   // No frames available
   if (!prevFrame) {
@@ -118,8 +121,8 @@ function getCurrentDetections(
       const age = nextFrame.frame_timestamp - currentTime;
       if (age <= persistenceTime) {
         return nextFrame.detections
-          .filter(det => det.confidence >= confidenceThreshold)
-          .map(det => ({ ...det, age, persisted: false }));
+          .filter((det) => det.confidence >= confidenceThreshold)
+          .map((det) => ({ ...det, age, persisted: false }));
       }
     }
     return [];
@@ -129,7 +132,7 @@ function getCurrentDetections(
 
   // Filter detections by confidence
   const prevDetections = prevFrame.detections.filter(
-    det => det.confidence >= confidenceThreshold
+    (det) => det.confidence >= confidenceThreshold,
   );
 
   // No interpolation or no next frame - return previous frame detections with persistence
@@ -138,17 +141,17 @@ function getCurrentDetections(
     if (age > persistenceTime) {
       return [];
     }
-    return prevDetections.map(det => ({
+    return prevDetections.map((det) => ({
       ...det,
       age,
-      persisted: age > 0.1
+      persisted: age > 0.1,
     }));
   }
 
   // Interpolate between frames
   const timeDelta = nextFrame.frame_timestamp - prevFrame.frame_timestamp;
   if (timeDelta <= 0) {
-    return prevDetections.map(det => ({ ...det, age, persisted: false }));
+    return prevDetections.map((det) => ({ ...det, age, persisted: false }));
   }
 
   const t = (currentTime - prevFrame.frame_timestamp) / timeDelta;
@@ -165,7 +168,7 @@ function getCurrentDetections(
     const matchingNext = findMatchingDetection(
       prevDet,
       nextFrame.detections,
-      confidenceThreshold
+      confidenceThreshold,
     );
 
     // Create a unique key for this detection (include class and size to avoid collisions)
@@ -173,16 +176,15 @@ function getCurrentDetections(
 
     if (matchingNext) {
       activeDetectionKeys.add(detKey);
-      
+
       // Calculate distance between detections
       const prevCenterX = prevDet.bbox.x + prevDet.bbox.width / 2;
       const prevCenterY = prevDet.bbox.y + prevDet.bbox.height / 2;
       const nextCenterX = matchingNext.bbox.x + matchingNext.bbox.width / 2;
       const nextCenterY = matchingNext.bbox.y + matchingNext.bbox.height / 2;
-      
+
       const distance = Math.sqrt(
-        Math.pow(nextCenterX - prevCenterX, 2) +
-        Math.pow(nextCenterY - prevCenterY, 2)
+        (nextCenterX - prevCenterX) ** 2 + (nextCenterY - prevCenterY) ** 2,
       );
 
       // Only interpolate if detections are close enough
@@ -197,7 +199,11 @@ function getCurrentDetections(
 
         interpolatedDetections.push({
           class: prevDet.class,
-          confidence: lerp(prevDet.confidence, matchingNext.confidence, smoothT),
+          confidence: lerp(
+            prevDet.confidence,
+            matchingNext.confidence,
+            smoothT,
+          ),
           bbox: interpolatedBbox,
           age: 0,
           persisted: false,
@@ -211,7 +217,7 @@ function getCurrentDetections(
             persisted: true,
           });
         }
-        
+
         // If we're close to the next frame, show the next detection appearing
         if (smoothT > 0.5) {
           interpolatedDetections.push({
@@ -239,30 +245,34 @@ function getCurrentDetections(
   for (let i = prevFrameIdx - 1; i >= 0; i--) {
     const olderFrame = detections[i];
     const frameAge = currentTime - olderFrame.frame_timestamp;
-    
+
     // Stop once we're beyond persistence window
     if (frameAge > persistenceTime) break;
-    
+
     for (const olderDet of olderFrame.detections) {
       if (olderDet.confidence < confidenceThreshold) continue;
-      
+
       // Create key for this detection (include class and size to avoid collisions)
       const detKey = `${olderDet.class}-${Math.round(olderDet.bbox.x * 100)}-${Math.round(olderDet.bbox.y * 100)}-${Math.round(olderDet.bbox.width * 100)}-${Math.round(olderDet.bbox.height * 100)}`;
-      
+
       // Skip if we're already showing this detection from a more recent frame
       if (activeDetectionKeys.has(detKey)) continue;
-      
+
       // Check if this detection appears in any frame between this one and current
       let appearsInRecentFrame = false;
       for (let j = i + 1; j <= prevFrameIdx; j++) {
         const recentFrame = detections[j];
-        const match = findMatchingDetection(olderDet, recentFrame.detections, confidenceThreshold);
+        const match = findMatchingDetection(
+          olderDet,
+          recentFrame.detections,
+          confidenceThreshold,
+        );
         if (match) {
           appearsInRecentFrame = true;
           break;
         }
       }
-      
+
       // If it doesn't appear in recent frames, it's truly gone - show it fading
       if (!appearsInRecentFrame) {
         activeDetectionKeys.add(detKey);
@@ -278,7 +288,6 @@ function getCurrentDetections(
   return interpolatedDetections;
 }
 
-
 export function DetectionOverlay({
   detections,
   currentTime,
@@ -291,13 +300,20 @@ export function DetectionOverlay({
 }: DetectionOverlayProps) {
   const currentDetections = useMemo(() => {
     if (!enabled || detections.length === 0) return [];
-    
+
     return getCurrentDetections(detections, currentTime, {
       confidenceThreshold,
       persistenceTime,
       interpolationEnabled,
     });
-  }, [detections, currentTime, enabled, confidenceThreshold, persistenceTime, interpolationEnabled]);
+  }, [
+    detections,
+    currentTime,
+    enabled,
+    confidenceThreshold,
+    persistenceTime,
+    interpolationEnabled,
+  ]);
 
   if (!enabled || currentDetections.length === 0) {
     return null;
@@ -329,7 +345,7 @@ export function DetectionOverlay({
           // Fade from 1.0 to 0.0 over the persistence time
           const fadeProgress = Math.min(detection.age / persistenceTime, 1);
           // Apply easing for smooth fade (ease-out cubic)
-          const easedFade = 1 - Math.pow(fadeProgress, 2);
+          const easedFade = 1 - fadeProgress ** 2;
           opacity = easedFade;
         }
 
@@ -342,8 +358,8 @@ export function DetectionOverlay({
         const labelY = y - 6;
 
         // Use stable key based on detection properties (not index)
-        const detectionKey = `${detection.class}-${Math.round(detection.bbox.x * 1000)}-${Math.round(detection.bbox.y * 1000)}-${Math.round(detection.bbox.width * 1000)}-${Math.round(detection.bbox.height * 1000)}-${detection.persisted ? 'p' : 'a'}-${Math.round(detection.age * 100)}-${idx}`;
-        
+        const detectionKey = `${detection.class}-${Math.round(detection.bbox.x * 1000)}-${Math.round(detection.bbox.y * 1000)}-${Math.round(detection.bbox.width * 1000)}-${Math.round(detection.bbox.height * 1000)}-${detection.persisted ? "p" : "a"}-${Math.round(detection.age * 100)}-${idx}`;
+
         return (
           <g key={detectionKey} opacity={opacity}>
             {/* Bounding box */}
@@ -385,4 +401,3 @@ export function DetectionOverlay({
     </svg>
   );
 }
-

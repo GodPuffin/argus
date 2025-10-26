@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { supabase, type Camera } from "@/lib/supabase";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { useEffect, useState } from "react";
+import { type Camera, supabase } from "@/lib/supabase";
 
 /**
  * Hook to subscribe to realtime updates for a specific camera by browser ID
@@ -50,12 +50,15 @@ export function useCameraRealtime(browserId: string | null) {
         (payload) => {
           console.log("Camera realtime event:", payload);
 
-          if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+          if (
+            payload.eventType === "INSERT" ||
+            payload.eventType === "UPDATE"
+          ) {
             setCamera(payload.new as Camera);
           } else if (payload.eventType === "DELETE") {
             setCamera(null);
           }
-        }
+        },
       )
       .subscribe();
 
@@ -67,4 +70,3 @@ export function useCameraRealtime(browserId: string | null) {
 
   return camera;
 }
-

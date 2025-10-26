@@ -1,65 +1,85 @@
-"use client"
+"use client";
 
-import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card"
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts"
-import { ChartBackground } from "./chart-background"
-import { EVENT_TYPE_COLORS } from "@/lib/chart-colors"
+import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import {
+  LuxeCard as Card,
+  LuxeCardContent as CardContent,
+  LuxeCardDescription as CardDescription,
+  LuxeCardHeader as CardHeader,
+  LuxeCardTitle as CardTitle,
+} from "@/components/ui/luxe-card";
+import { EVENT_TYPE_COLORS } from "@/lib/chart-colors";
+import { ChartBackground } from "./chart-background";
 
 interface EventTypeChartProps {
-  data: Array<{ type: string; count: number }>
+  data: Array<{ type: string; count: number }>;
 }
 
 export function EventTypeChart({ data }: EventTypeChartProps) {
   const chartData = data.slice(0, 8).map((item, index) => ({
     type: item.type,
     count: item.count,
-    fill: EVENT_TYPE_COLORS[index % EVENT_TYPE_COLORS.length]
-  }))
-  
-  // Build chart config dynamically
-  const chartConfig = chartData.reduce((acc, item) => {
-    acc[item.type] = {
-      label: item.type,
-      color: item.fill
-    }
-    return acc
-  }, {} as Record<string, { label: string; color: string }>)
+    fill: EVENT_TYPE_COLORS[index % EVENT_TYPE_COLORS.length],
+  }));
 
-  const total = data.reduce((sum, item) => sum + item.count, 0)
+  // Build chart config dynamically
+  const chartConfig = chartData.reduce(
+    (acc, item) => {
+      acc[item.type] = {
+        label: item.type,
+        color: item.fill,
+      };
+      return acc;
+    },
+    {} as Record<string, { label: string; color: string }>,
+  );
+
+  const total = data.reduce((sum, item) => sum + item.count, 0);
 
   return (
     <Card variant="revealed-pointer">
       <CardHeader>
         <CardTitle>Event Types</CardTitle>
         <CardDescription>
-          {total > 0 ? `Distribution of ${total.toLocaleString()} events by type` : "No events yet"}
+          {total > 0
+            ? `Distribution of ${total.toLocaleString()} events by type`
+            : "No events yet"}
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-6">
         <ChartBackground>
           {chartData.length > 0 ? (
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <BarChart data={chartData} margin={{ left: 10, right: 10, bottom: 20 }}>
+              <BarChart
+                data={chartData}
+                margin={{ left: 10, right: 10, bottom: 20 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis 
-                  dataKey="type" 
+                <XAxis
+                  dataKey="type"
                   stroke="hsl(var(--muted-foreground))"
                   fontSize={12}
                   angle={-45}
                   textAnchor="end"
                   height={80}
                 />
-                <YAxis 
+                <YAxis
                   type="number"
                   stroke="hsl(var(--muted-foreground))"
                   fontSize={12}
                 />
-                <ChartTooltip 
-                  cursor={{ fill: 'hsl(var(--muted))' }}
-                  content={<ChartTooltipContent hideLabel />} 
+                <ChartTooltip
+                  cursor={{ fill: "hsl(var(--muted))" }}
+                  content={<ChartTooltipContent hideLabel />}
                 />
-                <Bar 
+                <Bar
                   dataKey="count"
                   radius={[4, 4, 0, 0]}
                   animationDuration={800}
@@ -79,6 +99,5 @@ export function EventTypeChart({ data }: EventTypeChartProps) {
         </ChartBackground>
       </CardContent>
     </Card>
-  )
+  );
 }
-

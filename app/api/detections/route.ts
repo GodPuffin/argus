@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { getDetectionsForSource } from "@/lib/detection-queries";
 
 /**
  * GET /api/detections
  * Fetch object detections for a video source
- * 
+ *
  * Query params:
  * - sourceId: Asset ID (required)
  * - startTime: Start time in seconds (optional)
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   if (!sourceId) {
     return NextResponse.json(
       { error: "sourceId is required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -35,8 +35,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching detections:", error);
     return NextResponse.json(
       { error: "Failed to fetch detections" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

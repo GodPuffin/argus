@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useRouter } from "next/navigation"
 import {
-  IconVideo,
-  IconPlayerPlay,
-  IconEye,
-  IconChartBar,
-  IconSearch,
-  IconMessageChatbot,
-  IconDatabase,
-  IconList,
   IconBug,
+  IconChartBar,
+  IconDatabase,
+  IconEye,
   IconFileText,
-} from "@tabler/icons-react"
+  IconList,
+  IconMessageChatbot,
+  IconPlayerPlay,
+  IconSearch,
+  IconVideo,
+} from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
+import * as React from "react";
 
 import {
   CommandDialog,
@@ -23,7 +23,7 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@/components/ui/command"
+} from "@/components/ui/command";
 
 const navigationItems = [
   {
@@ -86,28 +86,28 @@ const navigationItems = [
       },
     ],
   },
-]
+];
 
 export function CommandMenu() {
-  const [open, setOpen] = React.useState(false)
-  const router = useRouter()
+  const [open, setOpen] = React.useState(false);
+  const router = useRouter();
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        setOpen((open) => !open)
+        e.preventDefault();
+        setOpen((open) => !open);
       }
-    }
+    };
 
-    document.addEventListener("keydown", down)
-    return () => document.removeEventListener("keydown", down)
-  }, [])
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
 
   const handleSelect = (url: string) => {
-    setOpen(false)
-    router.push(url)
-  }
+    setOpen(false);
+    router.push(url);
+  };
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
@@ -119,7 +119,7 @@ export function CommandMenu() {
             {idx > 0 && <CommandSeparator />}
             <CommandGroup heading={section.group}>
               {section.items.map((item) => {
-                const Icon = item.icon
+                const Icon = item.icon;
                 return (
                   <CommandItem
                     key={item.url}
@@ -129,13 +129,12 @@ export function CommandMenu() {
                     <Icon className="mr-2 h-4 w-4" />
                     <span>{item.title}</span>
                   </CommandItem>
-                )
+                );
               })}
             </CommandGroup>
           </React.Fragment>
         ))}
       </CommandList>
     </CommandDialog>
-  )
+  );
 }
-

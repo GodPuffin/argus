@@ -1,26 +1,26 @@
-import * as React from "react"
+import * as React from "react";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
-  const [isFocused, setIsFocused] = React.useState(false)
-  const [hasValue, setHasValue] = React.useState(false)
+  const [isFocused, setIsFocused] = React.useState(false);
+  const [hasValue, setHasValue] = React.useState(false);
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    setIsFocused(true)
-    props.onFocus?.(e)
-  }
+    setIsFocused(true);
+    props.onFocus?.(e);
+  };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    setIsFocused(false)
-    setHasValue(e.target.value.length > 0)
-    props.onBlur?.(e)
-  }
+    setIsFocused(false);
+    setHasValue(e.target.value.length > 0);
+    props.onBlur?.(e);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setHasValue(e.target.value.length > 0)
-    props.onChange?.(e)
-  }
+    setHasValue(e.target.value.length > 0);
+    props.onChange?.(e);
+  };
 
   return (
     <div className="relative w-full">
@@ -50,7 +50,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
           "hover:border-ring/50 hover:shadow-sm",
           // Smooth shadow transitions
           "shadow-xs transition-[color,box-shadow,border-color,transform] duration-300",
-          className
+          className,
         )}
         onFocus={handleFocus}
         onBlur={handleBlur}
@@ -61,11 +61,11 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       <div
         className={cn(
           "pointer-events-none absolute bottom-0 left-0 h-[2px] w-full origin-center scale-x-0 bg-gradient-to-r from-ring/50 via-ring to-ring/50 transition-transform duration-300 ease-out",
-          isFocused && "scale-x-100"
+          isFocused && "scale-x-100",
         )}
       />
     </div>
-  )
+  );
 }
 
-export { Input }
+export { Input };

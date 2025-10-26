@@ -1,8 +1,8 @@
 "use client";
 
-import { CameraCard } from "./camera-card";
-import { type Camera } from "@/lib/supabase";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import type { Camera } from "@/lib/supabase";
+import { CameraCard } from "./camera-card";
 
 interface CameraGridProps {
   cameras: Camera[];
@@ -11,11 +11,18 @@ interface CameraGridProps {
   onDelete: (id: string) => Promise<void>;
 }
 
-export function CameraGrid({ cameras, loading, onRename, onDelete }: CameraGridProps) {
+export function CameraGrid({
+  cameras,
+  loading,
+  onRename,
+  onDelete,
+}: CameraGridProps) {
   if (loading) {
     return (
       <div className="text-center py-12">
-        <div className="animate-pulse text-muted-foreground">Loading cameras...</div>
+        <div className="animate-pulse text-muted-foreground">
+          Loading cameras...
+        </div>
       </div>
     );
   }
@@ -41,8 +48,12 @@ export function CameraGrid({ cameras, loading, onRename, onDelete }: CameraGridP
   const sortedCameras = [...cameras].sort((a, b) => {
     if (a.status === "active" && b.status !== "active") return -1;
     if (a.status !== "active" && b.status === "active") return 1;
-    const aTime = a.last_connected_at ? new Date(a.last_connected_at).getTime() : 0;
-    const bTime = b.last_connected_at ? new Date(b.last_connected_at).getTime() : 0;
+    const aTime = a.last_connected_at
+      ? new Date(a.last_connected_at).getTime()
+      : 0;
+    const bTime = b.last_connected_at
+      ? new Date(b.last_connected_at).getTime()
+      : 0;
     return bTime - aTime;
   });
 
@@ -51,7 +62,8 @@ export function CameraGrid({ cameras, loading, onRename, onDelete }: CameraGridP
       <div className="mb-4 flex-shrink-0">
         <h2 className="text-2xl font-bold">Live Cameras</h2>
         <p className="text-sm text-muted-foreground">
-          {cameras.filter(c => c.status === "active").length} of {cameras.length} cameras streaming
+          {cameras.filter((c) => c.status === "active").length} of{" "}
+          {cameras.length} cameras streaming
         </p>
       </div>
 
@@ -70,4 +82,3 @@ export function CameraGrid({ cameras, loading, onRename, onDelete }: CameraGridP
     </div>
   );
 }
-

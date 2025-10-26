@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
 const MUX_TOKEN_ID = process.env.MUX_TOKEN_ID;
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
 
     // Wait for the Mux webhook to create the live_streams record using realtime
     console.log("Waiting for webhook to sync stream:", streamId);
-    
+
     const streamReady = await new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         cleanup();
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
             console.log("Stream synced via webhook:", streamId);
             cleanup();
             resolve(true);
-          }
+          },
         )
         .subscribe();
 
@@ -146,7 +146,10 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (updateError || !updatedStream) {
-      console.error("Failed to update live stream with camera info:", updateError);
+      console.error(
+        "Failed to update live stream with camera info:",
+        updateError,
+      );
       // Fallback: return Mux data if update somehow fails
       return NextResponse.json({
         streamKey: data.data.stream_key,

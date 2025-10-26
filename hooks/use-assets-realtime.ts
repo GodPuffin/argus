@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { supabase, type Asset } from "@/lib/supabase";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { useEffect, useState } from "react";
+import { type Asset, supabase } from "@/lib/supabase";
 
 export function useAssetsRealtime() {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -49,15 +49,15 @@ export function useAssetsRealtime() {
             const updatedAsset = payload.new as Asset;
             setAssets((current) =>
               current.map((asset) =>
-                asset.id === updatedAsset.id ? updatedAsset : asset
-              )
+                asset.id === updatedAsset.id ? updatedAsset : asset,
+              ),
             );
           } else if (payload.eventType === "DELETE") {
             setAssets((current) =>
-              current.filter((asset) => asset.id !== payload.old.id)
+              current.filter((asset) => asset.id !== payload.old.id),
             );
           }
-        }
+        },
       )
       .subscribe();
 
@@ -69,4 +69,3 @@ export function useAssetsRealtime() {
 
   return { assets, loading, error };
 }
-

@@ -1,13 +1,23 @@
-"use client"
+"use client";
 
-import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts"
-import { TrendingUp } from "lucide-react"
-import { ChartBackground } from "./chart-background"
+import { TrendingUp } from "lucide-react";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import {
+  LuxeCard as Card,
+  LuxeCardContent as CardContent,
+  LuxeCardDescription as CardDescription,
+  LuxeCardHeader as CardHeader,
+  LuxeCardTitle as CardTitle,
+} from "@/components/ui/luxe-card";
+import { ChartBackground } from "./chart-background";
 
 interface EventTimelineChartProps {
-  data: Array<{ date: string; count: number }>
+  data: Array<{ date: string; count: number }>;
 }
 
 const chartConfig = {
@@ -15,24 +25,25 @@ const chartConfig = {
     label: "Events",
     color: "hsl(0, 80%, 60%)",
   },
-}
+};
 
 export function EventTimelineChart({ data }: EventTimelineChartProps) {
-  const chartData = data.map(item => ({
+  const chartData = data.map((item) => ({
     ...item,
-    date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-  }))
+    date: new Date(item.date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    }),
+  }));
 
-  const total = data.reduce((sum, item) => sum + item.count, 0)
-  const avgPerDay = data.length > 0 ? (total / data.length).toFixed(1) : '0'
+  const total = data.reduce((sum, item) => sum + item.count, 0);
+  const avgPerDay = data.length > 0 ? (total / data.length).toFixed(1) : "0";
 
   return (
     <Card variant="revealed-pointer">
       <CardHeader>
         <CardTitle>Event Timeline</CardTitle>
-        <CardDescription>
-          Daily event detection trends
-        </CardDescription>
+        <CardDescription>Daily event detection trends</CardDescription>
       </CardHeader>
       <CardContent className="pb-6">
         <ChartBackground>
@@ -41,7 +52,13 @@ export function EventTimelineChart({ data }: EventTimelineChartProps) {
               <ChartContainer config={chartConfig} className="h-[300px] w-full">
                 <AreaChart data={chartData} margin={{ left: 0, right: 10 }}>
                   <defs>
-                    <linearGradient id="fillEventCount" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="fillEventCount"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop
                         offset="5%"
                         stopColor={chartConfig.count.color}
@@ -55,15 +72,12 @@ export function EventTimelineChart({ data }: EventTimelineChartProps) {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                  <XAxis 
-                    dataKey="date" 
+                  <XAxis
+                    dataKey="date"
                     stroke="hsl(var(--muted-foreground))"
                     fontSize={12}
                   />
-                  <YAxis 
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                  />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Area
                     type="monotone"
@@ -91,6 +105,5 @@ export function EventTimelineChart({ data }: EventTimelineChartProps) {
         </ChartBackground>
       </CardContent>
     </Card>
-  )
+  );
 }
-

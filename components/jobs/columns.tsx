@@ -1,12 +1,15 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Eye, MoreHorizontal, Copy } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { AIAnalysisJob } from "@/lib/supabase";
+import {
+  IconExclamationCircle,
+  IconReportAnalytics,
+} from "@tabler/icons-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { ArrowUpDown, Copy, Eye, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
-import { IconExclamationCircle, IconReportAnalytics } from "@tabler/icons-react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,10 +18,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { toast } from "sonner";
+import type { AIAnalysisJob } from "@/lib/supabase";
 
 function getStatusVariant(
-  status: AIAnalysisJob["status"]
+  status: AIAnalysisJob["status"],
 ): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
     case "succeeded":
@@ -46,7 +49,11 @@ function formatTimestamp(timestamp: string): string {
   });
 }
 
-function formatDuration(startEpoch: number, endEpoch: number, sourceType: string): string {
+function formatDuration(
+  startEpoch: number,
+  endEpoch: number,
+  sourceType: string,
+): string {
   if (sourceType === "vod") {
     // For VOD, these are relative seconds
     return `${startEpoch}s - ${endEpoch}s`;
@@ -72,7 +79,9 @@ export const columns: ColumnDef<AIAnalysisJob>[] = [
         </Button>
       );
     },
-    cell: ({ row }) => <div className="font-mono text-sm">#{row.getValue("id")}</div>,
+    cell: ({ row }) => (
+      <div className="font-mono text-sm">#{row.getValue("id")}</div>
+    ),
   },
   {
     accessorKey: "status",
@@ -121,7 +130,10 @@ export const columns: ColumnDef<AIAnalysisJob>[] = [
     cell: ({ row }) => {
       const sourceId = row.getValue("source_id") as string;
       return (
-        <div className="font-mono text-xs max-w-[150px] truncate" title={sourceId}>
+        <div
+          className="font-mono text-xs max-w-[150px] truncate"
+          title={sourceId}
+        >
           {sourceId}
         </div>
       );
@@ -158,7 +170,9 @@ export const columns: ColumnDef<AIAnalysisJob>[] = [
     cell: ({ row }) => {
       const attempts = row.getValue("attempts") as number;
       return (
-        <div className={`text-center ${attempts > 1 ? "text-yellow-600 dark:text-yellow-500 font-semibold" : ""}`}>
+        <div
+          className={`text-center ${attempts > 1 ? "text-yellow-600 dark:text-yellow-500 font-semibold" : ""}`}
+        >
           {attempts}
         </div>
       );
@@ -262,14 +276,22 @@ export const columns: ColumnDef<AIAnalysisJob>[] = [
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <a href={`/watch/${sourceId}?timestamp=${startSeconds}`} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={`/watch/${sourceId}?timestamp=${startSeconds}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <Eye className="h-4 w-4" />
                   Open in New Tab
                 </a>
               </DropdownMenuItem>
               {job.status === "succeeded" && job.result_ref && (
                 <DropdownMenuItem asChild>
-                  <a href={`/api/ai-analysis/results/${sourceId}`} target="_blank" rel="noopener noreferrer">
+                  <a
+                    href={`/api/ai-analysis/results/${sourceId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <IconReportAnalytics className="h-4 w-4" />
                     View Results API
                   </a>
@@ -282,4 +304,3 @@ export const columns: ColumnDef<AIAnalysisJob>[] = [
     },
   },
 ];
-
