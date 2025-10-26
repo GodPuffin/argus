@@ -444,24 +444,29 @@ async function getDetectionsTimeline(timeRange: TimeRange | null) {
  * Get occupancy data (people count over time)
  */
 async function getOccupancyData(timeRange: TimeRange | null) {
+  // Get the most recent detections, ordered by created_at DESC, then take the latest 100
   let query = supabase
     .from("ai_object_detections")
-    .select("frame_timestamp, detections, created_at")
-    .order("frame_timestamp");
+    .select("created_at, detections")
+    .order("created_at", { ascending: false })
+    .limit(100);
   
   if (timeRange) {
     query = query.gte("created_at", timeRange.start.toISOString());
   }
   
-  const { data, error } = await query.limit(1000);
+  const { data, error } = await query;
   
   if (error) {
     console.error("Error fetching occupancy data:", error);
     return [];
   }
   
-  return (data || []).map((frame) => ({
-    timestamp: frame.frame_timestamp,
+  // Reverse to get chronological order for the chart
+  const chronologicalData = (data || []).reverse();
+  
+  return chronologicalData.map((frame) => ({
+    timestamp: new Date(frame.created_at).getTime() / 1000, // Convert to Unix timestamp in seconds
     count: (frame.detections || []).filter((d: any) => d.class === "person").length,
   }));
 }
