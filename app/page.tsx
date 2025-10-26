@@ -17,7 +17,6 @@ import { BrowserComponent } from "@/components/browser-component";
 import { FeaturesAlternating } from "@/components/features-alternating";
 import { ModelsSection } from "@/components/models-section";
 import { SiteFooter } from "@/components/site-footer";
-import { Separator } from "@/components/ui/separator";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
