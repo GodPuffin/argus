@@ -5,14 +5,13 @@ import ScrambleHover from "@/components/fancy/text/scramble-hover";
 import { Badge } from "@/components/ui/badge";
 
 const aiModels = [
+  "Letta Stateful Agent",
+  "Elasticsearch Agent",
+  "Groq Kimi K2 Instruct",
   "Gemini 2.5 Pro",
   "Claude 4.5 Haiku",
   "Claude 4.5 Sonnet",
-  "Kimi K2 Instruct",
-  "Letta Stateful Agent",
-  "Elasticsearch Agent",
   "Roboflow 3.0 Object Detection",
-
 ];
 
 export function ModelsSection() {

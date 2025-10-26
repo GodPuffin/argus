@@ -16,6 +16,8 @@ import Dither from "@/components/dither";
 import { BrowserComponent } from "@/components/browser-component";
 import { FeaturesAlternating } from "@/components/features-alternating";
 import { ModelsSection } from "@/components/models-section";
+import { SiteFooter } from "@/components/site-footer";
+import { Separator } from "@/components/ui/separator";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
@@ -167,21 +169,19 @@ export default function Home() {
         </div>
       )}
 
-      {/* Dither background - covers entire page */}
       <div className="fixed inset-0 z-0">
         <Dither
-          waveColor={[0.18, 0.08, 0.08]}
+          waveColor={[0.15, 0.03, 0.03]}
           disableAnimation={false}
           enableMouseInteraction={false}
           mouseRadius={1}
           colorNum={4}
-          waveAmplitude={0.1}
+          waveAmplitude={0.3}
           waveFrequency={1}
           waveSpeed={0.05}
         />
       </div>
 
-      {/* Navigation Menu */}
       <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-center p-4 ">
         <NavigationMenu>
           <NavigationMenuList>
@@ -189,19 +189,20 @@ export default function Home() {
               <NavigationMenuLink href="#overview">Overview</NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
+              <NavigationMenuLink href="#models">Models</NavigationMenuLink>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
               <NavigationMenuLink href="#features">Features</NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <NavigationMenuLink href="#contact">Contact</NavigationMenuLink>
+              <NavigationMenuLink href="/watch">Dashboard</NavigationMenuLink>
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
       </div>
 
-      {/* Main Content */}
-      <main className="w-full min-h-screen flex items-center justify-between overflow-hidden relative [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <main id="overview" className="w-full min-h-screen flex items-center justify-between overflow-hidden relative [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-mt-24">
 
-        {/* Left side - Main content */}
         <div className="z-10 ml-0 w-1/3 flex items-start justify-center relative pointer-events-none ">
           <div className="text-left">
             <h1 className="text-7xl mt-0 font-bold mb-4 pb-4">ARGUS</h1>
@@ -211,7 +212,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Right side - ASCII Eye */}
         <div className="z-10 mt-10 w-1/2 h-full flex items-center justify-center relative pointer-events-none">
           <div className="w-full h-full flex items-center justify-center ">
             <AsciiEye />
@@ -219,8 +219,15 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Features Section */}
-      <section id="features" className="w-full py-20 relative z-10">
+      <section id="models" className="w-full py-20 relative z-10 scroll-mt-24">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-6 text-foreground">Technology for the Future  </h2>
+          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">Argus is built on the latest and greatest technologies to deliver the best possible experience for you and your team.</p>
+          <ModelsSection />
+        </div>
+      </section>
+
+      <section id="features" className="w-full py-20 relative z-10 scroll-mt-24">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-4 text-foreground">Features</h2>
           <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
@@ -230,14 +237,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* AI Models Section */}
-      <section id="models" className="w-full py-20 relative z-10">
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-6 text-foreground">Technology for the Future  </h2>
-          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">Argus is built on the latest and greatest technologies to deliver the best possible experience for you and your team.</p>
-          <ModelsSection />
-        </div>
-      </section>
+      <SiteFooter />
     </>
   );
 }
