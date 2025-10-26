@@ -9,8 +9,8 @@ import { getCriticalEvents } from "@/lib/ai-analysis-queries";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = searchParams.get("limit") 
-      ? Number.parseInt(searchParams.get("limit")!, 10) 
+    const limit = searchParams.get("limit")
+      ? Number.parseInt(searchParams.get("limit")!, 10)
       : 20;
 
     const events = await getCriticalEvents(limit);
@@ -19,8 +19,7 @@ export async function GET(request: Request) {
     console.error("Error fetching critical events:", error);
     return NextResponse.json(
       { error: "Failed to fetch critical events" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

@@ -184,4 +184,3 @@ export function buildSignedStoryboardUrl(
   });
   return `https://image.mux.com/${playbackId}/storyboard.vtt?token=${token}`;
 }
-

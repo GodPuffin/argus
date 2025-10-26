@@ -1,22 +1,21 @@
-"use client"
+"use client";
 
-import * as React from "react"
 import {
-  IconVideo,
-  IconPlayerPlay,
-  IconEye,
-  IconChartBar,
-  IconSearch,
-  IconMessageChatbot,
-  IconDatabase,
-  IconList,
   IconBug,
+  IconChartBar,
+  IconDatabase,
+  IconEye,
   IconFileText,
-} from "@tabler/icons-react"
-
-import { NavMain } from "@/components/nav-main"
-import { UserNav } from "@/components/user-nav"
-import { ModeToggle } from "@/components/mode-toggle"
+  IconList,
+  IconMessageChatbot,
+  IconPlayerPlay,
+  IconSearch,
+  IconVideo,
+} from "@tabler/icons-react";
+import type * as React from "react";
+import { ModeToggle } from "@/components/mode-toggle";
+import { NavMain } from "@/components/nav-main";
+import { Separator } from "@/components/ui/separator";
 import {
   Sidebar,
   SidebarContent,
@@ -25,8 +24,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/sidebar";
+import { UserNav } from "@/components/user-nav";
 
 const data = {
   navMain: [
@@ -91,7 +90,7 @@ const data = {
       ],
     },
   ],
-}
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -125,5 +124,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <UserNav />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

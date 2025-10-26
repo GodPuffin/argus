@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useRef } from "react";
-import type { AIAnalysisEvent } from "@/lib/supabase";
+import { useRef, useState } from "react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import type { AIAnalysisEvent } from "@/lib/supabase";
 
 interface EventTimelineProps {
   events: AIAnalysisEvent[];
@@ -20,7 +20,12 @@ interface EventTimelineProps {
  * Interactive timeline scrubber with event markers
  * Click or drag to seek through video, hover events for details
  */
-export function EventTimeline({ events, duration, currentTime, onSeek }: EventTimelineProps) {
+export function EventTimeline({
+  events,
+  duration,
+  currentTime,
+  onSeek,
+}: EventTimelineProps) {
   const [hoveredEvent, setHoveredEvent] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -31,9 +36,12 @@ export function EventTimeline({ events, duration, currentTime, onSeek }: EventTi
 
   const handleSeekFromPosition = (clientX: number) => {
     if (!timelineRef.current) return;
-    
+
     const rect = timelineRef.current.getBoundingClientRect();
-    const percentage = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const percentage = Math.max(
+      0,
+      Math.min(1, (clientX - rect.left) / rect.width),
+    );
     const newTime = percentage * duration;
     onSeek(newTime);
   };
@@ -71,7 +79,7 @@ export function EventTimeline({ events, duration, currentTime, onSeek }: EventTi
       >
         {/* Background track */}
         <div className="absolute inset-0 bg-muted/30 rounded-md" />
-        
+
         {/* Progress bar */}
         <div
           className="absolute left-0 top-0 bottom-0 bg-primary/40 rounded-md transition-all"
@@ -107,7 +115,9 @@ export function EventTimeline({ events, duration, currentTime, onSeek }: EventTi
                   <TooltipContent side="top" className="max-w-xs">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs font-semibold ${getTextColor(event.severity)}`}>
+                        <span
+                          className={`text-xs font-semibold ${getTextColor(event.severity)}`}
+                        >
                           {event.severity.toUpperCase()}
                         </span>
                         <span className="text-xs text-muted-foreground">
@@ -115,7 +125,9 @@ export function EventTimeline({ events, duration, currentTime, onSeek }: EventTi
                         </span>
                       </div>
                       <div className="font-semibold">{event.name}</div>
-                      <div className="text-xs text-muted-foreground">{event.type}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {event.type}
+                      </div>
                       {event.description && (
                         <div className="text-xs mt-1">{event.description}</div>
                       )}
@@ -130,7 +142,10 @@ export function EventTimeline({ events, duration, currentTime, onSeek }: EventTi
         {/* Playhead thumb - on top of everything */}
         <div
           className="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-3 h-8 bg-primary rounded-sm shadow-lg z-30 transition-transform group-hover:scale-110"
-          style={{ left: `${(currentTime / duration) * 100}%`, marginLeft: '-2px' }}
+          style={{
+            left: `${(currentTime / duration) * 100}%`,
+            marginLeft: "-2px",
+          }}
         />
       </div>
     </div>
@@ -160,4 +175,3 @@ function formatTimestamp(seconds: number): string {
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
-

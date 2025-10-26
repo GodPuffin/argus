@@ -35,7 +35,15 @@ export interface AnalysisEvent {
   name: string;
   description: string;
   severity: "Minor" | "Medium" | "High";
-  type: "Crime" | "Medical Emergency" | "Traffic Incident" | "Property Damage" | "Safety Hazard" | "Suspicious Activity" | "Normal Activity" | "Camera Interference";
+  type:
+    | "Crime"
+    | "Medical Emergency"
+    | "Traffic Incident"
+    | "Property Damage"
+    | "Safety Hazard"
+    | "Suspicious Activity"
+    | "Normal Activity"
+    | "Camera Interference";
   timestamp_seconds: number;
   affected_entities: any[];
   created_at: string;
@@ -242,9 +250,9 @@ export async function retryJob(jobId: number) {
 /**
  * Get aggregate tags across all results
  */
-export async function getPopularTags(limit = 20): Promise<
-  Array<{ tag: string; count: number }>
-> {
+export async function getPopularTags(
+  limit = 20,
+): Promise<Array<{ tag: string; count: number }>> {
   // Note: This requires a custom SQL query for efficiency
   // Using RPC or a view would be more performant
   const { data, error } = await supabase
@@ -388,4 +396,3 @@ export async function getCriticalEvents(limit = 20): Promise<AnalysisEvent[]> {
 
   return data || [];
 }
-

@@ -20,7 +20,8 @@ const eventTypeEnum = z.enum([
  * Use this when you already have event data from search results
  */
 export const displayEvent = tool({
-  description: "Display a video event with its details as an interactive card that users can click to watch the video at that moment",
+  description:
+    "Display a video event with its details as an interactive card that users can click to watch the video at that moment",
   inputSchema: z.object({
     asset_id: z.string().describe("The video asset ID"),
     event_id: z.number().describe("The event ID"),
@@ -28,10 +29,15 @@ export const displayEvent = tool({
     description: z.string().describe("Event description"),
     severity: eventSeverityEnum.describe("Event severity level"),
     type: eventTypeEnum.describe("Event type category"),
-    timestamp_seconds: z.number().describe("When the event occurred in seconds from video start"),
-    affected_entities: z.array(z.any()).optional().describe("Optional array of entities involved in the event"),
+    timestamp_seconds: z
+      .number()
+      .describe("When the event occurred in seconds from video start"),
+    affected_entities: z
+      .array(z.any())
+      .optional()
+      .describe("Optional array of entities involved in the event"),
   }),
-  execute: async function ({
+  execute: async ({
     asset_id,
     event_id,
     name,
@@ -40,7 +46,7 @@ export const displayEvent = tool({
     type,
     timestamp_seconds,
     affected_entities,
-  }) {
+  }) => {
     // Passthrough - return data as-is for UI rendering
     return {
       asset_id,
@@ -60,11 +66,12 @@ export const displayEvent = tool({
  * Use this when you only have an event ID
  */
 export const displayEventById = tool({
-  description: "Display a video event by fetching it from the database using its ID. Returns an interactive card that users can click to watch the video at that moment.",
+  description:
+    "Display a video event by fetching it from the database using its ID. Returns an interactive card that users can click to watch the video at that moment.",
   inputSchema: z.object({
     event_id: z.number().describe("The event ID to fetch and display"),
   }),
-  execute: async function ({ event_id }) {
+  execute: async ({ event_id }) => {
     // Fetch event from database
     const { data: event, error } = await supabase
       .from("ai_analysis_events")
@@ -99,11 +106,12 @@ export const displayEventById = tool({
  * Use this when you want to show a video player for an asset
  */
 export const displayAsset = tool({
-  description: "Display a video asset inline with a player and controls. Shows the video in the chat with an option to open the full viewer. Use this when you want to show a user a specific video recording.",
+  description:
+    "Display a video asset inline with a player and controls. Shows the video in the chat with an option to open the full viewer. Use this when you want to show a user a specific video recording.",
   inputSchema: z.object({
     asset_id: z.string().describe("The video asset ID to display"),
   }),
-  execute: async function ({ asset_id }) {
+  execute: async ({ asset_id }) => {
     // Passthrough - return data as-is for UI rendering
     return {
       asset_id,
@@ -116,12 +124,17 @@ export const displayAsset = tool({
  * Use this to create documentation or analysis reports with markdown content
  */
 export const createReport = tool({
-  description: "Create a new report with the given title and markdown content. Use this to generate documentation, analysis summaries, or investigation reports. The report will be saved and a preview link will be shown to the user.",
+  description:
+    "Create a new report with the given title and markdown content. Use this to generate documentation, analysis summaries, or investigation reports. The report will be saved and a preview link will be shown to the user.",
   inputSchema: z.object({
     title: z.string().describe("The title of the report"),
-    markdown: z.string().describe("The markdown content for the report. Use proper markdown formatting with headings, lists, bold/italic text, etc."),
+    markdown: z
+      .string()
+      .describe(
+        "The markdown content for the report. Use proper markdown formatting with headings, lists, bold/italic text, etc.",
+      ),
   }),
-  execute: async function ({ title, markdown }) {
+  execute: async ({ title, markdown }) => {
     // Import required modules
     const { marked } = await import("marked");
     const { generateJSON } = await import("@tiptap/html");
@@ -131,7 +144,7 @@ export const createReport = tool({
     const TaskList = (await import("@tiptap/extension-task-list")).default;
     const TaskItem = (await import("@tiptap/extension-task-item")).default;
     const ListItem = (await import("@tiptap/extension-list-item")).default;
-    
+
     // Convert markdown to HTML first
     let content = { type: "doc", content: [{ type: "paragraph" }] };
     try {
@@ -140,9 +153,9 @@ export const createReport = tool({
         breaks: true,
         gfm: true,
       });
-      
+
       const html = await marked(markdown);
-      
+
       // Convert HTML to Tiptap JSON with all extensions
       content = generateJSON(html, [
         StarterKit.configure({
@@ -159,13 +172,17 @@ export const createReport = tool({
       // If conversion fails, create a simple paragraph with the markdown text
       content = {
         type: "doc",
-        content: [{
-          type: "paragraph",
-          content: [{
-            type: "text",
-            text: markdown
-          }]
-        }]
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              {
+                type: "text",
+                text: markdown,
+              },
+            ],
+          },
+        ],
       };
     }
 
@@ -198,4 +215,3 @@ export const aiTools = {
   displayAsset,
   createReport,
 };
-

@@ -1,17 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  IconClock,
+  IconHistory,
+  IconPlus,
+  IconTrash,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { listChats, deleteChat } from "@/lib/chat-store";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { useEffect, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,22 +21,37 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { IconPlus, IconClock, IconHistory, IconTrash } from "@tabler/icons-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { deleteChat, listChats } from "@/lib/chat-store";
 
 interface ChatHistoryDropdownProps {
   currentChatId?: string;
 }
 
-export function ChatHistoryDropdown({ currentChatId }: ChatHistoryDropdownProps) {
+export function ChatHistoryDropdown({
+  currentChatId,
+}: ChatHistoryDropdownProps) {
   const router = useRouter();
-  const [chats, setChats] = useState<Array<{
-    id: string;
-    title: string;
-    updated_at: string;
-  }>>([]);
+  const [chats, setChats] = useState<
+    Array<{
+      id: string;
+      title: string;
+      updated_at: string;
+    }>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [chatToDelete, setChatToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [chatToDelete, setChatToDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   useEffect(() => {
     loadChats();
@@ -56,7 +68,11 @@ export function ChatHistoryDropdown({ currentChatId }: ChatHistoryDropdownProps)
     }
   };
 
-  const handleDeleteClick = (chatId: string, title: string, e: React.MouseEvent) => {
+  const handleDeleteClick = (
+    chatId: string,
+    title: string,
+    e: React.MouseEvent,
+  ) => {
     e.preventDefault();
     e.stopPropagation();
     setChatToDelete({ id: chatId, title });
@@ -65,13 +81,13 @@ export function ChatHistoryDropdown({ currentChatId }: ChatHistoryDropdownProps)
 
   const handleDeleteConfirm = async () => {
     if (!chatToDelete) return;
-    
+
     try {
       await deleteChat(chatToDelete.id);
-      setChats(chats.filter(c => c.id !== chatToDelete.id));
+      setChats(chats.filter((c) => c.id !== chatToDelete.id));
       setDeleteDialogOpen(false);
       setChatToDelete(null);
-      
+
       // If deleting current chat, redirect to new chat
       if (chatToDelete.id === currentChatId) {
         router.push("/ai-chat");
@@ -93,7 +109,7 @@ export function ChatHistoryDropdown({ currentChatId }: ChatHistoryDropdownProps)
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
-    
+
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
@@ -109,17 +125,20 @@ export function ChatHistoryDropdown({ currentChatId }: ChatHistoryDropdownProps)
         <DropdownMenuContent align="end" className="w-80">
           <DropdownMenuLabel>Chat History</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          
+
           {/* New Chat Button */}
           <DropdownMenuItem asChild>
-            <Link href="/ai-chat" className="flex items-center gap-2 cursor-pointer">
+            <Link
+              href="/ai-chat"
+              className="flex items-center gap-2 cursor-pointer"
+            >
               <IconPlus className="size-4" />
               <span className="font-medium">New Chat</span>
             </Link>
           </DropdownMenuItem>
-          
+
           <DropdownMenuSeparator />
-          
+
           {/* Chat List */}
           {loading ? (
             <div className="px-2 py-6 text-center text-sm text-muted-foreground">
@@ -154,7 +173,13 @@ export function ChatHistoryDropdown({ currentChatId }: ChatHistoryDropdownProps)
                       variant="ghost"
                       size="icon"
                       className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
-                      onClick={(e) => handleDeleteClick(chat.id, chat.title || "Untitled Chat", e)}
+                      onClick={(e) =>
+                        handleDeleteClick(
+                          chat.id,
+                          chat.title || "Untitled Chat",
+                          e,
+                        )
+                      }
                     >
                       <IconTrash className="size-4" />
                     </Button>
@@ -172,7 +197,8 @@ export function ChatHistoryDropdown({ currentChatId }: ChatHistoryDropdownProps)
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Chat</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{chatToDelete?.title}"? This will permanently delete the conversation and cannot be undone.
+              Are you sure you want to delete "{chatToDelete?.title}"? This will
+              permanently delete the conversation and cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -189,4 +215,3 @@ export function ChatHistoryDropdown({ currentChatId }: ChatHistoryDropdownProps)
     </>
   );
 }
-

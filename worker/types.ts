@@ -34,7 +34,15 @@ export interface Event {
   name: string;
   description: string;
   severity: "Minor" | "Medium" | "High";
-  type: "Crime" | "Medical Emergency" | "Traffic Incident" | "Property Damage" | "Safety Hazard" | "Suspicious Activity" | "Normal Activity" | "Camera Interference";
+  type:
+    | "Crime"
+    | "Medical Emergency"
+    | "Traffic Incident"
+    | "Property Damage"
+    | "Safety Hazard"
+    | "Suspicious Activity"
+    | "Normal Activity"
+    | "Camera Interference";
   timestamp_seconds: number;
   affected_entity_ids?: number[];
 }
@@ -71,4 +79,3 @@ export interface RoboflowAnalysisResponse {
   totalFrames: number;
   totalDetections: number;
 }
-

@@ -29,7 +29,10 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 // Base URL for the application API (for syncing to Elasticsearch)
-const APP_BASE_URL = process.env.APP_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const APP_BASE_URL =
+  process.env.APP_BASE_URL ||
+  process.env.NEXT_PUBLIC_APP_URL ||
+  "http://localhost:3000";
 
 /**
  * Sync event to Elasticsearch
@@ -37,9 +40,12 @@ const APP_BASE_URL = process.env.APP_BASE_URL || process.env.NEXT_PUBLIC_APP_URL
 async function syncEventToElasticsearch(eventId: number) {
   try {
     const url = `${APP_BASE_URL}/api/search/sync?type=event&id=${eventId}`;
-    const response = await fetch(url, { method: 'POST' });
+    const response = await fetch(url, { method: "POST" });
     if (!response.ok) {
-      console.warn(`Failed to sync event ${eventId} to Elasticsearch:`, await response.text());
+      console.warn(
+        `Failed to sync event ${eventId} to Elasticsearch:`,
+        await response.text(),
+      );
     } else {
       console.log(`Synced event ${eventId} to Elasticsearch`);
     }
@@ -55,9 +61,12 @@ async function syncEventToElasticsearch(eventId: number) {
 async function syncAnalysisToElasticsearch(jobId: number) {
   try {
     const url = `${APP_BASE_URL}/api/search/sync?type=analysis&id=${jobId}`;
-    const response = await fetch(url, { method: 'POST' });
+    const response = await fetch(url, { method: "POST" });
     if (!response.ok) {
-      console.warn(`Failed to sync analysis ${jobId} to Elasticsearch:`, await response.text());
+      console.warn(
+        `Failed to sync analysis ${jobId} to Elasticsearch:`,
+        await response.text(),
+      );
     } else {
       console.log(`Synced analysis ${jobId} to Elasticsearch`);
     }
@@ -129,8 +138,8 @@ async function markJobSucceeded(
     console.error(`Failed to insert result for job ${job.id}:`, resultError);
   } else {
     // Sync analysis result to Elasticsearch (best-effort, non-blocking)
-    syncAnalysisToElasticsearch(job.id).catch(err => 
-      console.warn(`Elasticsearch sync error for analysis ${job.id}:`, err)
+    syncAnalysisToElasticsearch(job.id).catch((err) =>
+      console.warn(`Elasticsearch sync error for analysis ${job.id}:`, err),
     );
   }
 
@@ -140,7 +149,7 @@ async function markJobSucceeded(
     // For VOD jobs: source_id is already the asset_id
     // For live jobs: need to lookup the live stream's active_asset_id
     let assetId = job.source_id;
-    
+
     if (job.source_type === "live") {
       const { data: liveStream, error: liveStreamError } = await supabase
         .schema("mux")
@@ -166,7 +175,8 @@ async function markJobSucceeded(
         // Calculate absolute timestamp from asset start
         // job.asset_start_seconds contains the absolute position of this clip in the asset
         // event.timestamp_seconds is relative to the clip start (0-60)
-        const absoluteTimestamp = (job.asset_start_seconds || 0) + event.timestamp_seconds;
+        const absoluteTimestamp =
+          (job.asset_start_seconds || 0) + event.timestamp_seconds;
 
         // Map affected entity IDs to actual entity objects for denormalization
         let affectedEntities: any[] = [];
@@ -191,18 +201,26 @@ async function markJobSucceeded(
       const { data: insertedEvents, error: eventsError } = await supabase
         .from("ai_analysis_events")
         .insert(eventRecords)
-        .select('id');
+        .select("id");
 
       if (eventsError) {
-        console.error(`Failed to insert events for job ${job.id}:`, eventsError);
+        console.error(
+          `Failed to insert events for job ${job.id}:`,
+          eventsError,
+        );
       } else {
-        console.log(`Inserted ${eventRecords.length} events for asset ${assetId} (job ${job.id})`);
-        
+        console.log(
+          `Inserted ${eventRecords.length} events for asset ${assetId} (job ${job.id})`,
+        );
+
         // Sync each event to Elasticsearch (best-effort, non-blocking)
         if (insertedEvents && insertedEvents.length > 0) {
           for (const event of insertedEvents) {
-            syncEventToElasticsearch(event.id).catch(err =>
-              console.warn(`Elasticsearch sync error for event ${event.id}:`, err)
+            syncEventToElasticsearch(event.id).catch((err) =>
+              console.warn(
+                `Elasticsearch sync error for event ${event.id}:`,
+                err,
+              ),
             );
           }
         }
@@ -266,7 +284,9 @@ async function markJobFailed(jobId: number, attempts: number, error: string) {
   }
 
   if (status === "dead") {
-    console.error(`Job ${jobId} moved to dead-letter queue after ${newAttempts} attempts`);
+    console.error(
+      `Job ${jobId} moved to dead-letter queue after ${newAttempts} attempts`,
+    );
   }
 }
 
@@ -333,12 +353,15 @@ async function processJob(job: AnalysisJob) {
     // Fetch HLS and transmux to MP4
     const mp4Buffer = await fetchAndTransmuxSegment(playbackUrl);
 
-    console.log(`Segment ready: ${(mp4Buffer.length / 1024 / 1024).toFixed(1)}MB`);
+    console.log(
+      `Segment ready: ${(mp4Buffer.length / 1024 / 1024).toFixed(1)}MB`,
+    );
 
     // Calculate timestamp offset for this segment
-    const segmentStartTime = job.source_type === "vod" 
-      ? job.start_epoch  // VOD uses relative seconds
-      : 0;  // LIVE clips are already timestamped from stream start
+    const segmentStartTime =
+      job.source_type === "vod"
+        ? job.start_epoch // VOD uses relative seconds
+        : 0; // LIVE clips are already timestamped from stream start
 
     // Run analysis based on source type
     if (job.source_type === "live") {
@@ -379,7 +402,8 @@ async function processJob(job: AnalysisJob) {
 
     console.log(`Job ${job.id} succeeded`);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error(`Job ${job.id} failed:`, errorMessage);
 
     await markJobFailed(job.id, job.attempts, errorMessage);
@@ -447,4 +471,3 @@ workerLoop().catch((error) => {
   console.error("Fatal error in worker:", error);
   process.exit(1);
 });
-

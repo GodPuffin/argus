@@ -1,7 +1,7 @@
 {
-    "mcpServers": {
-        "supabaselocal": {
-            "url": " http://127.0.0.1:55321/mcp"
-        }
+  "mcpServers": {
+    "supabaselocal": {
+      "url": " http://127.0.0.1:55321/mcp"
     }
+  }
 }

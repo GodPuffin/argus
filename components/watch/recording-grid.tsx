@@ -1,29 +1,37 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import { RecordingCard } from "./recording-card";
-import { type Asset } from "@/lib/supabase";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, Upload, Ghost } from "lucide-react";
-import { toast } from "sonner";
-import { Spinner } from "../ui/shadcn-io/spinner";
 import * as UpChunk from "@mux/upchunk";
+import { Ghost, Search, Upload } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import type { Asset } from "@/lib/supabase";
 import type { SearchHit } from "@/lib/types/elasticsearch";
+import { Spinner } from "../ui/shadcn-io/spinner";
+import { RecordingCard } from "./recording-card";
 
 interface RecordingGridProps {
   assets: Asset[];
   loading: boolean;
-  onUpdate?: (assetId: string, updates: { passthrough?: string; meta?: any }) => Promise<void>;
+  onUpdate?: (
+    assetId: string,
+    updates: { passthrough?: string; meta?: any },
+  ) => Promise<void>;
   onDelete?: (assetId: string) => Promise<void>;
 }
 
-export function RecordingGrid({ assets, loading, onUpdate, onDelete }: RecordingGridProps) {
+export function RecordingGrid({
+  assets,
+  loading,
+  onUpdate,
+  onDelete,
+}: RecordingGridProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchHit[]>([]);
@@ -51,21 +59,22 @@ export function RecordingGrid({ assets, loading, onUpdate, onDelete }: Recording
       if (response.ok) {
         // Get only 1 result per asset_id using the highest score
         const assetMap = new Map<string, SearchHit>();
-        
+
         for (const hit of data.results) {
           const assetId = hit.source.asset_id;
           const existingHit = assetMap.get(assetId);
-          
+
           // Keep the highest scoring result for each asset
           if (!existingHit || hit.score > existingHit.score) {
             assetMap.set(assetId, hit);
           }
         }
-        
+
         // Convert map to array and sort by score descending
-        const uniqueResults = Array.from(assetMap.values())
-          .sort((a, b) => b.score - a.score);
-        
+        const uniqueResults = Array.from(assetMap.values()).sort(
+          (a, b) => b.score - a.score,
+        );
+
         setSearchResults(uniqueResults);
       } else {
         console.error("Search error:", data.error);
@@ -88,7 +97,9 @@ export function RecordingGrid({ assets, loading, onUpdate, onDelete }: Recording
     return () => clearTimeout(timer);
   }, [searchQuery, handleSearch]);
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -97,14 +108,14 @@ export function RecordingGrid({ assets, loading, onUpdate, onDelete }: Recording
 
     try {
       // Get upload URL from API
-      const response = await fetch('/api/mux/upload', {
-        method: 'POST',
+      const response = await fetch("/api/mux/upload", {
+        method: "POST",
       });
       const data = await response.json();
-      
+
       if (!response.ok) {
-        console.error('API Error Response:', data);
-        throw new Error(data.error || 'Failed to create upload URL');
+        console.error("API Error Response:", data);
+        throw new Error(data.error || "Failed to create upload URL");
       }
 
       // Create UpChunk upload
@@ -115,41 +126,40 @@ export function RecordingGrid({ assets, loading, onUpdate, onDelete }: Recording
       });
 
       // Handle progress
-      upload.on('progress', (progress) => {
+      upload.on("progress", (progress) => {
         setUploadProgress(Math.round(progress.detail));
       });
 
       // Handle success
-      upload.on('success', () => {
+      upload.on("success", () => {
         setIsUploading(false);
         setUploadProgress(0);
-        toast.success('Upload complete!');
+        toast.success("Upload complete!");
         // Reset file input
         if (fileInputRef.current) {
-          fileInputRef.current.value = '';
+          fileInputRef.current.value = "";
         }
       });
 
       // Handle error
-      upload.on('error', (error) => {
+      upload.on("error", (error) => {
         setIsUploading(false);
         setUploadProgress(0);
-        console.error('Upload error:', error.detail);
-        toast.error('Upload failed. Please try again.');
+        console.error("Upload error:", error.detail);
+        toast.error("Upload failed. Please try again.");
         // Reset file input
         if (fileInputRef.current) {
-          fileInputRef.current.value = '';
+          fileInputRef.current.value = "";
         }
       });
-
     } catch (error) {
-      console.error('Error initializing upload:', error);
-      toast.error('Failed to start upload');
+      console.error("Error initializing upload:", error);
+      toast.error("Failed to start upload");
       setIsUploading(false);
       setUploadProgress(0);
       // Reset file input
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     }
   };
@@ -157,7 +167,9 @@ export function RecordingGrid({ assets, loading, onUpdate, onDelete }: Recording
   if (loading) {
     return (
       <div className="text-center py-12">
-        <div className="animate-pulse text-muted-foreground">Loading recordings...</div>
+        <div className="animate-pulse text-muted-foreground">
+          Loading recordings...
+        </div>
       </div>
     );
   }
@@ -182,22 +194,25 @@ export function RecordingGrid({ assets, loading, onUpdate, onDelete }: Recording
 
   // Determine which assets to display
   let displayAssets: Asset[] = [];
-  
+
   // Only show search results if we're actively searching or have completed a search
   // This prevents showing empty results during the debounce period
-  const showSearchResults = searchQuery.trim() && (isSearching || searchResults.length > 0);
-  
+  const showSearchResults =
+    searchQuery.trim() && (isSearching || searchResults.length > 0);
+
   if (showSearchResults) {
     // Map search results to assets
     displayAssets = searchResults
-      .map(hit => assets.find(asset => asset.id === hit.source.asset_id))
+      .map((hit) => assets.find((asset) => asset.id === hit.source.asset_id))
       .filter((asset): asset is Asset => asset !== undefined);
   } else {
     // Sort assets: ready first, then by creation date
     displayAssets = [...assets].sort((a, b) => {
       if (a.status === "ready" && b.status !== "ready") return -1;
       if (a.status !== "ready" && b.status === "ready") return 1;
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      return (
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
     });
   }
 
@@ -210,9 +225,9 @@ export function RecordingGrid({ assets, loading, onUpdate, onDelete }: Recording
           </div>
           <div className="flex-1 max-w-md relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              type="search" 
-              placeholder="Search recordings..." 
+            <Input
+              type="search"
+              placeholder="Search recordings..."
               className="w-full pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -233,7 +248,7 @@ export function RecordingGrid({ assets, loading, onUpdate, onDelete }: Recording
               className="hidden"
             />
             {/* Upload Button */}
-            <Button 
+            <Button
               type="button"
               variant="default"
               size="sm"
@@ -246,27 +261,28 @@ export function RecordingGrid({ assets, loading, onUpdate, onDelete }: Recording
               ) : (
                 <Upload className="h-4 w-4" />
               )}
-              {isUploading && uploadProgress > 0 ? `${uploadProgress}%` : 'Upload'}
+              {isUploading && uploadProgress > 0
+                ? `${uploadProgress}%`
+                : "Upload"}
             </Button>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <p className="text-sm text-muted-foreground">
             {showSearchResults
-              ? `${displayAssets.length} result${displayAssets.length !== 1 ? 's' : ''}`
-              : `${assets.length} total`
-            }
+              ? `${displayAssets.length} result${displayAssets.length !== 1 ? "s" : ""}`
+              : `${assets.length} total`}
           </p>
-          {searchError && (
-            <p className="text-sm text-red-500">{searchError}</p>
-          )}
+          {searchError && <p className="text-sm text-red-500">{searchError}</p>}
         </div>
       </div>
 
       <ScrollArea className="flex-1 min-h-0">
         {isSearching ? (
           <div className="text-center py-12">
-            <div className="animate-pulse text-muted-foreground">Searching recordings...</div>
+            <div className="animate-pulse text-muted-foreground">
+              Searching recordings...
+            </div>
           </div>
         ) : displayAssets.length === 0 && showSearchResults ? (
           <div className="text-center py-12 text-muted-foreground">
@@ -277,8 +293,8 @@ export function RecordingGrid({ assets, loading, onUpdate, onDelete }: Recording
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pr-4">
             {displayAssets.map((asset) => (
-              <RecordingCard 
-                key={asset.id} 
+              <RecordingCard
+                key={asset.id}
                 asset={asset}
                 onUpdate={onUpdate}
                 onDelete={onDelete}
@@ -290,4 +306,3 @@ export function RecordingGrid({ assets, loading, onUpdate, onDelete }: Recording
     </div>
   );
 }
-

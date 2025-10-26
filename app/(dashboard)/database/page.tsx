@@ -1,11 +1,8 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { SiteHeader } from "@/components/site-header"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { RefreshCw, Database, AlertTriangle } from "lucide-react"
+import { AlertTriangle, Database, RefreshCw } from "lucide-react";
+import { useState } from "react";
+import { SiteHeader } from "@/components/site-header";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,36 +13,48 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function DatabasePage() {
-  const [syncing, setSyncing] = useState(false)
-  const [syncResult, setSyncResult] = useState<{ events: number; analysis: number } | null>(null)
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<{
+    events: number;
+    analysis: number;
+  } | null>(null);
 
   const handleReindex = async () => {
-    setSyncing(true)
-    setSyncResult(null)
-    
+    setSyncing(true);
+    setSyncResult(null);
+
     try {
-      const response = await fetch('/api/search/sync?type=all', {
-        method: 'POST'
-      })
-      
-      const data = await response.json()
-      
+      const response = await fetch("/api/search/sync?type=all", {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
       if (response.ok) {
-        setSyncResult(data.counts)
+        setSyncResult(data.counts);
       } else {
-        console.error('Reindex error:', data.error)
-        alert(`Reindex failed: ${data.error}`)
+        console.error("Reindex error:", data.error);
+        alert(`Reindex failed: ${data.error}`);
       }
     } catch (error) {
-      console.error('Reindex failed:', error)
-      alert('Reindex failed. Check console for details.')
+      console.error("Reindex failed:", error);
+      alert("Reindex failed. Check console for details.");
     } finally {
-      setSyncing(false)
+      setSyncing(false);
     }
-  }
+  };
 
   return (
     <div className="flex flex-1 flex-col">
@@ -54,7 +63,9 @@ export default function DatabasePage() {
         <Card>
           <CardHeader>
             <CardTitle>Database</CardTitle>
-            <CardDescription>Explore Events, Entities, and more.</CardDescription>
+            <CardDescription>
+              Explore Events, Entities, and more.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">Database UI coming soon.</p>
@@ -74,7 +85,9 @@ export default function DatabasePage() {
                     Dev/Admin Only
                   </Badge>
                 </CardTitle>
-                <CardDescription>Administrative operations for managing search indices</CardDescription>
+                <CardDescription>
+                  Administrative operations for managing search indices
+                </CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -85,31 +98,38 @@ export default function DatabasePage() {
                 <div className="flex-1">
                   <h3 className="font-semibold mb-1">Reindex Search Data</h3>
                   <p className="text-sm text-muted-foreground mb-3">
-                    Clear and rebuild the Elasticsearch index with all events and analysis results from the database.
-                    This will sync all existing data to make it searchable.
+                    Clear and rebuild the Elasticsearch index with all events
+                    and analysis results from the database. This will sync all
+                    existing data to make it searchable.
                   </p>
                 </div>
               </div>
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     disabled={syncing}
                     className="w-fit"
                   >
-                    <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-                    {syncing ? 'Reindexing...' : 'Reindex All Search Data'}
+                    <RefreshCw
+                      className={`h-4 w-4 mr-2 ${syncing ? "animate-spin" : ""}`}
+                    />
+                    {syncing ? "Reindexing..." : "Reindex All Search Data"}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Reindex Search Data?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will reindex all events and analysis results to Elasticsearch.
-                      This operation may take a few moments depending on the amount of data.
-                      <br /><br />
-                      <strong>This is safe to run and won't delete any database data.</strong>
+                      This will reindex all events and analysis results to
+                      Elasticsearch. This operation may take a few moments
+                      depending on the amount of data.
+                      <br />
+                      <br />
+                      <strong>
+                        This is safe to run and won't delete any database data.
+                      </strong>
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -127,8 +147,12 @@ export default function DatabasePage() {
                     ✓ Reindex completed successfully
                   </p>
                   <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
-                    <span>Events: <strong>{syncResult.events}</strong></span>
-                    <span>Analysis: <strong>{syncResult.analysis}</strong></span>
+                    <span>
+                      Events: <strong>{syncResult.events}</strong>
+                    </span>
+                    <span>
+                      Analysis: <strong>{syncResult.analysis}</strong>
+                    </span>
                   </div>
                 </div>
               )}
@@ -137,5 +161,5 @@ export default function DatabasePage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

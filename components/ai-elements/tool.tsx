@@ -1,5 +1,16 @@
 "use client";
 
+import type { ToolUIPart } from "ai";
+import {
+  CheckCircleIcon,
+  ChevronDownIcon,
+  CircleIcon,
+  ClockIcon,
+  WrenchIcon,
+  XCircleIcon,
+} from "lucide-react";
+import type { ComponentProps, ReactNode } from "react";
+import { isValidElement } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
@@ -13,17 +24,6 @@ import {
   CodeBlockItem,
 } from "@/components/ui/shadcn-io/code-block";
 import { cn } from "@/lib/utils";
-import type { ToolUIPart } from "ai";
-import {
-  CheckCircleIcon,
-  ChevronDownIcon,
-  CircleIcon,
-  ClockIcon,
-  WrenchIcon,
-  XCircleIcon,
-} from "lucide-react";
-import type { ComponentProps, ReactNode } from "react";
-import { isValidElement } from "react";
 
 export type ToolProps = ComponentProps<typeof Collapsible>;
 
@@ -74,7 +74,7 @@ export const ToolHeader = ({
   <CollapsibleTrigger
     className={cn(
       "flex w-full items-center justify-between gap-4 p-3",
-      className
+      className,
     )}
     {...props}
   >
@@ -95,7 +95,7 @@ export const ToolContent = ({ className, ...props }: ToolContentProps) => (
   <CollapsibleContent
     className={cn(
       "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-popover-foreground outline-none data-[state=closed]:animate-out data-[state=open]:animate-in",
-      className
+      className,
     )}
     {...props}
   />
@@ -160,9 +160,8 @@ export const ToolOutput = ({
   }
 
   // Convert output to string for CodeBlock
-  const outputString = typeof output === "string" 
-    ? output 
-    : JSON.stringify(output, null, 2);
+  const outputString =
+    typeof output === "string" ? output : JSON.stringify(output, null, 2);
 
   return (
     <div className={cn("p-2", className)} {...props}>
@@ -183,9 +182,7 @@ export const ToolOutput = ({
               value={item.language}
               lineNumbers={false}
             >
-              <CodeBlockContent language="json">
-                {item.code}
-              </CodeBlockContent>
+              <CodeBlockContent language="json">{item.code}</CodeBlockContent>
             </CodeBlockItem>
           )}
         </CodeBlockBody>

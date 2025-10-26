@@ -1,5 +1,5 @@
-import { generateId } from "ai";
 import type { UIMessage } from "ai";
+import { generateId } from "ai";
 import { supabase } from "./supabase";
 
 /**
@@ -7,16 +7,14 @@ import { supabase } from "./supabase";
  */
 export async function createChat(): Promise<string> {
   const id = generateId();
-  
-  const { error } = await supabase
-    .from("chats")
-    .insert({ id, messages: [] });
-  
+
+  const { error } = await supabase.from("chats").insert({ id, messages: [] });
+
   if (error) {
     console.error("Error creating chat:", error);
     throw error;
   }
-  
+
   return id;
 }
 
@@ -29,12 +27,12 @@ export async function loadChat(id: string): Promise<UIMessage[]> {
     .select("messages")
     .eq("id", id)
     .single();
-  
+
   if (error) {
     console.error("Error loading chat:", error);
     return [];
   }
-  
+
   return (data?.messages as UIMessage[]) || [];
 }
 
@@ -53,26 +51,26 @@ export async function saveChat({
   if (!messages || messages.length === 0) {
     return;
   }
-  
+
   // Auto-generate title from first user message if not already set
   const { data: existingChat } = await supabase
     .from("chats")
     .select("title")
     .eq("id", chatId)
     .single();
-  
+
   let title = existingChat?.title;
-  
+
   // Generate title if not set
   if (!title) {
-    const firstUserMessage = messages.find(m => m.role === "user");
+    const firstUserMessage = messages.find((m) => m.role === "user");
     if (firstUserMessage) {
       title = generateChatTitle(firstUserMessage);
     } else {
       title = "New Chat";
     }
   }
-  
+
   const { error } = await supabase
     .from("chats")
     .update({
@@ -81,7 +79,7 @@ export async function saveChat({
       updated_at: new Date().toISOString(),
     })
     .eq("id", chatId);
-  
+
   if (error) {
     console.error("Error saving chat:", error);
     throw error;
@@ -91,22 +89,24 @@ export async function saveChat({
 /**
  * List recent chats for history dropdown
  */
-export async function listChats(limit = 10): Promise<Array<{
-  id: string;
-  title: string;
-  updated_at: string;
-}>> {
+export async function listChats(limit = 10): Promise<
+  Array<{
+    id: string;
+    title: string;
+    updated_at: string;
+  }>
+> {
   const { data, error } = await supabase
     .from("chats")
     .select("id, title, updated_at")
     .order("updated_at", { ascending: false })
     .limit(limit);
-  
+
   if (error) {
     console.error("Error listing chats:", error);
     return [];
   }
-  
+
   return data || [];
 }
 
@@ -114,11 +114,8 @@ export async function listChats(limit = 10): Promise<Array<{
  * Delete a chat by ID
  */
 export async function deleteChat(id: string): Promise<void> {
-  const { error } = await supabase
-    .from("chats")
-    .delete()
-    .eq("id", id);
-  
+  const { error } = await supabase.from("chats").delete().eq("id", id);
+
   if (error) {
     console.error("Error deleting chat:", error);
     throw error;
@@ -131,15 +128,14 @@ export async function deleteChat(id: string): Promise<void> {
 export function generateChatTitle(message: UIMessage): string {
   // Extract text from message parts
   const textParts = message.parts
-    .filter(part => part.type === "text")
-    .map(part => (part as any).text)
+    .filter((part) => part.type === "text")
+    .map((part) => (part as any).text)
     .join(" ");
-  
+
   // Truncate to 50 characters
   if (textParts.length > 50) {
     return textParts.substring(0, 50).trim() + "...";
   }
-  
+
   return textParts || "New Chat";
 }
-

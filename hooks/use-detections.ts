@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { DetectionFrame } from "@/lib/detection-queries";
 
 interface UseDetectionsOptions {
@@ -43,7 +43,8 @@ export function useDetections(
         setError(null);
 
         const params = new URLSearchParams({ sourceId });
-        if (startTime !== undefined) params.append("startTime", startTime.toString());
+        if (startTime !== undefined)
+          params.append("startTime", startTime.toString());
         if (endTime !== undefined) params.append("endTime", endTime.toString());
 
         const response = await fetch(`/api/detections?${params.toString()}`, {
@@ -58,7 +59,7 @@ export function useDetections(
         setDetections(data.detections || []);
       } catch (err) {
         // Ignore AbortError - this is expected when the request is cancelled
-        if (err instanceof Error && err.name === 'AbortError') {
+        if (err instanceof Error && err.name === "AbortError") {
           return;
         }
         console.error("Error fetching detections:", err);
@@ -78,4 +79,3 @@ export function useDetections(
 
   return { detections, loading, error };
 }
-

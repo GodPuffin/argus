@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Disable tracing to prevent EPERM errors on Windows
   experimental: {
-    // @ts-ignore - This is a valid option but not in types yet
+    // @ts-expect-error - This is a valid option but not in types yet
     disableOptimizedLoading: false,
   },
 

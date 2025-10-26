@@ -42,7 +42,7 @@ export async function POST() {
     }
 
     const data = await response.json();
-    
+
     // Return the upload URL to the client
     return NextResponse.json({
       url: data.data.url,
@@ -59,4 +59,3 @@ export async function POST() {
     );
   }
 }
-

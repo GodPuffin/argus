@@ -1,10 +1,10 @@
 "use client";
 
+import { IconClock, IconPlayerPlay } from "@tabler/icons-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { IconPlayerPlay, IconClock } from "@tabler/icons-react";
 
 export interface EventCardProps {
   asset_id: string;
@@ -22,7 +22,7 @@ const formatDuration = (seconds: number): string => {
   const hrs = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
-  
+
   if (hrs > 0) {
     return `${hrs}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   }
@@ -38,11 +38,15 @@ const getSeverityColor = (severity: "Minor" | "Medium" | "High"): string => {
   return colors[severity] || "border-l-gray-500";
 };
 
-const getSeverityBadgeClass = (severity: "Minor" | "Medium" | "High"): string => {
+const getSeverityBadgeClass = (
+  severity: "Minor" | "Medium" | "High",
+): string => {
   const classes = {
     High: "bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20 hover:bg-red-500/20",
-    Medium: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 border-yellow-500/20 hover:bg-yellow-500/20",
-    Minor: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20 hover:bg-blue-500/20",
+    Medium:
+      "bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 border-yellow-500/20 hover:bg-yellow-500/20",
+    Minor:
+      "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20 hover:bg-blue-500/20",
   };
   return classes[severity] || "";
 };
@@ -65,7 +69,7 @@ export const EventCard = ({
         className={cn(
           "cursor-pointer transition-all hover:shadow-lg border-l-4 py-0",
           getSeverityColor(severity),
-          "not-prose"
+          "not-prose",
         )}
       >
         <CardContent className="p-4">
@@ -99,14 +103,17 @@ export const EventCard = ({
             {affected_entities && affected_entities.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-muted-foreground">Involved:</span>
-                {affected_entities.slice(0, 3).map((entity: any, idx: number) => {
-                  const entityName = entity.label || entity.name || entity.type || "Unknown";
-                  return (
-                    <Badge key={idx} variant="outline" className="text-xs">
-                      {entityName}
-                    </Badge>
-                  );
-                })}
+                {affected_entities
+                  .slice(0, 3)
+                  .map((entity: any, idx: number) => {
+                    const entityName =
+                      entity.label || entity.name || entity.type || "Unknown";
+                    return (
+                      <Badge key={idx} variant="outline" className="text-xs">
+                        {entityName}
+                      </Badge>
+                    );
+                  })}
                 {affected_entities.length > 3 && (
                   <Badge variant="outline" className="text-xs">
                     +{affected_entities.length - 3} more
@@ -126,4 +133,3 @@ export const EventCard = ({
     </Link>
   );
 };
-

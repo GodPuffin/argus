@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { supabase, type AIAnalysisEvent } from "@/lib/supabase";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { useEffect, useState } from "react";
+import { type AIAnalysisEvent, supabase } from "@/lib/supabase";
 
 export function useCriticalEventsRealtime() {
   const [events, setEvents] = useState<AIAnalysisEvent[]>([]);
@@ -22,7 +22,11 @@ export function useCriticalEventsRealtime() {
         setEvents(data || []);
       } catch (err) {
         console.error("Error fetching critical events:", err);
-        setError(err instanceof Error ? err.message : "Failed to fetch critical events");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to fetch critical events",
+        );
       } finally {
         setLoading(false);
       }
@@ -46,7 +50,7 @@ export function useCriticalEventsRealtime() {
 
           const newEvent = payload.new as AIAnalysisEvent;
           setEvents((current) => [newEvent, ...current].slice(0, 20)); // Keep only recent 20
-        }
+        },
       )
       .subscribe();
 
@@ -58,4 +62,3 @@ export function useCriticalEventsRealtime() {
 
   return { events, loading, error };
 }
-

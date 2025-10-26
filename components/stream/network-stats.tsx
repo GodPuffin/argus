@@ -1,14 +1,20 @@
 "use client";
 
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
-  ChartConfig,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { Label } from "@/components/ui/label";
 
 interface NetworkStatsProps {
   dataRate: number;
@@ -23,7 +29,11 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function NetworkStats({ dataRate, dataHistory, streaming }: NetworkStatsProps) {
+export function NetworkStats({
+  dataRate,
+  dataHistory,
+  streaming,
+}: NetworkStatsProps) {
   return (
     <Card>
       {/* <CardHeader>
@@ -35,16 +45,20 @@ export function NetworkStats({ dataRate, dataHistory, streaming }: NetworkStatsP
           <div className="flex items-center justify-between">
             <Label>Transfer Rate</Label>
             <span className="text-2xl font-mono font-bold">
-              {dataRate} <span className="text-sm text-muted-foreground">KB/s</span>
+              {dataRate}{" "}
+              <span className="text-sm text-muted-foreground">KB/s</span>
             </span>
           </div>
           {dataHistory.length > 0 ? (
             <ChartContainer config={chartConfig} className="h-[150px] w-full">
-              <AreaChart data={dataHistory} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+              <AreaChart
+                data={dataHistory}
+                margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+              >
                 <defs>
                   <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
@@ -71,7 +85,9 @@ export function NetworkStats({ dataRate, dataHistory, streaming }: NetworkStatsP
           ) : (
             <div className="h-[150px] w-full flex items-center justify-center border rounded-lg bg-muted/50">
               <p className="text-sm text-muted-foreground">
-                {streaming ? "Collecting data..." : "Start streaming to see transfer rate"}
+                {streaming
+                  ? "Collecting data..."
+                  : "Start streaming to see transfer rate"}
               </p>
             </div>
           )}
@@ -80,4 +96,3 @@ export function NetworkStats({ dataRate, dataHistory, streaming }: NetworkStatsP
     </Card>
   );
 }
-

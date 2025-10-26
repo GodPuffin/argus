@@ -1,37 +1,27 @@
 "use client";
 
-import { use, useEffect, useState, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import MuxPlayer from "@mux/mux-player-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { use, useEffect, useRef, useState } from "react";
 import "@mux/mux-player/themes/minimal";
 import {
-  IconArrowLeft,
   IconAlertCircle,
-  IconPlayerPlay,
-  IconPlayerPause,
-  IconRewindBackward10,
-  IconRewindForward10,
-  IconVolume,
-  IconVolumeOff,
+  IconArrowLeft,
   IconMaximize,
   IconMinimize,
+  IconPlayerPause,
+  IconPlayerPlay,
   IconRadar,
   IconRadarOff,
-  IconSettings
+  IconRewindBackward10,
+  IconRewindForward10,
+  IconSettings,
+  IconVolume,
+  IconVolumeOff,
 } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Slider } from "@/components/ui/slider";
-import { supabase, type Asset, getAssetPlaybackId } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
-import { Spinner } from "@/components/ui/shadcn-io/spinner";
-import { EventTimeline } from "@/components/watch/event-timeline";
-import { useEventsRealtime } from "@/hooks/use-events-realtime";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useDetections } from "@/hooks/use-detections";
-import { DetectionOverlay } from "@/components/watch/detection-overlay";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,18 +30,37 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Spinner } from "@/components/ui/shadcn-io/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Slider } from "@/components/ui/slider";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { DetectionOverlay } from "@/components/watch/detection-overlay";
+import { EventTimeline } from "@/components/watch/event-timeline";
+import { useDetections } from "@/hooks/use-detections";
+import { useEventsRealtime } from "@/hooks/use-events-realtime";
+import { type Asset, getAssetPlaybackId, supabase } from "@/lib/supabase";
 
-export default function WatchAssetPage({ params }: { params: Promise<{ id: string }> }) {
+export default function WatchAssetPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const playerRef = useRef<any>(null);
-  
+
   const { id } = use(params);
-  
+
   const [asset, setAsset] = useState<Asset | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
@@ -60,7 +69,10 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const [detectionsEnabled, setDetectionsEnabled] = useState(true);
-  const [videoDimensions, setVideoDimensions] = useState({ width: 1920, height: 1080 });
+  const [videoDimensions, setVideoDimensions] = useState({
+    width: 1920,
+    height: 1080,
+  });
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [confidenceThreshold, setConfidenceThreshold] = useState(0.3);
@@ -79,7 +91,7 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
   // Fetch detections for this asset
   const { detections, loading: detectionsLoading } = useDetections(
     asset?.id || null,
-    { enabled: true }
+    { enabled: true },
   );
   useEffect(() => {
     const fetchAsset = async () => {
@@ -152,11 +164,11 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
 
     let animationFrameId: number;
     let mounted = true;
-    
+
     const updateTime = () => {
       // Check mounted flag to prevent updates after cleanup
       if (!mounted) return;
-      
+
       if (player && player.currentTime !== undefined) {
         setCurrentTime(player.currentTime);
       }
@@ -211,7 +223,7 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
       const player = playerRef.current;
       if (!player) return;
 
-      const videoElement = player.media || player.querySelector('video');
+      const videoElement = player.media || player.querySelector("video");
       if (!videoElement) return;
 
       const videoWidth = videoElement.videoWidth || 1920;
@@ -247,7 +259,8 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
     };
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
   const handleBack = () => {
@@ -298,12 +311,14 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
     if (autoPlay && player.paused) {
       player.play();
     }
-    
+
     // Scroll to top to view the video
     if (scrollAreaRef.current) {
-      const scrollViewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      const scrollViewport = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]",
+      );
       if (scrollViewport) {
-        scrollViewport.scrollTo({ top: 0, behavior: 'smooth' });
+        scrollViewport.scrollTo({ top: 0, behavior: "smooth" });
       }
     }
   };
@@ -324,7 +339,7 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
-    
+
     if (hrs > 0) {
       return `${hrs}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     }
@@ -332,16 +347,24 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
   };
 
   const formatDate = (timestamp: string | number) => {
-    const date = typeof timestamp === 'string' && timestamp.includes('-') 
-      ? new Date(timestamp) 
-      : new Date(typeof timestamp === 'string' ? parseInt(timestamp) * 1000 : timestamp * 1000);
+    const date =
+      typeof timestamp === "string" && timestamp.includes("-")
+        ? new Date(timestamp)
+        : new Date(
+            typeof timestamp === "string"
+              ? parseInt(timestamp) * 1000
+              : timestamp * 1000,
+          );
     return date.toLocaleString();
   };
 
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen bg-background">
-        <div className="flex items-center justify-center" style={{ height: "70vh" }}>
+        <div
+          className="flex items-center justify-center"
+          style={{ height: "70vh" }}
+        >
           <div className="text-center space-y-4">
             <Spinner variant="ring" size={48} className="mx-auto" />
             <p className="text-muted-foreground">Loading video...</p>
@@ -356,24 +379,23 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
       <div className="flex flex-col min-h-screen bg-background">
         {/* Top bar with back button */}
         <div className="p-4 border-b">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBack}
-          >
+          <Button variant="ghost" size="sm" onClick={handleBack}>
             <IconArrowLeft className="size-4 mr-2" />
             Back
           </Button>
         </div>
 
-        <div className="flex items-center justify-center flex-1" style={{ height: "60vh" }}>
+        <div
+          className="flex items-center justify-center flex-1"
+          style={{ height: "60vh" }}
+        >
           <div className="text-center space-y-4 p-8">
             <div className="w-20 h-20 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
               <IconAlertCircle className="w-10 h-10 text-destructive" />
             </div>
             <h1 className="text-2xl font-bold">{error || "Video not found"}</h1>
             <p className="text-muted-foreground">
-              {error === "Video not found" 
+              {error === "Video not found"
                 ? "The video you're looking for doesn't exist or has been deleted."
                 : "There was a problem loading this video. Please try again later."}
             </p>
@@ -395,18 +417,16 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
       {/* Header with back button and video info */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex-shrink-0">
         <div className="flex items-center justify-between h-14 px-4 max-w-full">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBack}
-          >
+          <Button variant="ghost" size="sm" onClick={handleBack}>
             <IconArrowLeft className="size-4 mr-2" />
             Back
           </Button>
-          
+
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             {asset.meta?.title && (
-              <h1 className="font-semibold text-foreground">{asset.meta.title}</h1>
+              <h1 className="font-semibold text-foreground">
+                {asset.meta.title}
+              </h1>
             )}
             <span>{formatDuration(asset.duration_seconds || 0)}</span>
             {asset.max_resolution_tier && (
@@ -421,7 +441,7 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
       <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
         <div className="flex flex-col">
           {/* Video player container */}
-          <div 
+          <div
             id="video-container"
             className="relative bg-black"
             style={{ height: "70vh" }}
@@ -432,28 +452,40 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
                   <div className="w-20 h-20 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
                     <IconAlertCircle className="w-10 h-10 text-destructive" />
                   </div>
-                  <h2 className="text-xl font-semibold text-white">Video Unavailable</h2>
+                  <h2 className="text-xl font-semibold text-white">
+                    Video Unavailable
+                  </h2>
                   <p className="text-white/70">
-                    {asset.status === "errored" 
+                    {asset.status === "errored"
                       ? "This video failed to process and cannot be played."
                       : "This video cannot be played at this time."}
                   </p>
                 </div>
               ) : isProcessing ? (
                 <div className="text-center space-y-4 p-8">
-                  <Spinner variant="ring" size={48} className="mx-auto text-yellow-500" />
-                  <h2 className="text-xl font-semibold text-white">Processing Video</h2>
+                  <Spinner
+                    variant="ring"
+                    size={48}
+                    className="mx-auto text-yellow-500"
+                  />
+                  <h2 className="text-xl font-semibold text-white">
+                    Processing Video
+                  </h2>
                   <p className="text-white/70">
-                    This video is still being processed. Please check back in a few moments.
+                    This video is still being processed. Please check back in a
+                    few moments.
                   </p>
                   {asset.is_live && (
-                    <Badge variant="outline" className="bg-purple-500/10 text-purple-300 border-purple-500/20">
+                    <Badge
+                      variant="outline"
+                      className="bg-purple-500/10 text-purple-300 border-purple-500/20"
+                    >
                       Currently Recording
                     </Badge>
                   )}
                 </div>
               ) : (
-                <div 
+                <div
                   ref={containerRef}
                   className="relative w-full h-full cursor-pointer"
                   onClick={togglePlayPause}
@@ -466,12 +498,14 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
                     startTime={startTime}
                     disableTracking={true}
                     disableCookies={true}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      "--controls": "none",
-                      pointerEvents: "none",
-                    } as React.CSSProperties}
+                    style={
+                      {
+                        width: "100%",
+                        height: "100%",
+                        "--controls": "none",
+                        pointerEvents: "none",
+                      } as React.CSSProperties
+                    }
                     className="w-full h-full"
                   />
 
@@ -607,31 +641,41 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
                               !detectionsEnabled
                                 ? "Enable detections to access settings"
                                 : detections.length === 0
-                                ? "No detections available yet"
-                                : "Detection settings"
+                                  ? "No detections available yet"
+                                  : "Detection settings"
                             }
-                            disabled={!detectionsEnabled || detections.length === 0}
+                            disabled={
+                              !detectionsEnabled || detections.length === 0
+                            }
                           >
                             <IconSettings className="size-5" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-80">
-                          <DropdownMenuLabel>Detection Settings</DropdownMenuLabel>
+                          <DropdownMenuLabel>
+                            Detection Settings
+                          </DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          
+
                           <div className="px-2 py-3 space-y-4">
                             {/* Confidence Threshold */}
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">
-                                <Label className="text-sm">Confidence Threshold</Label>
-                                <span className="text-xs text-muted-foreground">{Math.round(confidenceThreshold * 100)}%</span>
+                                <Label className="text-sm">
+                                  Confidence Threshold
+                                </Label>
+                                <span className="text-xs text-muted-foreground">
+                                  {Math.round(confidenceThreshold * 100)}%
+                                </span>
                               </div>
                               <Slider
                                 value={[confidenceThreshold]}
                                 min={0.1}
                                 max={0.9}
                                 step={0.05}
-                                onValueChange={(values) => setConfidenceThreshold(values[0])}
+                                onValueChange={(values) =>
+                                  setConfidenceThreshold(values[0])
+                                }
                                 className="cursor-pointer"
                               />
                               <p className="text-xs text-muted-foreground">
@@ -642,15 +686,21 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
                             {/* Persistence Time */}
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">
-                                <Label className="text-sm">Persistence Time</Label>
-                                <span className="text-xs text-muted-foreground">{persistenceTime.toFixed(1)}s</span>
+                                <Label className="text-sm">
+                                  Persistence Time
+                                </Label>
+                                <span className="text-xs text-muted-foreground">
+                                  {persistenceTime.toFixed(1)}s
+                                </span>
                               </div>
                               <Slider
                                 value={[persistenceTime]}
                                 min={0.5}
                                 max={5.0}
                                 step={0.5}
-                                onValueChange={(values) => setPersistenceTime(values[0])}
+                                onValueChange={(values) =>
+                                  setPersistenceTime(values[0])
+                                }
                                 className="cursor-pointer"
                               />
                               <p className="text-xs text-muted-foreground">
@@ -661,15 +711,21 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
                             {/* Smooth Interpolation Toggle */}
                             <div className="flex items-center justify-between">
                               <div className="space-y-0.5">
-                                <Label className="text-sm">Smooth Interpolation</Label>
+                                <Label className="text-sm">
+                                  Smooth Interpolation
+                                </Label>
                                 <p className="text-xs text-muted-foreground">
                                   Smoothly animate boxes between frames
                                 </p>
                               </div>
                               <Button
-                                variant={interpolationEnabled ? "default" : "outline"}
+                                variant={
+                                  interpolationEnabled ? "default" : "outline"
+                                }
                                 size="sm"
-                                onClick={() => setInterpolationEnabled(!interpolationEnabled)}
+                                onClick={() =>
+                                  setInterpolationEnabled(!interpolationEnabled)
+                                }
                                 className="ml-2"
                               >
                                 {interpolationEnabled ? "On" : "Off"}
@@ -721,7 +777,7 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
           {/* Timeline Events Section */}
           <div className="py-6 px-4 max-w-7xl mx-auto">
             <h2 className="text-xl font-bold mb-4">Timeline Events</h2>
-            
+
             {eventsLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Spinner variant="ring" size={32} />
@@ -745,7 +801,11 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
                             <Badge
-                              variant={event.severity === "High" ? "destructive" : "secondary"}
+                              variant={
+                                event.severity === "High"
+                                  ? "destructive"
+                                  : "secondary"
+                              }
                               className={getSeverityBadgeClass(event.severity)}
                             >
                               {event.severity}
@@ -759,47 +819,74 @@ export default function WatchAssetPage({ params }: { params: Promise<{ id: strin
                           <p className="text-sm text-muted-foreground">
                             {event.description}
                           </p>
-                          {event.affected_entities && Array.isArray(event.affected_entities) && event.affected_entities.length > 0 && (
-                            <div className="flex items-center gap-2 mt-2 flex-wrap">
-                              <span className="text-xs text-muted-foreground">Involved:</span>
-                              <TooltipProvider>
-                                {event.affected_entities.map((entity: any, idx: number) => {
-                                  const entityName = entity.label || entity.name || entity.type || "Unknown";
-                                  
-                                  return (
-                                    <Tooltip key={idx}>
-                                      <TooltipTrigger asChild>
-                                        <Badge 
-                                          variant="outline" 
-                                          className="text-xs cursor-help hover:bg-accent"
-                                        >
-                                          {entityName}
-                                        </Badge>
-                                      </TooltipTrigger>
-                                      <TooltipContent side="top" className="max-w-xs">
-                                        <div className="space-y-1">
-                                          <div className="font-semibold">{entityName}</div>
-                                          {entity.confidence && (
-                                            <div className="text-xs text-muted-foreground">
-                                              Confidence: {(entity.confidence * 100).toFixed(1)}%
+                          {event.affected_entities &&
+                            Array.isArray(event.affected_entities) &&
+                            event.affected_entities.length > 0 && (
+                              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                <span className="text-xs text-muted-foreground">
+                                  Involved:
+                                </span>
+                                <TooltipProvider>
+                                  {event.affected_entities.map(
+                                    (entity: any, idx: number) => {
+                                      const entityName =
+                                        entity.label ||
+                                        entity.name ||
+                                        entity.type ||
+                                        "Unknown";
+
+                                      return (
+                                        <Tooltip key={idx}>
+                                          <TooltipTrigger asChild>
+                                            <Badge
+                                              variant="outline"
+                                              className="text-xs cursor-help hover:bg-accent"
+                                            >
+                                              {entityName}
+                                            </Badge>
+                                          </TooltipTrigger>
+                                          <TooltipContent
+                                            side="top"
+                                            className="max-w-xs"
+                                          >
+                                            <div className="space-y-1">
+                                              <div className="font-semibold">
+                                                {entityName}
+                                              </div>
+                                              {entity.confidence && (
+                                                <div className="text-xs text-muted-foreground">
+                                                  Confidence:{" "}
+                                                  {(
+                                                    entity.confidence * 100
+                                                  ).toFixed(1)}
+                                                  %
+                                                </div>
+                                              )}
+                                              {entity.description && (
+                                                <div className="text-xs">
+                                                  {entity.description}
+                                                </div>
+                                              )}
+                                              {entity.bbox && (
+                                                <div className="text-xs text-muted-foreground">
+                                                  Position: [
+                                                  {entity.bbox
+                                                    .map((n: number) =>
+                                                      n.toFixed(2),
+                                                    )
+                                                    .join(", ")}
+                                                  ]
+                                                </div>
+                                              )}
                                             </div>
-                                          )}
-                                          {entity.description && (
-                                            <div className="text-xs">{entity.description}</div>
-                                          )}
-                                          {entity.bbox && (
-                                            <div className="text-xs text-muted-foreground">
-                                              Position: [{entity.bbox.map((n: number) => n.toFixed(2)).join(', ')}]
-                                            </div>
-                                          )}
-                                        </div>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  );
-                                })}
-                              </TooltipProvider>
-                            </div>
-                          )}
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      );
+                                    },
+                                  )}
+                                </TooltipProvider>
+                              </div>
+                            )}
                         </div>
                         <Button
                           variant="ghost"
@@ -837,7 +924,8 @@ function getBorderColor(severity: string): string {
 function getSeverityBadgeClass(severity: string): string {
   const classes: Record<string, string> = {
     High: "bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20",
-    Medium: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 border-yellow-500/20",
+    Medium:
+      "bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 border-yellow-500/20",
     Minor: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20",
   };
   return classes[severity] || classes.Minor;

@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { supabase, type AIAnalysisEvent } from "@/lib/supabase";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { useEffect, useState } from "react";
+import { type AIAnalysisEvent, supabase } from "@/lib/supabase";
 
 export function useEventsRealtime(assetId: string | null) {
   const [events, setEvents] = useState<AIAnalysisEvent[]>([]);
@@ -61,15 +61,15 @@ export function useEventsRealtime(assetId: string | null) {
             const updatedEvent = payload.new as AIAnalysisEvent;
             setEvents((current) =>
               current.map((event) =>
-                event.id === updatedEvent.id ? updatedEvent : event
-              )
+                event.id === updatedEvent.id ? updatedEvent : event,
+              ),
             );
           } else if (payload.eventType === "DELETE") {
             setEvents((current) =>
-              current.filter((event) => event.id !== payload.old.id)
+              current.filter((event) => event.id !== payload.old.id),
             );
           }
-        }
+        },
       )
       .subscribe();
 
@@ -81,4 +81,3 @@ export function useEventsRealtime(assetId: string | null) {
 
   return { events, loading, error };
 }
-

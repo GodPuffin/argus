@@ -1,64 +1,84 @@
-"use client"
+"use client";
 
-import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card"
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts"
-import { ChartBackground } from "./chart-background"
-import { getEntityTypeColor } from "@/lib/chart-colors"
+import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import {
+  LuxeCard as Card,
+  LuxeCardContent as CardContent,
+  LuxeCardDescription as CardDescription,
+  LuxeCardHeader as CardHeader,
+  LuxeCardTitle as CardTitle,
+} from "@/components/ui/luxe-card";
+import { getEntityTypeColor } from "@/lib/chart-colors";
+import { ChartBackground } from "./chart-background";
 
 interface TopEntitiesChartProps {
-  data: Array<{ entity: string; count: number; type?: string }>
+  data: Array<{ entity: string; count: number; type?: string }>;
 }
 
-
 export function TopEntitiesChart({ data }: TopEntitiesChartProps) {
-  const total = data.reduce((sum, item) => sum + item.count, 0)
-  const topData = data.slice(0, 10).map(item => ({
+  const total = data.reduce((sum, item) => sum + item.count, 0);
+  const topData = data.slice(0, 10).map((item) => ({
     entity: item.entity,
     count: item.count,
-    fill: item.type ? getEntityTypeColor(item.type) : "hsl(0, 0%, 50%)"
-  }))
-  
+    fill: item.type ? getEntityTypeColor(item.type) : "hsl(0, 0%, 50%)",
+  }));
+
   // Build chart config dynamically
-  const chartConfig = topData.reduce((acc, item) => {
-    acc[item.entity] = {
-      label: item.entity,
-      color: item.fill
-    }
-    return acc
-  }, {} as Record<string, { label: string; color: string }>)
+  const chartConfig = topData.reduce(
+    (acc, item) => {
+      acc[item.entity] = {
+        label: item.entity,
+        color: item.fill,
+      };
+      return acc;
+    },
+    {} as Record<string, { label: string; color: string }>,
+  );
 
   return (
     <Card variant="revealed-pointer">
       <CardHeader>
         <CardTitle>Top Detected Entities</CardTitle>
         <CardDescription>
-          {total > 0 ? `Most frequently detected entities (${total.toLocaleString()} total)` : "No entities yet"}
+          {total > 0
+            ? `Most frequently detected entities (${total.toLocaleString()} total)`
+            : "No entities yet"}
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-6">
         <ChartBackground>
           {topData.length > 0 ? (
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <BarChart data={topData} layout="vertical" margin={{ left: 10, right: 10 }}>
+              <BarChart
+                data={topData}
+                layout="vertical"
+                margin={{ left: 10, right: 10 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis 
-                  type="number" 
+                <XAxis
+                  type="number"
                   stroke="hsl(var(--muted-foreground))"
                   fontSize={12}
                 />
-                <YAxis 
-                  dataKey="entity" 
-                  type="category" 
-                  width={100} 
+                <YAxis
+                  dataKey="entity"
+                  type="category"
+                  width={100}
                   stroke="hsl(var(--muted-foreground))"
                   fontSize={12}
                 />
-                <ChartTooltip 
-                  cursor={{ fill: 'hsl(var(--muted))' }}
-                  content={<ChartTooltipContent hideLabel />} 
+                <ChartTooltip
+                  cursor={{ fill: "hsl(var(--muted))" }}
+                  content={<ChartTooltipContent hideLabel />}
                 />
-                <Bar 
+                <Bar
                   dataKey="count"
                   radius={[0, 4, 4, 0]}
                   animationDuration={800}
@@ -78,6 +98,5 @@ export function TopEntitiesChart({ data }: TopEntitiesChartProps) {
         </ChartBackground>
       </CardContent>
     </Card>
-  )
+  );
 }
-

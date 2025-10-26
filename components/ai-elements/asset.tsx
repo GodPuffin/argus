@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase, type Asset } from "@/lib/supabase";
-import { Spinner } from "@/components/ui/shadcn-io/spinner";
 import { IconAlertCircle } from "@tabler/icons-react";
-import { RecordingCard } from "@/components/watch/recording-card";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/shadcn-io/spinner";
+import { RecordingCard } from "@/components/watch/recording-card";
+import { type Asset, supabase } from "@/lib/supabase";
 
 export interface AssetDisplayProps {
   asset_id: string;
@@ -78,7 +78,9 @@ export const AssetDisplay = ({ asset_id }: AssetDisplayProps) => {
               </div>
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-sm">{error || "Video not found"}</h3>
+              <h3 className="font-semibold text-sm">
+                {error || "Video not found"}
+              </h3>
               <p className="text-xs text-muted-foreground mt-1">
                 Unable to load the requested video asset.
               </p>
@@ -95,4 +97,3 @@ export const AssetDisplay = ({ asset_id }: AssetDisplayProps) => {
     </div>
   );
 };
-

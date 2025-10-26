@@ -1,14 +1,20 @@
 "use client";
 
+import { IconCheck, IconCopy, IconVideo } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
-import { IconCopy, IconCheck, IconVideo } from "@tabler/icons-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { supabase } from "@/lib/supabase";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/lib/supabase";
 
 interface ExternalStreamSetupProps {
   streamKey: string;
@@ -25,7 +31,9 @@ export function ExternalStreamSetup({
   streamError,
   onRetryStream,
 }: ExternalStreamSetupProps) {
-  const [streamStatus, setStreamStatus] = useState<"idle" | "active" | "disabled">("idle");
+  const [streamStatus, setStreamStatus] = useState<
+    "idle" | "active" | "disabled"
+  >("idle");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [activeProtocol, setActiveProtocol] = useState<string | null>(null);
 
@@ -48,10 +56,20 @@ export function ExternalStreamSetup({
           filter: `id=eq.${streamId}`,
         },
         (payload) => {
-          const newStatus = payload.new.status as "idle" | "active" | "disabled";
-          const newProtocol = payload.new.active_ingest_protocol as string | null;
-          
-          console.log("Stream status update:", newStatus, "Protocol:", newProtocol);
+          const newStatus = payload.new.status as
+            | "idle"
+            | "active"
+            | "disabled";
+          const newProtocol = payload.new.active_ingest_protocol as
+            | string
+            | null;
+
+          console.log(
+            "Stream status update:",
+            newStatus,
+            "Protocol:",
+            newProtocol,
+          );
           setStreamStatus(newStatus);
           setActiveProtocol(newProtocol);
 
@@ -65,7 +83,7 @@ export function ExternalStreamSetup({
               description: "Waiting for reconnection...",
             });
           }
-        }
+        },
       )
       .subscribe();
 
@@ -194,7 +212,8 @@ export function ExternalStreamSetup({
                   <CopyButton text={streamKey} field="streamKey" />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Keep this private - anyone with this key can stream to your account
+                  Keep this private - anyone with this key can stream to your
+                  account
                 </p>
               </div>
 
@@ -210,7 +229,9 @@ export function ExternalStreamSetup({
                   </h4>
                   <div className="space-y-2 ml-8">
                     <div>
-                      <Label className="text-xs text-muted-foreground">Server URL</Label>
+                      <Label className="text-xs text-muted-foreground">
+                        Server URL
+                      </Label>
                       <div className="flex gap-2 mt-1">
                         <Input
                           value={rtmpUrl}
@@ -221,7 +242,9 @@ export function ExternalStreamSetup({
                       </div>
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Stream Key</Label>
+                      <Label className="text-xs text-muted-foreground">
+                        Stream Key
+                      </Label>
                       <div className="flex gap-2 mt-1">
                         <Input
                           value={streamKey}
@@ -233,7 +256,9 @@ export function ExternalStreamSetup({
                       </div>
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Full URL (alternative)</Label>
+                      <Label className="text-xs text-muted-foreground">
+                        Full URL (alternative)
+                      </Label>
                       <div className="flex gap-2 mt-1">
                         <Input
                           value={fullRtmpUrl}
@@ -255,7 +280,9 @@ export function ExternalStreamSetup({
                   </h4>
                   <div className="space-y-2 ml-8">
                     <div>
-                      <Label className="text-xs text-muted-foreground">SRT URL</Label>
+                      <Label className="text-xs text-muted-foreground">
+                        SRT URL
+                      </Label>
                       <div className="flex gap-2 mt-1">
                         <Input
                           value={srtUrl}
@@ -266,7 +293,8 @@ export function ExternalStreamSetup({
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      SRT provides lower latency and better error recovery than RTMP
+                      SRT provides lower latency and better error recovery than
+                      RTMP
                     </p>
                   </div>
                 </div>
@@ -292,64 +320,68 @@ export function ExternalStreamSetup({
 
           {streamKey && (
             <>
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold flex items-center gap-2">
-                <IconVideo className="size-4" />
-                OBS Studio
-              </h4>
-              <ol className="text-sm text-muted-foreground space-y-1 ml-6 list-decimal">
-                <li>Open Settings → Stream</li>
-                <li>Service: Custom</li>
-                <li>Server: <code className="text-xs bg-muted px-1 py-0.5 rounded">{rtmpUrl}</code></li>
-                <li>Stream Key: (paste your stream key)</li>
-                <li>Click "Start Streaming"</li>
-              </ol>
-            </div>
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold flex items-center gap-2">
+                  <IconVideo className="size-4" />
+                  OBS Studio
+                </h4>
+                <ol className="text-sm text-muted-foreground space-y-1 ml-6 list-decimal">
+                  <li>Open Settings → Stream</li>
+                  <li>Service: Custom</li>
+                  <li>
+                    Server:{" "}
+                    <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                      {rtmpUrl}
+                    </code>
+                  </li>
+                  <li>Stream Key: (paste your stream key)</li>
+                  <li>Click "Start Streaming"</li>
+                </ol>
+              </div>
 
-            <Separator />
+              <Separator />
 
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold">
-                FFmpeg
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                Stream a video file:
-              </p>
-              <div className="relative">
-                <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto">
-                  <code>{`ffmpeg -re -i input.mp4 \\
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">FFmpeg</h4>
+                <p className="text-sm text-muted-foreground">
+                  Stream a video file:
+                </p>
+                <div className="relative">
+                  <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto">
+                    <code>{`ffmpeg -re -i input.mp4 \\
   -c:v libx264 -preset veryfast \\
   -c:a aac -b:a 128k \\
   -f flv ${rtmpUrl}/${streamKey}`}</code>
-                </pre>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute top-2 right-2"
-                  onClick={() => copyToClipboard(
-                    `ffmpeg -re -i input.mp4 -c:v libx264 -preset veryfast -c:a aac -b:a 128k -f flv ${rtmpUrl}/${streamKey}`,
-                    "ffmpeg"
-                  )}
-                >
-                  {copiedField === "ffmpeg" ? (
-                    <IconCheck className="size-4" />
-                  ) : (
-                    <IconCopy className="size-4" />
-                  )}
-                </Button>
+                  </pre>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={() =>
+                      copyToClipboard(
+                        `ffmpeg -re -i input.mp4 -c:v libx264 -preset veryfast -c:a aac -b:a 128k -f flv ${rtmpUrl}/${streamKey}`,
+                        "ffmpeg",
+                      )
+                    }
+                  >
+                    {copiedField === "ffmpeg" ? (
+                      <IconCheck className="size-4" />
+                    ) : (
+                      <IconCopy className="size-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            <Separator />
+              <Separator />
 
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold">
-                Other Software
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                Compatible with: vMix, Wirecast, StreamLabs, XSplit, and any software supporting RTMP/SRT output.
-              </p>
-            </div>
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Other Software</h4>
+                <p className="text-sm text-muted-foreground">
+                  Compatible with: vMix, Wirecast, StreamLabs, XSplit, and any
+                  software supporting RTMP/SRT output.
+                </p>
+              </div>
             </>
           )}
         </CardContent>
@@ -357,4 +389,3 @@ export function ExternalStreamSetup({
     </div>
   );
 }
-

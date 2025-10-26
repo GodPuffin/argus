@@ -3,8 +3,8 @@
  * Provides aggregate statistics and insights from tracked detections
  */
 
-import type { Track } from "./detection-tracker";
 import type { DetectionFrame } from "./detection-queries";
+import type { Track } from "./detection-tracker";
 
 export interface TrackingMetrics {
   totalUniquePeople: number; // Total unique tracks seen
@@ -40,14 +40,14 @@ export function getTrackingMetrics(tracks: Track[]): TrackingMetrics {
   }
 
   const totalUniquePeople = tracks.length;
-  const averageTrackDuration = 
+  const averageTrackDuration =
     tracks.reduce((sum, track) => sum + track.age, 0) / tracks.length;
-  
+
   // For max concurrent, we'd need historical data, so we just return current count
-  const maxConcurrentPeople = tracks.filter(t => t.lostFrames === 0).length;
-  
+  const maxConcurrentPeople = tracks.filter((t) => t.lostFrames === 0).length;
+
   // Total frames is the max age among all tracks
-  const totalFramesProcessed = Math.max(...tracks.map(t => t.age), 0);
+  const totalFramesProcessed = Math.max(...tracks.map((t) => t.age), 0);
 
   return {
     totalUniquePeople,
@@ -61,7 +61,9 @@ export function getTrackingMetrics(tracks: Track[]): TrackingMetrics {
  * Build occupancy timeline from detection frames
  * Shows how many people were detected at each timestamp
  */
-export function getOccupancyTimeline(frames: DetectionFrame[]): OccupancyDataPoint[] {
+export function getOccupancyTimeline(
+  frames: DetectionFrame[],
+): OccupancyDataPoint[] {
   return frames.map((frame) => ({
     timestamp: frame.frame_timestamp,
     count: frame.detections.length,
@@ -105,7 +107,7 @@ export function analyzeOccupancy(timeline: OccupancyDataPoint[]): {
  */
 export function detectFrequentVisitors(
   tracks: Track[],
-  minAppearances: number = 1
+  minAppearances: number = 1,
 ): FrequentVisitor[] {
   // Group tracks by patterns (simplified - just returns all tracks)
   const visitors: FrequentVisitor[] = tracks.map((track) => ({
@@ -138,16 +140,17 @@ export function getDwellTimeDistribution(tracks: Track[]): {
   }
 
   const dwellTimes = tracks.map((t) => t.age).sort((a, b) => a - b);
-  const averageDwellTime = dwellTimes.reduce((a, b) => a + b, 0) / dwellTimes.length;
+  const averageDwellTime =
+    dwellTimes.reduce((a, b) => a + b, 0) / dwellTimes.length;
   const medianDwellTime = dwellTimes[Math.floor(dwellTimes.length / 2)];
 
   // Create bins: 0-5, 5-10, 10-20, 20-50, 50+ frames
   const bins = [
-    { range: '0-5 frames', count: 0 },
-    { range: '5-10 frames', count: 0 },
-    { range: '10-20 frames', count: 0 },
-    { range: '20-50 frames', count: 0 },
-    { range: '50+ frames', count: 0 },
+    { range: "0-5 frames", count: 0 },
+    { range: "5-10 frames", count: 0 },
+    { range: "10-20 frames", count: 0 },
+    { range: "20-50 frames", count: 0 },
+    { range: "50+ frames", count: 0 },
   ];
 
   for (const time of dwellTimes) {
@@ -194,8 +197,14 @@ export function getPeakTimes(timeline: OccupancyDataPoint[]): {
 
   // Find peak periods (consecutive high-activity periods)
   const threshold = peakCount * 0.7; // 70% of peak
-  const peakPeriods: Array<{ start: number; end: number; avgCount: number }> = [];
-  let currentPeriod: { start: number; end: number; sum: number; count: number } | null = null;
+  const peakPeriods: Array<{ start: number; end: number; avgCount: number }> =
+    [];
+  let currentPeriod: {
+    start: number;
+    end: number;
+    sum: number;
+    count: number;
+  } | null = null;
 
   for (const point of timeline) {
     if (point.count >= threshold) {
@@ -242,7 +251,7 @@ export function getPeakTimes(timeline: OccupancyDataPoint[]): {
  */
 export function generateTrackingReport(
   tracks: Track[],
-  frames: DetectionFrame[]
+  frames: DetectionFrame[],
 ): {
   metrics: TrackingMetrics;
   occupancy: ReturnType<typeof analyzeOccupancy>;
@@ -267,7 +276,7 @@ export function generateTrackingReport(
 export function formatTimestamp(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
 /**
@@ -282,4 +291,3 @@ export function formatDuration(frames: number, fps: number = 5): string {
   const secs = Math.floor(seconds % 60);
   return `${mins}m ${secs}s`;
 }
-

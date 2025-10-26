@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { supabase, type AIAnalysisJob } from "@/lib/supabase";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { useEffect, useState } from "react";
+import { type AIAnalysisJob, supabase } from "@/lib/supabase";
 
 export function useJobsRealtime() {
   const [jobs, setJobs] = useState<AIAnalysisJob[]>([]);
@@ -48,15 +48,15 @@ export function useJobsRealtime() {
             const updatedJob = payload.new as AIAnalysisJob;
             setJobs((current) =>
               current.map((job) =>
-                job.id === updatedJob.id ? updatedJob : job
-              )
+                job.id === updatedJob.id ? updatedJob : job,
+              ),
             );
           } else if (payload.eventType === "DELETE") {
             setJobs((current) =>
-              current.filter((job) => job.id !== payload.old.id)
+              current.filter((job) => job.id !== payload.old.id),
             );
           }
-        }
+        },
       )
       .subscribe();
 
@@ -68,4 +68,3 @@ export function useJobsRealtime() {
 
   return { jobs, loading, error };
 }
-

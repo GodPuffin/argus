@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import MuxPlayer from "@mux/mux-player-react";
-import { IconPencil, IconTrash, IconVolume, IconVolumeOff } from "@tabler/icons-react";
-import { LuxeCard as Card, LuxeCardContent as CardContent } from "@/components/ui/luxe-card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { type Camera, getPlaybackId } from "@/lib/supabase";
+import {
+  IconPencil,
+  IconTrash,
+  IconVolume,
+  IconVolumeOff,
+} from "@tabler/icons-react";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +19,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  LuxeCard as Card,
+  LuxeCardContent as CardContent,
+} from "@/components/ui/luxe-card";
+import { type Camera, getPlaybackId } from "@/lib/supabase";
 
 interface CameraCardProps {
   camera: Camera;
@@ -61,7 +69,10 @@ export function CameraCard({ camera, onRename, onDelete }: CameraCardProps) {
   };
 
   return (
-    <Card variant="revealed-pointer" className="group relative overflow-hidden transition-all hover:shadow-lg py-0">
+    <Card
+      variant="revealed-pointer"
+      className="group relative overflow-hidden transition-all hover:shadow-lg py-0"
+    >
       <CardContent className="p-0 pb-4">
         {/* Video/Offline Display */}
         <div className="relative aspect-video bg-black mb-3">
@@ -75,12 +86,14 @@ export function CameraCard({ camera, onRename, onDelete }: CameraCardProps) {
                 autoPlay
                 disableTracking={true}
                 disableCookies={true}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  aspectRatio: "16/9",
-                  "--controls": "none",
-                } as React.CSSProperties}
+                style={
+                  {
+                    width: "100%",
+                    height: "100%",
+                    aspectRatio: "16/9",
+                    "--controls": "none",
+                  } as React.CSSProperties
+                }
                 className="absolute inset-0"
               />
               {/* Minimal Controls Overlay */}
@@ -104,7 +117,8 @@ export function CameraCard({ camera, onRename, onDelete }: CameraCardProps) {
               <div className="text-center space-y-2">
                 <div className="text-4xl opacity-20">📹</div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  {camera.camera_name} is {camera.status === "idle" ? "idle" : "offline"}
+                  {camera.camera_name} is{" "}
+                  {camera.status === "idle" ? "idle" : "offline"}
                 </p>
                 {camera.status === "idle" && (
                   <p className="text-xs text-muted-foreground/70">
@@ -153,12 +167,11 @@ export function CameraCard({ camera, onRename, onDelete }: CameraCardProps) {
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold truncate">{camera.camera_name}</h3>
                 <p className="text-xs text-muted-foreground">
-                  {camera.status === "active" 
-                    ? "Streaming now" 
-                    : camera.last_connected_at 
+                  {camera.status === "active"
+                    ? "Streaming now"
+                    : camera.last_connected_at
                       ? `Last seen ${formatDate(camera.last_connected_at)}`
-                      : "Never connected"
-                  }
+                      : "Never connected"}
                 </p>
               </div>
               <div className="flex gap-1">
@@ -171,14 +184,21 @@ export function CameraCard({ camera, onRename, onDelete }: CameraCardProps) {
                 >
                   <IconPencil className="size-4" />
                 </Button>
-                <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialog
+                  open={deleteDialogOpen}
+                  onOpenChange={setDeleteDialogOpen}
+                >
                   <AlertDialogTrigger asChild>
                     <Button
                       size="icon"
                       variant="ghost"
                       className="h-8 w-8 text-destructive hover:text-destructive"
                       disabled={camera.status === "active" || isDeleting}
-                      title={camera.status === "active" ? "Cannot delete while streaming" : "Delete"}
+                      title={
+                        camera.status === "active"
+                          ? "Cannot delete while streaming"
+                          : "Delete"
+                      }
                     >
                       <IconTrash className="size-4" />
                     </Button>
@@ -187,7 +207,9 @@ export function CameraCard({ camera, onRename, onDelete }: CameraCardProps) {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete Camera</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to delete "{camera.camera_name}"? This will permanently delete the stream and cannot be undone.
+                        Are you sure you want to delete "{camera.camera_name}"?
+                        This will permanently delete the stream and cannot be
+                        undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -207,9 +229,15 @@ export function CameraCard({ camera, onRename, onDelete }: CameraCardProps) {
 
           {/* Status Indicator */}
           <div className="flex items-center gap-2 pt-2 border-t">
-            <div className={`w-2 h-2 rounded-full ${camera.status === "active" ? "bg-green-500 animate-pulse" : camera.status === "idle" ? "bg-yellow-500" : "bg-muted-foreground/30"}`} />
+            <div
+              className={`w-2 h-2 rounded-full ${camera.status === "active" ? "bg-green-500 animate-pulse" : camera.status === "idle" ? "bg-yellow-500" : "bg-muted-foreground/30"}`}
+            />
             <span className="text-xs text-muted-foreground capitalize">
-              {camera.status === "active" ? "Broadcasting" : camera.status === "idle" ? "Idle" : camera.status}
+              {camera.status === "active"
+                ? "Broadcasting"
+                : camera.status === "idle"
+                  ? "Idle"
+                  : camera.status}
             </span>
           </div>
         </div>
@@ -217,4 +245,3 @@ export function CameraCard({ camera, onRename, onDelete }: CameraCardProps) {
     </Card>
   );
 }
-

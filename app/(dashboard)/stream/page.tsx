@@ -1,20 +1,22 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
-import { StreamControls } from "@/components/stream/stream-controls";
 import { ExternalStreamSetup } from "@/components/stream/external-stream-setup";
 import { NetworkStats } from "@/components/stream/network-stats";
+import { StreamControls } from "@/components/stream/stream-controls";
 import { VideoDisplay } from "@/components/stream/video-display";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
-import { useStreamState } from "@/hooks/use-stream-state";
-import { useStreamManager } from "@/hooks/use-stream-manager";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCameraRealtime } from "@/hooks/use-camera-realtime";
+import { useStreamManager } from "@/hooks/use-stream-manager";
+import { useStreamState } from "@/hooks/use-stream-state";
 
 export default function StreamPage() {
   const state = useStreamState();
-  const [streamType, setStreamType] = useState<"From Browser" | "From Other">("From Browser");
+  const [streamType, setStreamType] = useState<"From Browser" | "From Other">(
+    "From Browser",
+  );
   const inputStreamRef = useRef<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -83,8 +85,9 @@ export default function StreamPage() {
 
   const enableCamera = async () => {
     try {
-      inputStreamRef.current =
-        await navigator.mediaDevices.getUserMedia(streamManager.CAMERA_CONSTRAINTS);
+      inputStreamRef.current = await navigator.mediaDevices.getUserMedia(
+        streamManager.CAMERA_CONSTRAINTS,
+      );
 
       if (videoRef.current) {
         videoRef.current.srcObject = inputStreamRef.current;
@@ -206,26 +209,29 @@ export default function StreamPage() {
         if (e.data && e.data.size > 0) {
           if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
             wsRef.current.send(e.data);
-            
+
             bytesSentRef.current += e.data.size;
             const now = Date.now();
             const timeDiff = (now - lastUpdateTimeRef.current) / 1000;
-            
+
             if (timeDiff >= 1) {
-              const rate = (bytesSentRef.current / timeDiff) / 1024;
+              const rate = bytesSentRef.current / timeDiff / 1024;
               const roundedRate = Math.round(rate);
               state.setDataRate(roundedRate);
-              
-              const currentTime = new Date().toLocaleTimeString('en-US', { 
-                hour12: false, 
-                minute: '2-digit', 
-                second: '2-digit' 
+
+              const currentTime = new Date().toLocaleTimeString("en-US", {
+                hour12: false,
+                minute: "2-digit",
+                second: "2-digit",
               });
-              state.setDataHistory(prev => {
-                const newData = [...prev, { time: currentTime, rate: roundedRate }];
+              state.setDataHistory((prev) => {
+                const newData = [
+                  ...prev,
+                  { time: currentTime, rate: roundedRate },
+                ];
                 return newData.slice(-30);
               });
-              
+
               bytesSentRef.current = 0;
               lastUpdateTimeRef.current = now;
             }
@@ -300,7 +306,9 @@ export default function StreamPage() {
             <AnimatedTabs
               tabs={["From Browser", "From Other"]}
               activeTab={streamType}
-              onTabChange={(tab) => setStreamType(tab as "From Browser" | "From Other")}
+              onTabChange={(tab) =>
+                setStreamType(tab as "From Browser" | "From Other")
+              }
             />
           </div>
 

@@ -1,37 +1,37 @@
-import { Client } from "@elastic/elasticsearch"
-import type { 
-  SearchDocument, 
-  SearchFilters, 
-  SearchResult, 
+import { Client } from "@elastic/elasticsearch";
+import type {
+  BulkIndexDocument,
+  SearchDocument,
+  SearchFilters,
   SearchHit,
-  BulkIndexDocument 
-} from "./types/elasticsearch"
+  SearchResult,
+} from "./types/elasticsearch";
 
 // Re-export types for convenience
-export type { 
-  SearchDocument, 
-  SearchFilters, 
-  SearchResult, 
-  SearchHit,
-  EventDocument,
+export type {
   AnalysisDocument,
-  BulkIndexDocument
-} from "./types/elasticsearch"
+  BulkIndexDocument,
+  EventDocument,
+  SearchDocument,
+  SearchFilters,
+  SearchHit,
+  SearchResult,
+} from "./types/elasticsearch";
 
 // ============================================================================
 // Configuration
 // ============================================================================
 
-const ELASTICSEARCH_INDEX = 'content'
-const SEARCH_RESULT_SIZE = 20
+const ELASTICSEARCH_INDEX = "content";
+const SEARCH_RESULT_SIZE = 20;
 // Minimum score threshold for search results to filter out low-relevance matches
 // Especially important for semantic search (ELSER) which can match weakly to many documents
 // Typical ELSER scores: 5-15 for strong matches, 1-5 for weak matches, <1 for very weak
-const MIN_SEARCH_SCORE = 1.5
+const MIN_SEARCH_SCORE = 1.5;
 
 const isElasticsearchConfigured = (): boolean => {
-  return !!(process.env.ELASTICSEARCH_URL && process.env.ELASTICSEARCH_API_KEY)
-}
+  return !!(process.env.ELASTICSEARCH_URL && process.env.ELASTICSEARCH_API_KEY);
+};
 
 // ============================================================================
 // Client Initialization
@@ -42,7 +42,7 @@ export const esClient = isElasticsearchConfigured()
       node: process.env.ELASTICSEARCH_URL!,
       auth: { apiKey: process.env.ELASTICSEARCH_API_KEY! },
     })
-  : null
+  : null;
 
 // ============================================================================
 // Index Management
@@ -55,134 +55,136 @@ const INDEX_MAPPING = {
   mappings: {
     properties: {
       // Base fields
-      doc_type: { 
-        type: 'keyword' 
+      doc_type: {
+        type: "keyword",
       },
       asset_id: {
-        type: 'keyword'
+        type: "keyword",
       },
       asset_type: {
-        type: 'keyword'
+        type: "keyword",
       },
       camera_name: {
-        type: 'text',
-        analyzer: 'standard',
+        type: "text",
+        analyzer: "standard",
         fields: {
-          keyword: { type: 'keyword' }
-        }
+          keyword: { type: "keyword" },
+        },
       },
-      
+
       // Text fields with semantic_text multi-fields for hybrid search
       title: {
-        type: 'text',
-        analyzer: 'standard',
+        type: "text",
+        analyzer: "standard",
         fields: {
-          keyword: { type: 'keyword' },
+          keyword: { type: "keyword" },
           semantic: {
-            type: 'semantic_text',
-            inference_id: '.elser-2-elasticsearch'
-          }
-        }
+            type: "semantic_text",
+            inference_id: ".elser-2-elasticsearch",
+          },
+        },
       },
-      
-      created_at: { 
-        type: 'date' 
+
+      created_at: {
+        type: "date",
       },
       playback_id: {
-        type: 'keyword'
+        type: "keyword",
       },
       duration: {
-        type: 'integer'
+        type: "integer",
       },
-      
+
       // Event-specific fields
       description: {
-        type: 'text',
-        analyzer: 'standard',
+        type: "text",
+        analyzer: "standard",
         fields: {
           semantic: {
-            type: 'semantic_text',
-            inference_id: '.elser-2-elasticsearch'
-          }
-        }
+            type: "semantic_text",
+            inference_id: ".elser-2-elasticsearch",
+          },
+        },
       },
       severity: {
-        type: 'keyword'
+        type: "keyword",
       },
       event_type: {
-        type: 'keyword'
+        type: "keyword",
       },
       timestamp_seconds: {
-        type: 'integer'
+        type: "integer",
       },
       affected_entities: {
-        type: 'object',
-        enabled: true
+        type: "object",
+        enabled: true,
       },
-      
+
       // Analysis-specific fields
       summary: {
-        type: 'text',
-        analyzer: 'standard',
+        type: "text",
+        analyzer: "standard",
         fields: {
           semantic: {
-            type: 'semantic_text',
-            inference_id: '.elser-2-elasticsearch'
-          }
-        }
+            type: "semantic_text",
+            inference_id: ".elser-2-elasticsearch",
+          },
+        },
       },
-      tags: { 
-        type: 'keyword',
+      tags: {
+        type: "keyword",
         fields: {
           semantic: {
-            type: 'semantic_text',
-            inference_id: '.elser-2-elasticsearch'
-          }
-        }
+            type: "semantic_text",
+            inference_id: ".elser-2-elasticsearch",
+          },
+        },
       },
       entities: {
-        type: 'object',
-        enabled: true
+        type: "object",
+        enabled: true,
       },
       asset_start_seconds: {
-        type: 'integer'
+        type: "integer",
       },
       asset_end_seconds: {
-        type: 'integer'
-      }
-    }
-  }
-}
+        type: "integer",
+      },
+    },
+  },
+};
 
 async function createContentIndex(): Promise<void> {
   if (!esClient) {
-    console.warn('[Elasticsearch] Client not configured. Cannot create index.')
-    return
+    console.warn("[Elasticsearch] Client not configured. Cannot create index.");
+    return;
   }
 
   try {
     await esClient.indices.create({
       index: ELASTICSEARCH_INDEX,
-      ...INDEX_MAPPING
-    } as any)
-    console.log(`[Elasticsearch] Index '${ELASTICSEARCH_INDEX}' created successfully`)
+      ...INDEX_MAPPING,
+    } as any);
+    console.log(
+      `[Elasticsearch] Index '${ELASTICSEARCH_INDEX}' created successfully`,
+    );
   } catch (error) {
-    console.error('[Elasticsearch] Error creating index:', error)
-    throw error
+    console.error("[Elasticsearch] Error creating index:", error);
+    throw error;
   }
 }
 
 async function checkIndexExists(): Promise<boolean> {
-  if (!esClient) return false
-  
+  if (!esClient) return false;
+
   try {
-    const exists = await esClient.indices.exists({ 
-      index: ELASTICSEARCH_INDEX 
-    })
-    return exists
+    const exists = await esClient.indices.exists({
+      index: ELASTICSEARCH_INDEX,
+    });
+    return exists;
   } catch (error) {
-    console.error('[Elasticsearch] Error checking index existence:', error)
-    return false
+    console.error("[Elasticsearch] Error checking index existence:", error);
+    return false;
   }
 }
 
@@ -194,81 +196,78 @@ async function checkIndexExists(): Promise<boolean> {
 // Reference: https://www.elastic.co/docs/solutions/search/hybrid-semantic-text
 function buildSearchQuery(query: string, filters?: SearchFilters) {
   // Use match_all for wildcard searches (when only filters are present)
-  const isWildcard = query === '*'
-  
+  const isWildcard = query === "*";
+
   const searchBody: any = {
     query: {
       bool: {
-        must: isWildcard ? [
-          { match_all: {} }
-        ] : [
-          // Hybrid search: combine semantic and lexical search
-          {
-            bool: {
-              should: [
-                // Lexical search on text fields
-                {
-                  multi_match: {
-                    query,
-                    fields: [
-                      'title^3',
-                      'description^2',
-                      'summary^2',
-                      'tags^1.5',
-                      'camera_name'
-                    ],
-                    type: 'best_fields',
-                    fuzziness: 'AUTO'
-                  }
+        must: isWildcard
+          ? [{ match_all: {} }]
+          : [
+              // Hybrid search: combine semantic and lexical search
+              {
+                bool: {
+                  should: [
+                    // Lexical search on text fields
+                    {
+                      multi_match: {
+                        query,
+                        fields: [
+                          "title^3",
+                          "description^2",
+                          "summary^2",
+                          "tags^1.5",
+                          "camera_name",
+                        ],
+                        type: "best_fields",
+                        fuzziness: "AUTO",
+                      },
+                    },
+                    // Semantic search on semantic_text subfields
+                    // Uses ELSER embeddings for AI-powered meaning-based search
+                    {
+                      bool: {
+                        should: [
+                          { match: { "title.semantic": query } },
+                          { match: { "description.semantic": query } },
+                          { match: { "summary.semantic": query } },
+                          { match: { "tags.semantic": query } },
+                        ],
+                      },
+                    },
+                  ],
+                  minimum_should_match: 1,
                 },
-                // Semantic search on semantic_text subfields
-                // Uses ELSER embeddings for AI-powered meaning-based search
-                {
-                  bool: {
-                    should: [
-                      { match: { 'title.semantic': query } },
-                      { match: { 'description.semantic': query } },
-                      { match: { 'summary.semantic': query } },
-                      { match: { 'tags.semantic': query } }
-                    ]
-                  }
-                }
-              ],
-              minimum_should_match: 1
-            }
-          }
-        ]
-      }
+              },
+            ],
+      },
     },
     // Filter out low-relevance results (skip for wildcard searches)
     min_score: isWildcard ? undefined : MIN_SEARCH_SCORE,
     size: SEARCH_RESULT_SIZE,
-    sort: [
-      '_score',
-      { created_at: { order: 'desc' } }
-    ]
-  }
+    sort: ["_score", { created_at: { order: "desc" } }],
+  };
 
   // Apply filters
   if (filters) {
-    const filterQueries: any[] = []
+    const filterQueries: any[] = [];
 
     if (filters.doc_type) {
       filterQueries.push({
-        term: { doc_type: filters.doc_type }
-      })
+        term: { doc_type: filters.doc_type },
+      });
     }
 
     if (filters.severity && filters.severity.length > 0) {
       filterQueries.push({
-        terms: { severity: filters.severity }
-      })
+        terms: { severity: filters.severity },
+      });
     }
 
     if (filters.event_type && filters.event_type.length > 0) {
       filterQueries.push({
-        terms: { event_type: filters.event_type }
-      })
+        terms: { event_type: filters.event_type },
+      });
     }
 
     if (filters.dateRange) {
@@ -276,74 +275,80 @@ function buildSearchQuery(query: string, filters?: SearchFilters) {
         range: {
           created_at: {
             gte: filters.dateRange.from,
-            lte: filters.dateRange.to
-          }
-        }
-      })
+            lte: filters.dateRange.to,
+          },
+        },
+      });
     }
 
     if (filterQueries.length > 0) {
-      searchBody.query.bool.filter = filterQueries
+      searchBody.query.bool.filter = filterQueries;
     }
   }
 
-  return searchBody
+  return searchBody;
 }
 
 function parseSearchResponse(response: any): SearchResult {
   // Handle response structure (newer versions return response directly, older versions use response.body)
-  const responseData = response.body || response
+  const responseData = response.body || response;
 
   return {
     hits: responseData.hits.hits.map((hit: any) => ({
       id: hit._id,
       score: hit._score,
       source: hit._source,
-      highlights: hit.highlight
+      highlights: hit.highlight,
     })),
     total: responseData.hits.total.value ?? responseData.hits.total,
-    took: responseData.took
-  }
+    took: responseData.took,
+  };
 }
 
 // Hybrid search combining AI-powered semantic search with traditional lexical search
 export async function searchContent(
   query: string,
-  filters?: SearchFilters
+  filters?: SearchFilters,
 ): Promise<SearchResult> {
   if (!esClient) {
-    console.warn('[Elasticsearch] Client not configured. Returning empty results.')
+    console.warn(
+      "[Elasticsearch] Client not configured. Returning empty results.",
+    );
     return {
       hits: [],
       total: 0,
-      took: 0
-    }
+      took: 0,
+    };
   }
 
-  const searchBody = buildSearchQuery(query, filters)
+  const searchBody = buildSearchQuery(query, filters);
 
   try {
     const response = await esClient.search({
       index: ELASTICSEARCH_INDEX,
-      body: searchBody
-    })
+      body: searchBody,
+    });
 
-    return parseSearchResponse(response)
+    return parseSearchResponse(response);
   } catch (error: any) {
     // Handle index not found error
-    if (error.meta?.statusCode === 404 && 
-        error.body?.error?.type === 'index_not_found_exception') {
-      console.warn(`[Elasticsearch] Index '${ELASTICSEARCH_INDEX}' not found. Creating...`)
-      await createContentIndex()
+    if (
+      error.meta?.statusCode === 404 &&
+      error.body?.error?.type === "index_not_found_exception"
+    ) {
+      console.warn(
+        `[Elasticsearch] Index '${ELASTICSEARCH_INDEX}' not found. Creating...`,
+      );
+      await createContentIndex();
       return {
         hits: [],
         total: 0,
-        took: 0
-      }
+        took: 0,
+      };
     }
 
-    console.error('[Elasticsearch] Search error:', error)
-    throw new Error('Search failed')
+    console.error("[Elasticsearch] Search error:", error);
+    throw new Error("Search failed");
   }
 }
 
@@ -352,17 +357,19 @@ export async function searchContent(
 // ============================================================================
 
 export async function ensureIndexExists(): Promise<void> {
-  if (!esClient) return
+  if (!esClient) return;
 
-  const exists = await checkIndexExists()
+  const exists = await checkIndexExists();
   if (!exists) {
-    console.log(`[Elasticsearch] Index '${ELASTICSEARCH_INDEX}' does not exist. Creating...`)
-    await createContentIndex()
+    console.log(
+      `[Elasticsearch] Index '${ELASTICSEARCH_INDEX}' does not exist. Creating...`,
+    );
+    await createContentIndex();
   }
 }
 
 export function isConfigured(): boolean {
-  return esClient !== null
+  return esClient !== null;
 }
 
 // ============================================================================
@@ -371,38 +378,38 @@ export function isConfigured(): boolean {
 
 export async function indexDocument(
   id: string,
-  document: SearchDocument
+  document: SearchDocument,
 ): Promise<void> {
   if (!esClient) {
-    console.warn('[Elasticsearch] Client not configured. Skipping indexing.')
-    return
+    console.warn("[Elasticsearch] Client not configured. Skipping indexing.");
+    return;
   }
 
   // Ensure index exists with proper mapping before indexing
-  await ensureIndexExists()
+  await ensureIndexExists();
 
   try {
     await esClient.index({
       index: ELASTICSEARCH_INDEX,
       id,
       body: document,
-      refresh: 'wait_for' // Wait for index refresh to make document searchable
-    })
-    
-    console.log(`[Elasticsearch] Document indexed: ${id}`)
+      refresh: "wait_for", // Wait for index refresh to make document searchable
+    });
+
+    console.log(`[Elasticsearch] Document indexed: ${id}`);
   } catch (error) {
-    console.error(`[Elasticsearch] Indexing error for document ${id}:`, error)
-    throw new Error(`Failed to index document: ${id}`)
+    console.error(`[Elasticsearch] Indexing error for document ${id}:`, error);
+    throw new Error(`Failed to index document: ${id}`);
   }
 }
 
 export async function updateDocument(
   id: string,
-  updates: Partial<SearchDocument>
+  updates: Partial<SearchDocument>,
 ): Promise<void> {
   if (!esClient) {
-    console.warn('[Elasticsearch] Client not configured. Skipping update.')
-    return
+    console.warn("[Elasticsearch] Client not configured. Skipping update.");
+    return;
   }
 
   try {
@@ -410,86 +417,93 @@ export async function updateDocument(
       index: ELASTICSEARCH_INDEX,
       id,
       body: {
-        doc: updates
+        doc: updates,
       },
-      refresh: 'wait_for'
-    } as any)
-    
-    console.log(`[Elasticsearch] Document updated: ${id}`)
+      refresh: "wait_for",
+    } as any);
+
+    console.log(`[Elasticsearch] Document updated: ${id}`);
   } catch (error) {
-    console.error(`[Elasticsearch] Update error for document ${id}:`, error)
-    throw new Error(`Failed to update document: ${id}`)
+    console.error(`[Elasticsearch] Update error for document ${id}:`, error);
+    throw new Error(`Failed to update document: ${id}`);
   }
 }
 
 export async function deleteDocument(id: string): Promise<void> {
   if (!esClient) {
-    console.warn('[Elasticsearch] Client not configured. Skipping deletion.')
-    return
+    console.warn("[Elasticsearch] Client not configured. Skipping deletion.");
+    return;
   }
 
   try {
     await esClient.delete({
       index: ELASTICSEARCH_INDEX,
       id,
-      refresh: 'wait_for'
-    })
-    
-    console.log(`[Elasticsearch] Document deleted: ${id}`)
+      refresh: "wait_for",
+    });
+
+    console.log(`[Elasticsearch] Document deleted: ${id}`);
   } catch (error: any) {
     // Ignore not found errors
     if (error.meta?.statusCode === 404) {
-      console.warn(`[Elasticsearch] Document not found: ${id}`)
-      return
+      console.warn(`[Elasticsearch] Document not found: ${id}`);
+      return;
     }
-    
-    console.error(`[Elasticsearch] Delete error for document ${id}:`, error)
-    throw new Error(`Failed to delete document: ${id}`)
+
+    console.error(`[Elasticsearch] Delete error for document ${id}:`, error);
+    throw new Error(`Failed to delete document: ${id}`);
   }
 }
 
 export async function bulkIndexDocuments(
-  documents: BulkIndexDocument[]
+  documents: BulkIndexDocument[],
 ): Promise<void> {
   if (!esClient) {
-    console.warn('[Elasticsearch] Client not configured. Skipping bulk indexing.')
-    return
+    console.warn(
+      "[Elasticsearch] Client not configured. Skipping bulk indexing.",
+    );
+    return;
   }
 
   if (documents.length === 0) {
-    console.log('[Elasticsearch] No documents to index')
-    return
+    console.log("[Elasticsearch] No documents to index");
+    return;
   }
 
   // Ensure index exists with proper mapping before bulk indexing
-  await ensureIndexExists()
+  await ensureIndexExists();
 
   try {
     const body = documents.flatMap(({ id, document }) => [
       { index: { _index: ELASTICSEARCH_INDEX, _id: id } },
-      document
-    ])
+      document,
+    ]);
 
     const response = await esClient.bulk({
       body,
-      refresh: 'wait_for'
-    })
+      refresh: "wait_for",
+    });
 
     if (response.errors) {
-      console.error('[Elasticsearch] Bulk indexing had errors:', response.items)
+      console.error(
+        "[Elasticsearch] Bulk indexing had errors:",
+        response.items,
+      );
     } else {
-      console.log(`[Elasticsearch] Bulk indexed ${documents.length} documents`)
+      console.log(`[Elasticsearch] Bulk indexed ${documents.length} documents`);
     }
   } catch (error) {
-    console.error('[Elasticsearch] Bulk indexing error:', error)
-    throw new Error('Failed to bulk index documents')
+    console.error("[Elasticsearch] Bulk indexing error:", error);
+    throw new Error("Failed to bulk index documents");
   }
 }
 
-export async function deleteDocumentsByAssetId(assetId: string): Promise<number> {
+export async function deleteDocumentsByAssetId(
+  assetId: string,
+): Promise<number> {
   if (!esClient) {
-    console.warn('[Elasticsearch] Client not configured. Skipping deletion.')
-    return 0
+    console.warn("[Elasticsearch] Client not configured. Skipping deletion.");
+    return 0;
   }
 
   try {
@@ -497,26 +511,33 @@ export async function deleteDocumentsByAssetId(assetId: string): Promise<number>
       index: ELASTICSEARCH_INDEX,
       query: {
         term: {
-          asset_id: assetId
-        }
+          asset_id: assetId,
+        },
       },
-      refresh: true
-    } as any)
+      refresh: true,
+    } as any);
 
     // Handle response structure (newer versions return response directly, older versions use response.body)
-    const responseData = (response as any).body || response
-    const deleted = responseData.deleted || 0
-    
-    console.log(`[Elasticsearch] Deleted ${deleted} documents for asset ${assetId}`)
-    return deleted
+    const responseData = (response as any).body || response;
+    const deleted = responseData.deleted || 0;
+
+    console.log(
+      `[Elasticsearch] Deleted ${deleted} documents for asset ${assetId}`,
+    );
+    return deleted;
   } catch (error: any) {
     // Ignore index not found errors
     if (error.meta?.statusCode === 404) {
-      console.warn(`[Elasticsearch] Index not found when deleting documents for asset ${assetId}`)
-      return 0
+      console.warn(
+        `[Elasticsearch] Index not found when deleting documents for asset ${assetId}`,
+      );
+      return 0;
     }
-    
-    console.error(`[Elasticsearch] Error deleting documents for asset ${assetId}:`, error)
-    throw new Error(`Failed to delete documents for asset: ${assetId}`)
+
+    console.error(
+      `[Elasticsearch] Error deleting documents for asset ${assetId}:`,
+      error,
+    );
+    throw new Error(`Failed to delete documents for asset: ${assetId}`);
   }
 }

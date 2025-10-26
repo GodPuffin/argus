@@ -1,16 +1,16 @@
 "use client";
 
+import Link from "@tiptap/extension-link";
+import ListItem from "@tiptap/extension-list-item";
+import TaskItem from "@tiptap/extension-task-item";
+import TaskList from "@tiptap/extension-task-list";
+import Underline from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
-import Link from "@tiptap/extension-link";
-import TaskList from "@tiptap/extension-task-list";
-import TaskItem from "@tiptap/extension-task-item";
-import ListItem from "@tiptap/extension-list-item";
 import { useEffect } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { EditorToolbar } from "./editor-toolbar";
-import { Checkbox } from "@/components/ui/checkbox";
 
 interface TiptapEditorProps {
   content: any;
@@ -52,10 +52,7 @@ export function TiptapEditor({
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: cn(
-          "focus:outline-none min-h-[500px] px-4 py-3",
-          className
-        ),
+        class: cn("focus:outline-none min-h-[500px] px-4 py-3", className),
       },
     },
     onUpdate: ({ editor }) => {
@@ -67,7 +64,11 @@ export function TiptapEditor({
 
   // Update editor content when prop changes
   useEffect(() => {
-    if (editor && content && JSON.stringify(editor.getJSON()) !== JSON.stringify(content)) {
+    if (
+      editor &&
+      content &&
+      JSON.stringify(editor.getJSON()) !== JSON.stringify(content)
+    ) {
       editor.commands.setContent(content);
     }
   }, [content, editor]);
@@ -79,4 +80,3 @@ export function TiptapEditor({
     </div>
   );
 }
-

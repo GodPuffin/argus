@@ -1,30 +1,24 @@
 "use client";
 
-import { Editor } from "@tiptap/react";
 import {
+  IconArrowBackUp,
+  IconArrowForwardUp,
   IconBold,
-  IconItalic,
-  IconUnderline,
-  IconList,
-  IconListNumbers,
-  IconListCheck,
-  IconLink,
-  IconLinkOff,
   IconH1,
   IconH2,
   IconH3,
-  IconArrowBackUp,
-  IconArrowForwardUp,
+  IconItalic,
+  IconLink,
+  IconLinkOff,
+  IconList,
+  IconListCheck,
+  IconListNumbers,
   IconSeparatorHorizontal,
+  IconUnderline,
 } from "@tabler/icons-react";
+import type { Editor } from "@tiptap/react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -33,9 +27,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { Separator } from "@/components/ui/separator";
 
 interface EditorToolbarProps {
   editor: Editor | null;
@@ -288,4 +288,3 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
     </>
   );
 }
-

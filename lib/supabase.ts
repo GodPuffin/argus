@@ -119,7 +119,15 @@ export interface AIAnalysisEvent {
   name: string;
   description: string;
   severity: "Minor" | "Medium" | "High";
-  type: "Crime" | "Medical Emergency" | "Traffic Incident" | "Property Damage" | "Safety Hazard" | "Suspicious Activity" | "Normal Activity" | "Camera Interference";
+  type:
+    | "Crime"
+    | "Medical Emergency"
+    | "Traffic Incident"
+    | "Property Damage"
+    | "Safety Hazard"
+    | "Suspicious Activity"
+    | "Normal Activity"
+    | "Camera Interference";
   timestamp_seconds: number;
   affected_entities: any[] | any;
   created_at: string;
@@ -132,4 +140,3 @@ export interface Report {
   created_at: string;
   updated_at: string;
 }
-

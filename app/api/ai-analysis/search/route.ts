@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { searchByTag, getRecentResults } from "@/lib/ai-analysis-queries";
+import { getRecentResults, searchByTag } from "@/lib/ai-analysis-queries";
 
 export async function GET(request: Request) {
   try {
@@ -32,4 +32,3 @@ export async function GET(request: Request) {
     );
   }
 }
-

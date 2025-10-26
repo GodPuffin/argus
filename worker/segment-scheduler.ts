@@ -89,9 +89,10 @@ async function enqueueAssetWindows(
   durationSeconds: number,
   liveStreamPlaybackId?: string,
 ): Promise<number> {
-  const playbackId = asset.is_live && liveStreamPlaybackId 
-    ? liveStreamPlaybackId 
-    : asset.playback_ids[0]?.id;
+  const playbackId =
+    asset.is_live && liveStreamPlaybackId
+      ? liveStreamPlaybackId
+      : asset.playback_ids[0]?.id;
 
   if (!playbackId) {
     console.warn(`Asset ${asset.id} has no playback_ids, skipping`);
@@ -99,7 +100,7 @@ async function enqueueAssetWindows(
   }
 
   const windowSize = asset.is_live ? LIVE_WINDOW_SIZE : WINDOW_SIZE;
-  
+
   const numCompleteWindows = Math.floor(durationSeconds / windowSize);
 
   if (numCompleteWindows === 0) {
@@ -110,18 +111,22 @@ async function enqueueAssetWindows(
   }
 
   const sourceType = asset.is_live ? "live" : "vod";
-  
-  const assetStartEpoch = asset.is_live 
+
+  const assetStartEpoch = asset.is_live
     ? Math.floor(new Date(asset.created_at).getTime() / 1000)
     : 0;
-  
+
   const jobs = [];
   for (let i = 0; i < numCompleteWindows; i++) {
     const relativeStart = i * windowSize;
     const relativeEnd = (i + 1) * windowSize;
-    
-    const startEpoch = asset.is_live ? assetStartEpoch + relativeStart : relativeStart;
-    const endEpoch = asset.is_live ? assetStartEpoch + relativeEnd : relativeEnd;
+
+    const startEpoch = asset.is_live
+      ? assetStartEpoch + relativeStart
+      : relativeStart;
+    const endEpoch = asset.is_live
+      ? assetStartEpoch + relativeEnd
+      : relativeEnd;
 
     jobs.push({
       source_type: sourceType,
@@ -135,12 +140,10 @@ async function enqueueAssetWindows(
     });
   }
 
-  const { error } = await supabase
-    .from("ai_analysis_jobs")
-    .upsert(jobs, {
-      onConflict: "source_id,asset_start_seconds,asset_end_seconds",
-      ignoreDuplicates: true,
-    });
+  const { error } = await supabase.from("ai_analysis_jobs").upsert(jobs, {
+    onConflict: "source_id,asset_start_seconds,asset_end_seconds",
+    ignoreDuplicates: true,
+  });
 
   if (error) {
     console.error(`Error enqueuing jobs for asset ${asset.id}:`, error);
@@ -181,7 +184,8 @@ async function processAsset(asset: MuxAsset): Promise<void> {
         .single();
 
       if (!error && liveStream) {
-        liveStreamPlaybackId = (liveStream as MuxLiveStream).playback_ids[0]?.id;
+        liveStreamPlaybackId = (liveStream as MuxLiveStream).playback_ids[0]
+          ?.id;
         console.log(
           `Using live stream playback ID ${liveStreamPlaybackId} for asset ${asset.id}`,
         );
@@ -189,12 +193,14 @@ async function processAsset(asset: MuxAsset): Promise<void> {
     }
   } else {
     durationSeconds = Math.floor(asset.duration_seconds ?? 0);
-    console.log(
-      `Asset ${asset.id} (COMPLETED): duration=${durationSeconds}s`,
-    );
+    console.log(`Asset ${asset.id} (COMPLETED): duration=${durationSeconds}s`);
   }
 
-  const enqueuedCount = await enqueueAssetWindows(asset, durationSeconds, liveStreamPlaybackId);
+  const enqueuedCount = await enqueueAssetWindows(
+    asset,
+    durationSeconds,
+    liveStreamPlaybackId,
+  );
 
   if (!asset.is_live) {
     const { error } = await supabase
@@ -204,10 +210,7 @@ async function processAsset(asset: MuxAsset): Promise<void> {
       .eq("id", asset.id);
 
     if (error) {
-      console.error(
-        `Error marking asset ${asset.id} as complete:`,
-        error,
-      );
+      console.error(`Error marking asset ${asset.id} as complete:`, error);
     } else {
       console.log(
         `Asset ${asset.id} marked as complete (is_live=false, ${enqueuedCount} windows enqueued, duration=${durationSeconds}s)`,
@@ -218,7 +221,9 @@ async function processAsset(asset: MuxAsset): Promise<void> {
 
 async function schedulerLoop() {
   console.log("Live Asset Segment Scheduler starting...");
-  console.log(`Config: SCHEDULER_INTERVAL=${SCHEDULER_INTERVAL_MS}ms, VOD_WINDOW=${WINDOW_SIZE}s, LIVE_WINDOW=${LIVE_WINDOW_SIZE}s`);
+  console.log(
+    `Config: SCHEDULER_INTERVAL=${SCHEDULER_INTERVAL_MS}ms, VOD_WINDOW=${WINDOW_SIZE}s, LIVE_WINDOW=${LIVE_WINDOW_SIZE}s`,
+  );
 
   while (true) {
     try {
@@ -227,7 +232,9 @@ async function schedulerLoop() {
       const { data: assets, error } = await supabase
         .schema("mux")
         .from("assets")
-        .select("id, is_live, status, duration_seconds, playback_ids, live_stream_id, ai_analysis_complete, created_at")
+        .select(
+          "id, is_live, status, duration_seconds, playback_ids, live_stream_id, ai_analysis_complete, created_at",
+        )
         .eq("status", "ready")
         .not("live_stream_id", "is", null)
         .or("ai_analysis_complete.is.null,ai_analysis_complete.eq.false");
@@ -242,17 +249,19 @@ async function schedulerLoop() {
         }
 
         const elapsed = Date.now() - startTime;
-        console.log(
-          `Processed ${assets.length} assets in ${elapsed}ms`,
-        );
+        console.log(`Processed ${assets.length} assets in ${elapsed}ms`);
       } else {
         console.log("No live-derived assets to process");
       }
 
-      await new Promise((resolve) => setTimeout(resolve, SCHEDULER_INTERVAL_MS));
+      await new Promise((resolve) =>
+        setTimeout(resolve, SCHEDULER_INTERVAL_MS),
+      );
     } catch (error) {
       console.error("Error in scheduler loop:", error);
-      await new Promise((resolve) => setTimeout(resolve, SCHEDULER_INTERVAL_MS));
+      await new Promise((resolve) =>
+        setTimeout(resolve, SCHEDULER_INTERVAL_MS),
+      );
     }
   }
 }
@@ -263,4 +272,3 @@ export function startSegmentScheduler() {
     process.exit(1);
   });
 }
-

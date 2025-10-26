@@ -1,12 +1,24 @@
-"use client"
+"use client";
 
-import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card"
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts"
-import { ChartBackground } from "./chart-background"
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import {
+  LuxeCard as Card,
+  LuxeCardContent as CardContent,
+  LuxeCardDescription as CardDescription,
+  LuxeCardHeader as CardHeader,
+  LuxeCardTitle as CardTitle,
+} from "@/components/ui/luxe-card";
+import { ChartBackground } from "./chart-background";
 
 interface AssetDurationChartProps {
-  data: Array<{ range: string; count: number }>
+  data: Array<{ range: string; count: number }>;
 }
 
 const chartConfig = {
@@ -14,23 +26,25 @@ const chartConfig = {
     label: "Recordings",
     color: "hsl(195, 68%, 62%)",
   },
-}
+};
 
 export function AssetDurationChart({ data }: AssetDurationChartProps) {
-  const chartData = data.map(item => ({
+  const chartData = data.map((item) => ({
     range: item.range,
     count: item.count,
-  }))
+  }));
 
-  const total = data.reduce((sum, item) => sum + item.count, 0)
-  const maxCount = Math.max(...data.map(d => d.count), 0)
+  const total = data.reduce((sum, item) => sum + item.count, 0);
+  const maxCount = Math.max(...data.map((d) => d.count), 0);
 
   return (
     <Card variant="revealed-pointer">
       <CardHeader>
         <CardTitle>Recording Length Distribution</CardTitle>
         <CardDescription>
-          {total > 0 ? `Duration breakdown of ${total.toLocaleString()} recordings` : "No recording data yet"}
+          {total > 0
+            ? `Duration breakdown of ${total.toLocaleString()} recordings`
+            : "No recording data yet"}
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-6">
@@ -39,15 +53,12 @@ export function AssetDurationChart({ data }: AssetDurationChartProps) {
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
               <LineChart data={chartData} margin={{ left: 0, right: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis 
-                  dataKey="range" 
+                <XAxis
+                  dataKey="range"
                   stroke="hsl(var(--muted-foreground))"
                   fontSize={12}
                 />
-                <YAxis 
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
-                />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <ChartLegend content={<ChartLegendContent />} />
                 <Line
@@ -69,6 +80,5 @@ export function AssetDurationChart({ data }: AssetDurationChartProps) {
         </ChartBackground>
       </CardContent>
     </Card>
-  )
+  );
 }
-

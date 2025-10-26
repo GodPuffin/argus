@@ -1,30 +1,29 @@
 "use client";
 
-import React from "react";
-import { SiteHeader } from "@/components/site-header";
-import { useJobsRealtime } from "@/hooks/use-jobs-realtime";
-import { columns } from "@/components/jobs/columns";
 import {
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
+  type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type SortingState,
   useReactTable,
+  type VisibilityState,
 } from "@tanstack/react-table";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Filter,
+} from "lucide-react";
+import React from "react";
+import { columns } from "@/components/jobs/columns";
+import { SiteHeader } from "@/components/site-header";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -33,18 +32,35 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Filter } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  LuxeCard as Card,
+  LuxeCardContent as CardContent,
+  LuxeCardDescription as CardDescription,
+  LuxeCardHeader as CardHeader,
+  LuxeCardTitle as CardTitle,
+} from "@/components/ui/luxe-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useJobsRealtime } from "@/hooks/use-jobs-realtime";
 
 export default function JobsPage() {
   const { jobs, loading, error } = useJobsRealtime();
   const [sorting, setSorting] = React.useState<SortingState>([
-    { id: "created_at", desc: true }
+    { id: "created_at", desc: true },
   ]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
 
   const table = useReactTable({
     data: jobs,
@@ -80,23 +96,29 @@ export default function JobsPage() {
   }, [jobs]);
 
   // Status filter
-  const statusFilter = (table.getColumn("status")?.getFilterValue() as string[]) ?? [];
+  const statusFilter =
+    (table.getColumn("status")?.getFilterValue() as string[]) ?? [];
   const toggleStatusFilter = (status: string) => {
     const current = statusFilter;
     const updated = current.includes(status)
       ? current.filter((s) => s !== status)
       : [...current, status];
-    table.getColumn("status")?.setFilterValue(updated.length > 0 ? updated : undefined);
+    table
+      .getColumn("status")
+      ?.setFilterValue(updated.length > 0 ? updated : undefined);
   };
 
   // Type filter
-  const typeFilter = (table.getColumn("source_type")?.getFilterValue() as string[]) ?? [];
+  const typeFilter =
+    (table.getColumn("source_type")?.getFilterValue() as string[]) ?? [];
   const toggleTypeFilter = (type: string) => {
     const current = typeFilter;
     const updated = current.includes(type)
       ? current.filter((t) => t !== type)
       : [...current, type];
-    table.getColumn("source_type")?.setFilterValue(updated.length > 0 ? updated : undefined);
+    table
+      .getColumn("source_type")
+      ?.setFilterValue(updated.length > 0 ? updated : undefined);
   };
 
   return (
@@ -118,7 +140,9 @@ export default function JobsPage() {
               <CardTitle className="text-sm font-medium">Queued</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">{stats.queued}</div>
+              <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                {stats.queued}
+              </div>
             </CardContent>
           </Card>
           <Card variant="revealed-pointer">
@@ -126,7 +150,9 @@ export default function JobsPage() {
               <CardTitle className="text-sm font-medium">Processing</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-500">{stats.processing}</div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-500">
+                {stats.processing}
+              </div>
             </CardContent>
           </Card>
           <Card variant="revealed-pointer">
@@ -134,7 +160,9 @@ export default function JobsPage() {
               <CardTitle className="text-sm font-medium">Succeeded</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600 dark:text-green-500">{stats.succeeded}</div>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-500">
+                {stats.succeeded}
+              </div>
             </CardContent>
           </Card>
           <Card variant="revealed-pointer">
@@ -142,7 +170,9 @@ export default function JobsPage() {
               <CardTitle className="text-sm font-medium">Failed</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600 dark:text-orange-500">{stats.failed}</div>
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-500">
+                {stats.failed}
+              </div>
             </CardContent>
           </Card>
           <Card variant="revealed-pointer">
@@ -150,18 +180,25 @@ export default function JobsPage() {
               <CardTitle className="text-sm font-medium">Dead</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600 dark:text-red-500">{stats.dead}</div>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-500">
+                {stats.dead}
+              </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Data Table */}
-        <Card variant="revealed-pointer" className="flex flex-col flex-1 overflow-hidden">
+        <Card
+          variant="revealed-pointer"
+          className="flex flex-col flex-1 overflow-hidden"
+        >
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Job Queue</CardTitle>
-                <CardDescription className="mt-2">Monitor AI analysis jobs in realtime</CardDescription>
+                <CardDescription className="mt-2">
+                  Monitor AI analysis jobs in realtime
+                </CardDescription>
               </div>
               {loading && (
                 <Badge variant="secondary" className="animate-pulse">
@@ -176,9 +213,15 @@ export default function JobsPage() {
               <div className="flex items-center gap-4 flex-1">
                 <Input
                   placeholder="Search by source ID..."
-                  value={(table.getColumn("source_id")?.getFilterValue() as string) ?? ""}
+                  value={
+                    (table
+                      .getColumn("source_id")
+                      ?.getFilterValue() as string) ?? ""
+                  }
                   onChange={(event) =>
-                    table.getColumn("source_id")?.setFilterValue(event.target.value)
+                    table
+                      .getColumn("source_id")
+                      ?.setFilterValue(event.target.value)
                   }
                   className="max-w-sm"
                 />
@@ -199,7 +242,13 @@ export default function JobsPage() {
                   <DropdownMenuContent align="start">
                     <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {["queued", "processing", "succeeded", "failed", "dead"].map((status) => (
+                    {[
+                      "queued",
+                      "processing",
+                      "succeeded",
+                      "failed",
+                      "dead",
+                    ].map((status) => (
                       <DropdownMenuCheckboxItem
                         key={status}
                         className="capitalize"
@@ -261,7 +310,9 @@ export default function JobsPage() {
                           key={column.id}
                           className="capitalize"
                           checked={column.getIsVisible()}
-                          onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                          onCheckedChange={(value) =>
+                            column.toggleVisibility(!!value)
+                          }
                         >
                           {column.id.replace(/_/g, " ")}
                         </DropdownMenuCheckboxItem>
@@ -284,7 +335,7 @@ export default function JobsPage() {
                               ? null
                               : flexRender(
                                   header.column.columnDef.header,
-                                  header.getContext()
+                                  header.getContext(),
                                 )}
                           </TableHead>
                         );
@@ -312,18 +363,26 @@ export default function JobsPage() {
                       >
                         {row.getVisibleCells().map((cell) => (
                           <TableCell key={cell.id}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
                           </TableCell>
                         ))}
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={columns.length} className="h-24 text-center">
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center"
+                      >
                         {error ? (
                           <div className="text-destructive">Error: {error}</div>
                         ) : (
-                          <div className="text-muted-foreground">No jobs found.</div>
+                          <div className="text-muted-foreground">
+                            No jobs found.
+                          </div>
                         )}
                       </TableCell>
                     </TableRow>
@@ -335,7 +394,8 @@ export default function JobsPage() {
             {/* Pagination */}
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
-                Showing {table.getRowModel().rows.length} of {table.getFilteredRowModel().rows.length} job(s)
+                Showing {table.getRowModel().rows.length} of{" "}
+                {table.getFilteredRowModel().rows.length} job(s)
               </div>
               <div className="flex items-center space-x-6">
                 <div className="flex items-center space-x-2">
@@ -408,4 +468,3 @@ export default function JobsPage() {
     </div>
   );
 }
-

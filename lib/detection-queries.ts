@@ -81,7 +81,7 @@ export async function getDetectionsForSource(
 
   // Map job IDs to their start times for timestamp calculation
   const jobStartTimes = new Map<number, number>(
-    jobs.map((j) => [j.id, j.start_epoch])
+    jobs.map((j) => [j.id, j.start_epoch]),
   );
 
   // Convert to absolute timestamps
@@ -109,4 +109,3 @@ export async function getDetectionsForSource(
 
   return allDetections;
 }
-

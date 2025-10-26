@@ -1,12 +1,12 @@
-import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
-export function SiteHeader({ 
+export function SiteHeader({
   title = "Argus",
-  children 
-}: { 
-  title?: string
-  children?: React.ReactNode 
+  children,
+}: {
+  title?: string;
+  children?: React.ReactNode;
 }) {
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear">
@@ -19,12 +19,8 @@ export function SiteHeader({
           />
           <h1 className="text-base font-medium">{title}</h1>
         </div>
-        {children && (
-          <div className="flex items-center gap-2">
-            {children}
-          </div>
-        )}
+        {children && <div className="flex items-center gap-2">{children}</div>}
       </div>
     </header>
-  )
+  );
 }

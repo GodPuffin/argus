@@ -1,7 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { searchContent } from "@/lib/elasticsearch";
 import { supabase } from "@/lib/supabase";
-import type { SearchFilters, DocumentType, EventSeverity, EventType } from "@/lib/types/elasticsearch";
+import type {
+  DocumentType,
+  EventSeverity,
+  EventType,
+  SearchFilters,
+} from "@/lib/types/elasticsearch";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,41 +22,45 @@ export async function GET(request: NextRequest) {
     if (!query || query.trim().length === 0) {
       return NextResponse.json(
         { error: "Query parameter 'q' is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Validate doc_type parameter
-    if (docType && !['event', 'analysis'].includes(docType)) {
+    if (docType && !["event", "analysis"].includes(docType)) {
       return NextResponse.json(
         { error: "Invalid doc_type. Must be 'event' or 'analysis'" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Build filters object
     const filters: SearchFilters = {};
-    
+
     if (docType) {
       filters.doc_type = docType;
     }
-    
+
     // Parse severity filter (comma-separated)
     if (severityParam) {
-      const severityList = severityParam.split(',').filter(Boolean) as EventSeverity[];
+      const severityList = severityParam
+        .split(",")
+        .filter(Boolean) as EventSeverity[];
       if (severityList.length > 0) {
         filters.severity = severityList;
       }
     }
-    
+
     // Parse event_type filter (comma-separated)
     if (eventTypeParam) {
-      const eventTypeList = eventTypeParam.split(',').filter(Boolean) as EventType[];
+      const eventTypeList = eventTypeParam
+        .split(",")
+        .filter(Boolean) as EventType[];
       if (eventTypeList.length > 0) {
         filters.event_type = eventTypeList;
       }
     }
-    
+
     if (from && to) {
       filters.dateRange = { from, to };
     }
@@ -61,31 +70,40 @@ export async function GET(request: NextRequest) {
 
     // Validate that assets still exist in mux.assets table
     let validatedHits = results.hits;
-    
+
     if (results.hits.length > 0) {
       // Get unique asset IDs from search results
-      const assetIds = [...new Set(results.hits.map(hit => hit.source.asset_id))];
-      
+      const assetIds = [
+        ...new Set(results.hits.map((hit) => hit.source.asset_id)),
+      ];
+
       // Query mux.assets to check which assets still exist
       const { data: existingAssets, error: assetsError } = await supabase
-        .schema('mux')
-        .from('assets')
-        .select('id')
-        .in('id', assetIds);
-      
+        .schema("mux")
+        .from("assets")
+        .select("id")
+        .in("id", assetIds);
+
       if (assetsError) {
-        console.warn('[Search API] Error checking assets existence:', assetsError);
+        console.warn(
+          "[Search API] Error checking assets existence:",
+          assetsError,
+        );
         // Continue with unvalidated results if the check fails
       } else {
         // Create a Set of valid asset IDs for fast lookup
-        const validAssetIds = new Set(existingAssets?.map(a => a.id) || []);
-        
+        const validAssetIds = new Set(existingAssets?.map((a) => a.id) || []);
+
         // Filter results to only include those with valid assets
         const originalCount = results.hits.length;
-        validatedHits = results.hits.filter(hit => validAssetIds.has(hit.source.asset_id));
-        
+        validatedHits = results.hits.filter((hit) =>
+          validAssetIds.has(hit.source.asset_id),
+        );
+
         if (validatedHits.length < originalCount) {
-          console.log(`[Search API] Filtered out ${originalCount - validatedHits.length} results with missing assets`);
+          console.log(
+            `[Search API] Filtered out ${originalCount - validatedHits.length} results with missing assets`,
+          );
         }
       }
     }
@@ -110,10 +128,9 @@ export async function GET(request: NextRequest) {
         doc_type: docType || null,
         severity: filters.severity || null,
         event_type: filters.event_type || null,
-        dateRange: from && to ? { from, to } : null
-      }
+        dateRange: from && to ? { from, to } : null,
+      },
     });
-
   } catch (error) {
     console.error("[Search API] Error:", error);
     return NextResponse.json(
@@ -121,7 +138,7 @@ export async function GET(request: NextRequest) {
         error: "Search failed",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

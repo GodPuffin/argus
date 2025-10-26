@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
 // GET all cameras (live streams with browser_id)
@@ -78,4 +78,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

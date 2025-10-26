@@ -1,11 +1,11 @@
-'use client'
+"use client";
 
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { AsciiEye } from "@/components/ascii-eye";
-import Dither from '@/components/dither'
-import { useState, useEffect } from 'react';
-import TextType from "@/components/text-type"
+import Dither from "@/components/dither";
+import TextType from "@/components/text-type";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
@@ -15,13 +15,13 @@ export default function Home() {
     const loadContent = async () => {
       // Wait for typing animation to complete
       // "WELCOME TO ARGUS" = ~17 chars * 50ms = 850ms + 2000ms pause = ~2850ms
-      await new Promise(resolve => setTimeout(resolve, 3500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 3500));
+
       // Start fade out animation
       setFadeOut(true);
-      
+
       // Remove loading screen after fade completes
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise((resolve) => setTimeout(resolve, 800));
       setIsLoading(false);
     };
 
@@ -32,9 +32,9 @@ export default function Home() {
     <>
       {/* Loading Screen */}
       {isLoading && (
-        <div 
+        <div
           className={`fixed inset-0 z-50 flex items-center justify-center bg-black transition-opacity duration-800 ${
-            fadeOut ? 'opacity-0' : 'opacity-100'
+            fadeOut ? "opacity-0" : "opacity-100"
           }`}
         >
           <TextType
@@ -69,8 +69,14 @@ export default function Home() {
         {/* Left side - Main content */}
         <div className="z-10 w-1/2 flex items-center justify-center relative pointer-events-none px-8">
           <div className="text-center">
-            <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-8">ARGUS</h1>
-            <Button variant="secondary" size="lg" className="pointer-events-auto">
+            <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-8">
+              ARGUS
+            </h1>
+            <Button
+              variant="secondary"
+              size="lg"
+              className="pointer-events-auto"
+            >
               <Link href="/watch">Go to Dashboard</Link>
             </Button>
           </div>

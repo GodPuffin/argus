@@ -141,10 +141,10 @@ export function buildSignedPlaybackUrl(
     expiration,
     clips,
   });
-  
+
   // Build query params for clipping
   const params = new URLSearchParams({ token });
-  
+
   if (clips.asset_start_time !== undefined) {
     params.set("start", clips.asset_start_time.toString());
   }
@@ -157,7 +157,7 @@ export function buildSignedPlaybackUrl(
   if (clips.program_end_time !== undefined) {
     params.set("end", clips.program_end_time.toString());
   }
-  
+
   return `https://stream.mux.com/${playbackId}.m3u8?${params.toString()}`;
 }
 
@@ -202,4 +202,3 @@ export function buildSignedStoryboardUrl(
   });
   return `https://image.mux.com/${playbackId}/storyboard.vtt?token=${token}`;
 }
-

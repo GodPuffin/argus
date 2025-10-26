@@ -1,13 +1,13 @@
-import { supabase } from "@/lib/supabase";
-import { NextRequest, NextResponse } from "next/server";
+import Link from "@tiptap/extension-link";
+import ListItem from "@tiptap/extension-list-item";
+import TaskItem from "@tiptap/extension-task-item";
+import TaskList from "@tiptap/extension-task-list";
+import Underline from "@tiptap/extension-underline";
 import { generateJSON } from "@tiptap/html";
 import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
-import Link from "@tiptap/extension-link";
-import TaskList from "@tiptap/extension-task-list";
-import TaskItem from "@tiptap/extension-task-item";
-import ListItem from "@tiptap/extension-list-item";
 import { marked } from "marked";
+import { type NextRequest, NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
 
 // GET /api/reports - List all reports
 export async function GET() {
@@ -21,7 +21,7 @@ export async function GET() {
       console.error("Error fetching reports:", error);
       return NextResponse.json(
         { error: "Failed to fetch reports" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -30,7 +30,7 @@ export async function GET() {
     console.error("Error in GET /api/reports:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 
     // Convert markdown to Tiptap JSON if provided
     let content = { type: "doc", content: [{ type: "paragraph" }] };
-    
+
     if (markdown) {
       try {
         // Configure marked to preserve line breaks and use GFM
@@ -51,10 +51,10 @@ export async function POST(req: NextRequest) {
           breaks: true,
           gfm: true,
         });
-        
+
         // Convert markdown to HTML first
         const html = await marked(markdown);
-        
+
         // Convert HTML to Tiptap JSON with all extensions
         content = generateJSON(html, [
           StarterKit.configure({
@@ -71,13 +71,17 @@ export async function POST(req: NextRequest) {
         // If conversion fails, create a simple paragraph with the markdown text
         content = {
           type: "doc",
-          content: [{
-            type: "paragraph",
-            content: [{
-              type: "text",
-              text: markdown
-            }]
-          }]
+          content: [
+            {
+              type: "paragraph",
+              content: [
+                {
+                  type: "text",
+                  text: markdown,
+                },
+              ],
+            },
+          ],
         };
       }
     }
@@ -95,7 +99,7 @@ export async function POST(req: NextRequest) {
       console.error("Error creating report:", error);
       return NextResponse.json(
         { error: "Failed to create report" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -104,8 +108,7 @@ export async function POST(req: NextRequest) {
     console.error("Error in POST /api/reports:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

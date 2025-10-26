@@ -1,24 +1,24 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { SiteHeader } from "@/components/site-header"
-import { AnimatedTabs } from "@/components/ui/animated-tabs"
-import { CameraGrid } from "@/components/watch/camera-grid"
-import { RecordingGrid } from "@/components/watch/recording-grid"
-import { useCamerasRealtime } from "@/hooks/use-cameras-realtime"
-import { useAssetsRealtime } from "@/hooks/use-assets-realtime"
+import React, { useEffect, useState } from "react";
+import { SiteHeader } from "@/components/site-header";
+import { AnimatedTabs } from "@/components/ui/animated-tabs";
+import { CameraGrid } from "@/components/watch/camera-grid";
+import { RecordingGrid } from "@/components/watch/recording-grid";
+import { useAssetsRealtime } from "@/hooks/use-assets-realtime";
+import { useCamerasRealtime } from "@/hooks/use-cameras-realtime";
 
 const WATCH_TAB_STORAGE_KEY = "watch-last-tab";
 
 export default function WatchPage() {
   const searchParams = useSearchParams();
-  
+
   const { cameras, loading: loadingCameras } = useCamerasRealtime();
   const { assets, loading: loadingAssets } = useAssetsRealtime();
-  
+
   const [activeTab, setActiveTab] = useState<string>("cameras");
-  
+
   useEffect(() => {
     const urlTab = searchParams.get("tab");
     if (urlTab && (urlTab === "cameras" || urlTab === "recordings")) {
@@ -31,7 +31,7 @@ export default function WatchPage() {
       }
     }
   }, [searchParams]);
-  
+
   const handleTabChange = (tab: string) => {
     // Map display name to internal value
     const value = tab === "Live Cameras" ? "cameras" : "recordings";
@@ -52,7 +52,6 @@ export default function WatchPage() {
       if (!response.ok) {
         throw new Error("Failed to update camera name");
       }
-      
     } catch (error) {
       console.error("Error updating camera:", error);
       alert("Failed to update camera name");
@@ -68,14 +67,16 @@ export default function WatchPage() {
       if (!response.ok) {
         throw new Error("Failed to delete camera");
       }
-      
     } catch (error) {
       console.error("Error deleting camera:", error);
       alert("Failed to delete camera");
     }
   };
 
-  const handleUpdateAsset = async (assetId: string, updates: { passthrough?: string; meta?: any }) => {
+  const handleUpdateAsset = async (
+    assetId: string,
+    updates: { passthrough?: string; meta?: any },
+  ) => {
     try {
       const response = await fetch(`/api/assets/${assetId}`, {
         method: "PATCH",
@@ -88,7 +89,6 @@ export default function WatchPage() {
       if (!response.ok) {
         throw new Error("Failed to update asset");
       }
-
     } catch (error) {
       console.error("Error updating asset:", error);
       alert("Failed to update recording");
@@ -104,7 +104,6 @@ export default function WatchPage() {
       if (!response.ok) {
         throw new Error("Failed to delete asset");
       }
-
     } catch (error) {
       console.error("Error deleting asset:", error);
       alert("Failed to delete recording");
@@ -144,4 +143,3 @@ export default function WatchPage() {
     </div>
   );
 }
-
