@@ -41,6 +41,14 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --color-main: var(--main);
+  --color-main-secondary: var(--main-secondary);
+  --color-main-foreground: var(--main-foreground);
+  --color-main-muted: var(--main-muted);
+  --color-main-background: var(--main-background);
+  --color-main-invert: var(--main-invert);
+  --color-primary-muted: var(--primary-muted);
+  --color-primary-invert: var(--primary-invert);
 }
 
 :root {
@@ -76,6 +84,16 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  
+  /* Luxe UI variables */
+  --main: oklch(0.97 0 0);
+  --main-secondary: oklch(97% 0 0);
+  --main-foreground: oklch(0.925 0 0);
+  --main-muted: oklch(0.96 0 0);
+  --main-background: oklch(0.97 0 0);
+  --main-invert: oklch(0.205 0 0);
+  --primary-muted: oklch(0.556 0 0);
+  --primary-invert: oklch(1 0 0);
 }
 
 .dark {
@@ -110,7 +128,16 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  
+  /* Luxe UI dark mode variables */
+  --main: oklch(0.178 0 0);
+  --main-foreground: oklch(0.269 0 0);
+  --main-muted: oklch(0.168 0 0);
+  --main-background: oklch(0.145 0 0);
+  --primary-muted: oklch(0.708 0 0);
 }
+
+
 
 @layer base {
   * {
@@ -140,5 +167,42 @@
 
   .animate-breathe {
     animation: breathe 5s ease-in-out infinite;
+  }
+
+  @keyframes shine {
+    0% {
+      background-position: 0% 0%;
+    }
+    50% {
+      background-position: 100% 100%;
+    }
+    100% {
+      background-position: 0% 0%;
+    }
+  }
+
+  .animate-shine {
+    animation: shine 10s linear infinite;
+  }
+
+  @keyframes brightness {
+    0% {
+      opacity: 0;
+      transform: translateX(-100%) skewX(-45deg);
+    }
+    5% {
+      opacity: 1;
+    }
+    95% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translateX(200%) skewX(-45deg);
+    }
+  }
+
+  .animate-brightness {
+    animation: brightness 2s ease-in-out infinite;
   }
 }
