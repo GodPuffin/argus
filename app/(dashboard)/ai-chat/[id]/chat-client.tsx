@@ -65,15 +65,29 @@ export default function ChatClient({ id, initialMessages }: ChatClientProps) {
   }, [selectedModel]);
   
   // Create a custom transport that reads model at request time
-  const transport = useRef(
-    new DefaultChatTransport({
+  const transportRef = useRef<DefaultChatTransport | null>(null);
+  
+  if (!transportRef.current) {
+    transportRef.current = new DefaultChatTransport({
       api: "/api/chat",
       body: () => ({
         chatId: id,
         model: selectedModelRef.current,
       }),
-    })
-  ).current;
+    });
+  }
+  
+  const transport = transportRef.current;
+  
+  // Cleanup transport on unmount
+  useEffect(() => {
+    return () => {
+      if (transportRef.current) {
+        // Abort any ongoing requests
+        transportRef.current = null;
+      }
+    };
+  }, []);
 
   const { messages, sendMessage, status } = useChat({
     id,
