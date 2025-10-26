@@ -4,6 +4,7 @@ import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription a
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { PieChart, Pie } from "recharts"
 import { ChartBackground } from "./chart-background"
+import { STREAM_STATUS_COLORS } from "@/lib/chart-colors"
 
 interface StreamStatusChartProps {
   data: {
@@ -16,15 +17,15 @@ interface StreamStatusChartProps {
 const chartConfig = {
   active: {
     label: "Active",
-    color: "hsl(142, 70%, 45%)", // Green for active
+    color: STREAM_STATUS_COLORS.active,
   },
   idle: {
     label: "Idle",
-    color: "hsl(25, 80%, 60%)", // Orange
+    color: STREAM_STATUS_COLORS.idle,
   },
   disabled: {
     label: "Disabled",
-    color: "hsl(0, 70%, 50%)", // Red for disabled
+    color: STREAM_STATUS_COLORS.disabled,
   },
 }
 

@@ -1,46 +1,46 @@
 "use client"
 
 import { LuxeCard as Card, LuxeCardContent as CardContent, LuxeCardDescription as CardDescription, LuxeCardHeader as CardHeader, LuxeCardTitle as CardTitle } from "@/components/ui/luxe-card"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts"
 import { ChartBackground } from "./chart-background"
-import { getColorblindSafeColor } from "@/lib/chart-colors"
+import { getEntityTypeColor } from "@/lib/chart-colors"
 
-interface CameraActivityChartProps {
-  data: Array<{ camera_name: string; event_count: number; camera_id: string }>
+interface TopEntitiesChartProps {
+  data: Array<{ entity: string; count: number; type?: string }>
 }
 
-export function CameraActivityChart({ data }: CameraActivityChartProps) {
-  const chartData = data.slice(0, 10).map((item, index) => ({
-    camera: item.camera_name,
-    jobs: item.event_count,
-    fill: getColorblindSafeColor(index)
+
+export function TopEntitiesChart({ data }: TopEntitiesChartProps) {
+  const total = data.reduce((sum, item) => sum + item.count, 0)
+  const topData = data.slice(0, 10).map(item => ({
+    entity: item.entity,
+    count: item.count,
+    fill: item.type ? getEntityTypeColor(item.type) : "hsl(0, 0%, 50%)"
   }))
   
   // Build chart config dynamically
-  const chartConfig = chartData.reduce((acc, item) => {
-    acc[item.camera] = {
-      label: item.camera,
+  const chartConfig = topData.reduce((acc, item) => {
+    acc[item.entity] = {
+      label: item.entity,
       color: item.fill
     }
     return acc
   }, {} as Record<string, { label: string; color: string }>)
 
-  const total = data.reduce((sum, item) => sum + item.event_count, 0)
-
   return (
     <Card variant="revealed-pointer">
       <CardHeader>
-        <CardTitle>Camera Analysis Activity</CardTitle>
+        <CardTitle>Top Detected Entities</CardTitle>
         <CardDescription>
-          {total > 0 ? `AI jobs processed per camera (${total.toLocaleString()} total)` : "No camera activity yet"}
+          {total > 0 ? `Most frequently detected entities (${total.toLocaleString()} total)` : "No entities yet"}
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-6">
         <ChartBackground>
-          {chartData.length > 0 ? (
+          {topData.length > 0 ? (
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 10 }}>
+              <BarChart data={topData} layout="vertical" margin={{ left: 10, right: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis 
                   type="number" 
@@ -48,9 +48,9 @@ export function CameraActivityChart({ data }: CameraActivityChartProps) {
                   fontSize={12}
                 />
                 <YAxis 
-                  dataKey="camera" 
+                  dataKey="entity" 
                   type="category" 
-                  width={120} 
+                  width={100} 
                   stroke="hsl(var(--muted-foreground))"
                   fontSize={12}
                 />
@@ -59,19 +59,20 @@ export function CameraActivityChart({ data }: CameraActivityChartProps) {
                   content={<ChartTooltipContent hideLabel />} 
                 />
                 <Bar 
-                  dataKey="jobs"
+                  dataKey="count"
                   radius={[0, 4, 4, 0]}
                   animationDuration={800}
                 >
-                  {chartData.map((entry) => (
-                    <Cell key={entry.camera} fill={entry.fill} />
+                  {topData.map((entry) => (
+                    <Cell key={entry.entity} fill={entry.fill} />
                   ))}
                 </Bar>
+                <ChartLegend content={<ChartLegendContent />} />
               </BarChart>
             </ChartContainer>
           ) : (
             <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-              No camera activity data available
+              No entity data available
             </div>
           )}
         </ChartBackground>
@@ -79,3 +80,4 @@ export function CameraActivityChart({ data }: CameraActivityChartProps) {
     </Card>
   )
 }
+

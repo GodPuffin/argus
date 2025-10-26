@@ -5,6 +5,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts"
 import { Activity } from "lucide-react"
 import { ChartBackground } from "./chart-background"
+import { PROCESSING_VOLUME_COLOR } from "@/lib/chart-colors"
 
 interface ProcessingVolumeChartProps {
   data: Array<{ date: string; volume: number }>
@@ -13,7 +14,7 @@ interface ProcessingVolumeChartProps {
 const chartConfig = {
   volume: {
     label: "Processing Volume",
-    color: "hsl(15, 80%, 58%)",
+    color: PROCESSING_VOLUME_COLOR,
   },
 }
 
