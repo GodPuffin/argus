@@ -381,15 +381,16 @@ export default function StatsPage() {
 
                 {/* Top AI Analysis Tags */}
                 <TopTagsChart data={stats.topTags} />
-
-                {/* Detections Timeline */}
-                <div className="md:col-span-2">
-                  <DetectionsTimelineChart data={stats.detectionsTimeline} />
-                </div>
-
+                
                 {/* Occupancy Over Time */}
+                <div className="md:col-span-2">
+                  <div className="md:col-span-1">
+                    <OccupancyChart data={stats.occupancyData} />
+                  </div>
+                </div>
+                {/* Detections Timeline */}
                 <div className="md:col-span-1">
-                  <OccupancyChart data={stats.occupancyData} />
+                  <DetectionsTimelineChart data={stats.detectionsTimeline} />
                 </div>
               </div>
             ) : null}
@@ -420,15 +421,15 @@ export default function StatsPage() {
                 {/* Detection Classes */}
                 <DetectionClassChart data={stats.detectionStats.classCounts} />
 
+                {/* Processing Volume */}
+                <div className="md:col-span-1">
+                  <ProcessingVolumeChart data={stats.processingVolume} />
+                </div>
                 {/* Jobs Timeline */}
                 <div className="md:col-span-2">
                   <JobsTimelineChart data={stats.jobsTimeline} />
                 </div>
 
-                {/* Processing Volume */}
-                <div className="md:col-span-1">
-                  <ProcessingVolumeChart data={stats.processingVolume} />
-                </div>
               </div>
             ) : null}
 
