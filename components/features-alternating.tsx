@@ -81,7 +81,7 @@ export function FeaturesAlternating({
   }, [features]);
 
   return (
-    <div className="w-full max-w-[80%] mx-auto space-y-24">
+    <div className="w-full max-w-[95%] lg:max-w-[80%] mx-auto space-y-12 lg:space-y-24">
       {features.map((feature, index) => {
         const isEven = index % 2 === 0;
         
@@ -91,41 +91,41 @@ export function FeaturesAlternating({
             ref={(el) => {
               sectionRefs.current[index] = el;
             }}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start"
+            className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 items-start"
           >
             {isEven ? (
               <>
                 {/* Left: Text Content */}
                 <LuxeCard variant="revealed-pointer" className="feature-card">
                   <LuxeCardHeader>
-                    <LuxeCardTitle className="text-2xl">
+                    <LuxeCardTitle className="text-xl lg:text-2xl">
                       {feature.title}
                     </LuxeCardTitle>
-                    <LuxeCardDescription className="text-lg">
+                    <LuxeCardDescription className="text-base lg:text-lg">
                       {feature.description}
                     </LuxeCardDescription>
                   </LuxeCardHeader>
                 </LuxeCard>
 
                 {/* Right: Browser Component */}
-                <div className="w-full min-h-[600px] feature-content">
+                <div className="w-full min-h-[300px] lg:min-h-[600px] feature-content">
                   {feature.content}
                 </div>
               </>
             ) : (
               <>
                 {/* Left: Browser Component */}
-                <div className="w-full min-h-[600px] feature-content">
+                <div className="w-full min-h-[300px] lg:min-h-[600px] feature-content lg:order-first">
                   {feature.content}
                 </div>
 
                 {/* Right: Text Content */}
-                <LuxeCard variant="revealed-pointer" className="feature-card">
+                <LuxeCard variant="revealed-pointer" className="feature-card lg:order-last">
                   <LuxeCardHeader>
-                    <LuxeCardTitle className="text-2xl">
+                    <LuxeCardTitle className="text-xl lg:text-2xl">
                       {feature.title}
                     </LuxeCardTitle>
-                    <LuxeCardDescription className="text-lg">
+                    <LuxeCardDescription className="text-base lg:text-lg">
                       {feature.description}
                     </LuxeCardDescription>
                   </LuxeCardHeader>

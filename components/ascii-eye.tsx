@@ -196,7 +196,7 @@ export const AsciiEye = memo(function AsciiEye() {
   return (
     <div className="h-full w-full pointer-events-auto">
       <pre
-        className="font-medium sm:text-xs select-none"
+        className="font-medium text-[0.5rem] sm:text-[0.6rem] md:text-xs select-none"
         style={{
           fontFamily: "monospace",
           willChange: "transform", // GPU acceleration hint

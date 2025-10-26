@@ -181,28 +181,29 @@ export default function Home() {
         />
       </div>
 
-      <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-center p-4 ">
+      <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-center p-2 sm:p-4">
         <NavigationMenu>
-          <NavigationMenuList>
+          <NavigationMenuList className="flex-wrap justify-center gap-1 sm:gap-2">
             <NavigationMenuItem>
-              <NavigationMenuLink href="#overview">Overview</NavigationMenuLink>
+              <NavigationMenuLink href="#overview" className="text-sm sm:text-base">Overview</NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <NavigationMenuLink href="#models">Models</NavigationMenuLink>
+              <NavigationMenuLink href="#models" className="text-sm sm:text-base">Models</NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <NavigationMenuLink href="#features">Features</NavigationMenuLink>
+              <NavigationMenuLink href="#features" className="text-sm sm:text-base">Features</NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <NavigationMenuLink href="/watch">Dashboard</NavigationMenuLink>
+              <NavigationMenuLink href="/watch" className="text-sm sm:text-base">Dashboard</NavigationMenuLink>
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
       </div>
 
-      <main id="overview" className="w-full min-h-screen flex items-center justify-between overflow-hidden relative [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-mt-24">
+      <main id="overview" className="w-full min-h-screen flex items-center justify-center lg:justify-between overflow-hidden relative [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-mt-24">
 
-        <div className="z-10 ml-0 w-1/3 flex items-start justify-center relative pointer-events-none ">
+        {/* Desktop Layout */}
+        <div className="hidden lg:flex z-10 ml-0 w-1/3 items-start justify-center relative pointer-events-none">
           <div className="text-left">
             <h1 className="text-7xl mt-0 font-bold mb-4 pb-4">ARGUS</h1>
             <LuxeButton variant="animated-border" className="pointer-events-auto px-4 py-2 text-base">
@@ -211,25 +212,41 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="z-10 mt-10 w-1/2 h-full flex items-center justify-center relative pointer-events-none">
-          <div className="w-full h-full flex items-center justify-center ">
+        <div className="hidden lg:flex z-10 mt-10 w-1/2 h-full items-center justify-center relative pointer-events-none">
+          <div className="w-full h-full flex items-center justify-center">
             <AsciiEye />
+          </div>
+        </div>
+
+        {/* Mobile Layout - Centered with Overlay */}
+        <div className="lg:hidden relative w-full h-screen flex items-center justify-center px-4">
+          {/* ASCII Eye Background */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none scale-90 sm:scale-100">
+            <AsciiEye />
+          </div>
+          
+          {/* Overlayed Text Content */}
+          <div className="relative z-20 flex flex-col items-center justify-center text-center space-y-6">
+            <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-white drop-shadow-2xl">ARGUS</h1>
+            <LuxeButton variant="animated-border" className="pointer-events-auto px-6 py-3 text-base">
+              <Link href="/watch">Open Argus</Link>
+            </LuxeButton>
           </div>
         </div>
       </main>
 
-      <section id="models" className="w-full py-20 relative z-10 scroll-mt-24">
+      <section id="models" className="w-full py-12 lg:py-20 relative z-10 scroll-mt-24">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-6 text-foreground">Technology for the Future  </h2>
-          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">Argus is built on the latest and greatest technologies to deliver the best possible experience for you and your team.</p>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-4 lg:mb-6 text-foreground">Technology for the Future</h2>
+          <p className="text-center text-sm sm:text-base text-muted-foreground mb-8 lg:mb-12 max-w-2xl mx-auto px-4">Argus is built on the latest and greatest technologies to deliver the best possible experience for you and your team.</p>
           <ModelsSection />
         </div>
       </section>
 
-      <section id="features" className="w-full py-20 relative z-10 scroll-mt-24">
+      <section id="features" className="w-full py-12 lg:py-20 relative z-10 scroll-mt-24">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-4 text-foreground">Features</h2>
-          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-3 lg:mb-4 text-foreground">Features</h2>
+          <p className="text-center text-sm sm:text-base text-muted-foreground mb-8 lg:mb-12 max-w-2xl mx-auto px-4">
             Discover the powerful capabilities that make Argus the ultimate surveillance and monitoring solution.
           </p>
           <FeaturesAlternating features={featuresContent} />
