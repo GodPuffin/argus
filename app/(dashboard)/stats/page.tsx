@@ -133,8 +133,8 @@ export default function StatsPage() {
         )}
       </SiteHeader>
       
-      <ScrollArea className="h-[calc(100vh-9rem)]">
-        <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+      <ScrollArea className="h-[calc(100vh-6rem)]">
+        <div className="@container/main flex flex-1 flex-col gap-4 p-4 pb-0 md:gap-6 md:p-6 md:pb-0">
           {/* Controls */}
           <div className="flex items-center justify-between gap-3">
             <div key="section-tabs">
