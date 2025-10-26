@@ -12,6 +12,7 @@ import {
   IconDatabase,
   IconList,
   IconBug,
+  IconFileText,
 } from "@tabler/icons-react"
 
 import {
@@ -57,6 +58,11 @@ const navigationItems = [
         title: "AI Chat",
         url: "/ai-chat",
         icon: IconMessageChatbot,
+      },
+      {
+        title: "Reports",
+        url: "/reports",
+        icon: IconFileText,
       },
     ],
   },
