@@ -63,7 +63,7 @@ export const EventCard = ({
     <Link href={videoUrl} className="block no-underline">
       <Card
         className={cn(
-          "cursor-pointer transition-all hover:shadow-lg border-l-4",
+          "cursor-pointer transition-all hover:shadow-lg border-l-4 py-0",
           getSeverityColor(severity),
           "not-prose"
         )}
