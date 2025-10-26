@@ -5,6 +5,7 @@
 
 import { NextResponse } from "next/server";
 import { getStats } from "@/lib/stats-queries";
+import { getAllElasticsearchStats, getTimeRangeFromFilter } from "@/lib/elasticsearch-stats";
 
 export async function GET(request: Request) {
   try {
@@ -19,9 +20,21 @@ export async function GET(request: Request) {
       );
     }
     
-    const stats = await getStats(range);
+    // Fetch both Supabase stats and Elasticsearch stats in parallel
+    const timeRange = getTimeRangeFromFilter(range);
     
-    return NextResponse.json(stats);
+    const [stats, esMetrics] = await Promise.all([
+      getStats(range),
+      getAllElasticsearchStats(timeRange)
+    ]);
+    
+    // Merge the data
+    const combinedStats = {
+      ...stats,
+      esMetrics
+    };
+    
+    return NextResponse.json(combinedStats);
   } catch (error) {
     console.error("Error fetching stats:", error);
     return NextResponse.json(

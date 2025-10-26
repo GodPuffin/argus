@@ -18,13 +18,17 @@ import {
 import { JobStatusChart } from "@/components/stats/job-status-chart"
 import { DetectionClassChart } from "@/components/stats/detection-class-chart"
 import { StreamStatusChart } from "@/components/stats/stream-status-chart"
-import { CameraActivityChart } from "@/components/stats/camera-activity-chart"
 import { TopTagsChart } from "@/components/stats/top-tags-chart"
 import { DetectionsByHourChart } from "@/components/stats/detections-by-hour-chart"
 import { JobsTimelineChart } from "@/components/stats/jobs-timeline-chart"
 import { DetectionsTimelineChart } from "@/components/stats/detections-timeline-chart"
 import { OccupancyChart } from "@/components/stats/occupancy-chart"
 import { ProcessingVolumeChart } from "@/components/stats/processing-volume-chart"
+import { EventSeverityChart } from "@/components/stats/event-severity-chart"
+import { EventTypeChart } from "@/components/stats/event-type-chart"
+import { TopEntitiesChart } from "@/components/stats/top-entities-chart"
+import { CameraEventHeatmap } from "@/components/stats/camera-event-heatmap"
+import { EntityTypeChart } from "@/components/stats/entity-type-chart"
 
 // Hooks
 import { useStatsRealtime } from "@/hooks/use-stats-realtime"
@@ -32,10 +36,23 @@ import { useStatsRealtime } from "@/hooks/use-stats-realtime"
 import type { StatsData } from "@/lib/stats-queries"
 
 type TimeRange = '24h' | '7d' | '30d' | 'all'
+type TabType = 'Events' | 'Jobs'
 
 const STATS_TIME_RANGE_KEY = "stats-time-range"
+const STATS_ACTIVE_TAB_KEY = "stats-active-tab"
 
 export default function StatsPage() {
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    // Load saved tab from localStorage
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(STATS_ACTIVE_TAB_KEY) as TabType
+      if (saved && ['Events', 'Jobs'].includes(saved)) {
+        return saved
+      }
+    }
+    return 'Events'
+  })
+  
   const [timeRange, setTimeRange] = useState<TimeRange>(() => {
     // Load saved time range from localStorage
     if (typeof window !== 'undefined') {
@@ -65,9 +82,8 @@ export default function StatsPage() {
   const fetchStats = async (range: TimeRange, isInitial = false) => {
     if (isInitial) {
       setLoading(true)
-    } else {
-      setIsRefetching(true)
     }
+    // Don't show refetching indicator for time range changes
     
     try {
       const response = await fetch(`/api/stats?range=${range}`)
@@ -79,9 +95,8 @@ export default function StatsPage() {
     } finally {
       if (isInitial) {
         setLoading(false)
-      } else {
-        setIsRefetching(false)
       }
+      setIsRefetching(false)
     }
   }
 
@@ -94,48 +109,58 @@ export default function StatsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRange])
 
+  // Save active tab to localStorage
+  useEffect(() => {
+    localStorage.setItem(STATS_ACTIVE_TAB_KEY, activeTab)
+  }, [activeTab])
+
   return (
     <div className="flex flex-1 flex-col">
-      <SiteHeader title="Statistics" />
+      <SiteHeader title="Statistics">
+        {lastUpdate && (
+          <Badge variant="outline" className="text-xs">
+            Updated {lastUpdate.toLocaleTimeString()}
+          </Badge>
+        )}
+      </SiteHeader>
       
       <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         {/* Controls */}
-        <div className="flex items-center gap-3">
-          <AnimatedTabs
-            tabs={["24 Hours", "7 Days", "30 Days", "All Time"]}
-            activeTab={
-              timeRange === "24h" ? "24 Hours" :
-              timeRange === "7d" ? "7 Days" :
-              timeRange === "30d" ? "30 Days" :
-              "All Time"
-            }
-            onTabChange={(tab) => {
-              const mapping: Record<string, TimeRange> = {
-                "24 Hours": "24h",
-                "7 Days": "7d",
-                "30 Days": "30d",
-                "All Time": "all",
+        <div className="flex items-center justify-between gap-3">
+          <div key="section-tabs">
+            <AnimatedTabs
+              tabs={["Events", "Jobs"]}
+              activeTab={activeTab}
+              onTabChange={(tab) => setActiveTab(tab as TabType)}
+            />
+          </div>
+          
+          <div key="time-tabs">
+            <AnimatedTabs
+              tabs={["24 Hours", "7 Days", "30 Days", "All Time"]}
+              activeTab={
+                timeRange === "24h" ? "24 Hours" :
+                timeRange === "7d" ? "7 Days" :
+                timeRange === "30d" ? "30 Days" :
+                "All Time"
               }
-              setTimeRange(mapping[tab])
-            }}
-          />
-          {isRefetching && (
-            <Badge variant="outline" className="text-xs">
-              <Activity className="mr-1 h-3 w-3 animate-pulse" />
-              Updating...
-            </Badge>
-          )}
-          {lastUpdate && (
-            <Badge variant="outline" className="text-xs">
-              Updated {lastUpdate.toLocaleTimeString()}
-            </Badge>
-          )}
+              onTabChange={(tab) => {
+                const mapping: Record<string, TimeRange> = {
+                  "24 Hours": "24h",
+                  "7 Days": "7d",
+                  "30 Days": "30d",
+                  "All Time": "all",
+                }
+                setTimeRange(mapping[tab])
+              }}
+            />
+          </div>
         </div>
 
         <ScrollArea className="h-[calc(100vh-12rem)]">
           <div className="space-y-6">
-            {/* Key Metrics Cards */}
-            {loading ? (
+            {/* Key Metrics Cards - Events Tab */}
+            {activeTab === 'Events' && loading ? (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {[...Array(4)].map((_, i) => (
                   <Card key={i} variant="revealed-pointer">
@@ -148,7 +173,89 @@ export default function StatsPage() {
                   </Card>
                 ))}
               </div>
-            ) : stats ? (
+            ) : activeTab === 'Events' && stats && stats.esMetrics ? (
+              <div className={`grid gap-4 md:grid-cols-2 lg:grid-cols-4 transition-opacity duration-200 ${isRefetching ? 'opacity-60' : 'opacity-100'}`}>
+                {/* Total Events */}
+                <Card variant="revealed-pointer">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Events</CardTitle>
+                    <Activity className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {stats.esMetrics.eventSeverity.reduce((sum, e) => sum + e.count, 0).toLocaleString()}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      AI-analyzed events detected
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Critical Events */}
+                <Card variant="revealed-pointer">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Critical Events</CardTitle>
+                    <Activity className="h-4 w-4 text-red-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {stats.esMetrics.eventSeverity.find(e => e.severity === 'High')?.count.toLocaleString() || 0}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      High severity alerts
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Event Types */}
+                <Card variant="revealed-pointer">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Event Types</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {stats.esMetrics.eventTypes.length}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Different event categories
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Detected Entities */}
+                <Card variant="revealed-pointer">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Detected Entities</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {stats.esMetrics.topEntities.reduce((sum, e) => sum + e.count, 0).toLocaleString()}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Total entity occurrences
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : null}
+
+            {/* Key Metrics Cards - Jobs Tab */}
+            {activeTab === 'Jobs' && loading ? (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {[...Array(4)].map((_, i) => (
+                  <Card key={i} variant="revealed-pointer">
+                    <CardHeader className="pb-2">
+                      <Skeleton className="h-4 w-24" />
+                    </CardHeader>
+                    <CardContent>
+                      <Skeleton className="h-8 w-16" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : activeTab === 'Jobs' && stats ? (
               <div className={`grid gap-4 md:grid-cols-2 lg:grid-cols-4 transition-opacity duration-200 ${isRefetching ? 'opacity-60' : 'opacity-100'}`}>
                 {/* Total Jobs */}
                 <Card variant="revealed-pointer">
@@ -210,8 +317,8 @@ export default function StatsPage() {
               </div>
             ) : null}
 
-            {/* Charts Grid */}
-            {loading ? (
+            {/* Charts Grid - Events Tab */}
+            {activeTab === 'Events' && loading ? (
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {[...Array(9)].map((_, i) => (
                   <Card key={i} variant="revealed-pointer">
@@ -225,37 +332,78 @@ export default function StatsPage() {
                   </Card>
                 ))}
               </div>
-            ) : stats ? (
+            ) : activeTab === 'Events' && stats && stats.esMetrics ? (
               <div className={`grid gap-6 md:grid-cols-2 xl:grid-cols-3 transition-opacity duration-200 ${isRefetching ? 'opacity-60' : 'opacity-100'}`}>
-                {/* Pie Charts */}
+                {/* Event Severity */}
+                <EventSeverityChart data={stats.esMetrics.eventSeverity} />
+
+                {/* Event Types */}
+                <EventTypeChart data={stats.esMetrics.eventTypes} />
+
+                {/* Entity Type Distribution */}
+                <EntityTypeChart data={stats.esMetrics.entityTypes} />
+
+                {/* Top Entities */}
+                <TopEntitiesChart data={stats.esMetrics.topEntities} />
+
+                {/* Camera Event Patterns */}
+                <CameraEventHeatmap data={stats.esMetrics.cameraEventPatterns} />
+
+                {/* Top AI Analysis Tags */}
+                <TopTagsChart data={stats.topTags} />
+
+                {/* Detections Timeline */}
+                <div className="md:col-span-2">
+                  <DetectionsTimelineChart data={stats.detectionsTimeline} />
+                </div>
+
+                {/* Occupancy Over Time */}
+                <div className="md:col-span-1">
+                  <OccupancyChart data={stats.occupancyData} />
+                </div>
+              </div>
+            ) : null}
+
+            {/* Charts Grid - Jobs Tab */}
+            {activeTab === 'Jobs' && loading ? (
+              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {[...Array(6)].map((_, i) => (
+                  <Card key={i} variant="revealed-pointer">
+                    <CardHeader>
+                      <Skeleton className="h-6 w-48" />
+                      <Skeleton className="h-4 w-32" />
+                    </CardHeader>
+                    <CardContent>
+                      <Skeleton className="h-[300px] w-full" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : activeTab === 'Jobs' && stats ? (
+              <div className={`grid gap-6 md:grid-cols-2 xl:grid-cols-3 transition-opacity duration-200 ${isRefetching ? 'opacity-60' : 'opacity-100'}`}>
+                {/* AI Job Status Distribution */}
                 <JobStatusChart data={stats.jobStats} />
+
+                {/* Stream Status */}
                 <StreamStatusChart data={stats.streamStats} />
-                <CameraActivityChart data={stats.cameraActivity} />
                 
                 {/* Detection Classes */}
                 <DetectionClassChart data={stats.detectionStats.classCounts} />
 
-                {/* Bar Charts */}
-                <TopTagsChart data={stats.topTags} />
-                <DetectionsByHourChart data={stats.occupancyData} />
-
-                {/* Line Charts */}
+                {/* Jobs Timeline */}
                 <div className="md:col-span-2">
                   <JobsTimelineChart data={stats.jobsTimeline} />
                 </div>
-                <div className="md:col-span-1">
-                  <DetectionsTimelineChart data={stats.detectionsTimeline} />
-                </div>
 
-                {/* Area Charts */}
-                <div className="md:col-span-2">
-                  <OccupancyChart data={stats.occupancyData} />
-                </div>
+                {/* Processing Volume */}
                 <div className="md:col-span-1">
                   <ProcessingVolumeChart data={stats.processingVolume} />
                 </div>
               </div>
-            ) : (
+            ) : null}
+
+            {/* No Data Available */}
+            {!loading && !stats && (
               <Card variant="revealed-pointer">
                 <CardHeader>
                   <CardTitle>No Data Available</CardTitle>
