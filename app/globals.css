@@ -41,6 +41,14 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --color-main: var(--main);
+  --color-main-secondary: var(--main-secondary);
+  --color-main-foreground: var(--main-foreground);
+  --color-main-muted: var(--main-muted);
+  --color-main-background: var(--main-background);
+  --color-main-invert: var(--main-invert);
+  --color-primary-muted: var(--primary-muted);
+  --color-primary-invert: var(--primary-invert);
 }
 
 :root {
@@ -51,7 +59,7 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --primary: oklch(0 0 0);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -76,6 +84,16 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  
+  /* Luxe UI variables */
+  --main: oklch(0.97 0 0);
+  --main-secondary: oklch(97% 0 0);
+  --main-foreground: oklch(0.925 0 0);
+  --main-muted: oklch(0.96 0 0);
+  --main-background: oklch(0.97 0 0);
+  --main-invert: oklch(0.205 0 0);
+  --primary-muted: oklch(0.556 0 0);
+  --primary-invert: oklch(1 0 0);
 }
 
 .dark {
@@ -85,7 +103,7 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
+  --primary: oklch(1 0 0);
   --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -110,17 +128,57 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  
+  /* Luxe UI dark mode variables */
+  --main: oklch(0.178 0 0);
+  --main-foreground: oklch(0.269 0 0);
+  --main-muted: oklch(0.168 0 0);
+  --main-background: oklch(0.145 0 0);
+  --primary-muted: oklch(0.708 0 0);
+  --primary-invert: oklch(0 0 0);
 }
+
+
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    scroll-behavior: smooth;
+  }
   
   html,
   body,
   #__next {
-    @apply h-full overflow-hidden;
+    @apply h-full;
+  }
+  
+  body {
+    @apply overflow-x-hidden overflow-y-auto;
+  }
+
+  /* shadcn-inspired scrollbar */
+  :root,
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--muted-foreground) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklab, var(--muted-foreground) 45%, transparent);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklab, var(--muted-foreground) 65%, transparent);
   }
   
   body {
@@ -140,6 +198,43 @@
 
   .animate-breathe {
     animation: breathe 5s ease-in-out infinite;
+  }
+
+  @keyframes shine {
+    0% {
+      background-position: 0% 0%;
+    }
+    50% {
+      background-position: 100% 100%;
+    }
+    100% {
+      background-position: 0% 0%;
+    }
+  }
+
+  .animate-shine {
+    animation: shine 10s linear infinite;
+  }
+
+  @keyframes brightness {
+    0% {
+      opacity: 0;
+      transform: translateX(-100%) skewX(-45deg);
+    }
+    5% {
+      opacity: 1;
+    }
+    95% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translateX(200%) skewX(-45deg);
+    }
+  }
+
+  .animate-brightness {
+    animation: brightness 2s ease-in-out infinite;
   }
 }
 
