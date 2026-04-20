@@ -1,5 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
+import { isDemoMode } from "./demo/flag";
+import { demoReportStore, mockEvents } from "./demo/mock-data";
 import { supabase } from "./supabase";
 
 // Event severity and type enums matching database schema
@@ -72,19 +74,27 @@ export const displayEventById = tool({
     event_id: z.number().describe("The event ID to fetch and display"),
   }),
   execute: async ({ event_id }) => {
-    // Fetch event from database
-    const { data: event, error } = await supabase
-      .from("ai_analysis_events")
-      .select("*")
-      .eq("id", event_id)
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to fetch event ${event_id}: ${error.message}`);
-    }
-
-    if (!event) {
-      throw new Error(`Event ${event_id} not found`);
+    let event: any = null;
+    if (isDemoMode) {
+      event = mockEvents.find((e) => e.id === event_id) ?? null;
+      if (!event) {
+        throw new Error(`Event ${event_id} not found in demo data`);
+      }
+    } else {
+      const { data, error } = await supabase
+        .from("ai_analysis_events")
+        .select("*")
+        .eq("id", event_id)
+        .single();
+      if (error) {
+        throw new Error(
+          `Failed to fetch event ${event_id}: ${error.message}`,
+        );
+      }
+      if (!data) {
+        throw new Error(`Event ${event_id} not found`);
+      }
+      event = data;
     }
 
     // Return formatted event data
@@ -183,6 +193,24 @@ export const createReport = tool({
             ],
           },
         ],
+      };
+    }
+
+    if (isDemoMode) {
+      const store = demoReportStore();
+      const now = new Date().toISOString();
+      const report = {
+        id: `demo-report-${Date.now()}`,
+        title,
+        content,
+        created_at: now,
+        updated_at: now,
+      };
+      store.unshift(report);
+      return {
+        id: report.id,
+        title: report.title,
+        created_at: report.created_at,
       };
     }
 

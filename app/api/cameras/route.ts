@@ -1,8 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { isDemoMode } from "@/lib/demo/flag";
+import { mockCameras } from "@/lib/demo/mock-data";
 import { supabase } from "@/lib/supabase";
 
 // GET all cameras (live streams with browser_id)
 export async function GET(request: NextRequest) {
+  if (isDemoMode) {
+    return NextResponse.json({ cameras: mockCameras });
+  }
   try {
     const { data, error } = await supabase
       .schema("mux")
@@ -35,6 +40,11 @@ export async function GET(request: NextRequest) {
 // POST update camera status or last_connected_at
 // Note: Status updates from Mux webhooks will override this, which is correct behavior
 export async function POST(request: NextRequest) {
+  if (isDemoMode) {
+    const body = await request.json().catch(() => ({}));
+    const camera = mockCameras.find((c) => c.browser_id === body.browserId);
+    return NextResponse.json({ camera: camera ?? null });
+  }
   try {
     const body = await request.json();
     const { browserId, status, lastConnectedAt } = body;

@@ -10,13 +10,18 @@ import {
 } from "ai";
 import { aiTools } from "@/lib/ai-tools";
 import { loadChat, saveChat } from "@/lib/chat-store";
+import { isDemoMode } from "@/lib/demo/flag";
+import {
+  OPENROUTER_DEFAULT_MODEL,
+  openrouter,
+} from "@/lib/demo/openrouter";
 
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
   const { messages, chatId, model: selectedModel } = await req.json();
 
-  // Initialize MCP client for Elastic Agent Builder
+  // Initialize MCP client for Elastic Agent Builder (disabled in demo)
   let mcpClient:
     | Awaited<ReturnType<typeof experimental_createMCPClient>>
     | undefined;
@@ -25,7 +30,7 @@ export async function POST(req: Request) {
   const elasticsearchUrl = process.env.ELASTICSEARCH_URL;
   const apiKey = process.env.ELASTICSEARCH_API_KEY;
 
-  if (elasticsearchUrl && apiKey) {
+  if (!isDemoMode && elasticsearchUrl && apiKey) {
     try {
       // Convert Elasticsearch URL to Kibana URL
       const kibanaUrl = elasticsearchUrl
@@ -55,83 +60,106 @@ export async function POST(req: Request) {
     }
   }
 
-  // Validate API keys
-  if (
-    !process.env.ANTHROPIC_API_KEY &&
-    !process.env.GROQ_API_KEY &&
-    !process.env.LETTA_API_KEY
-  ) {
-    return new Response(
-      "Missing API keys. Please configure ANTHROPIC_API_KEY, GROQ_API_KEY, or LETTA_API_KEY.",
-      { status: 500 },
-    );
-  }
-
   // Select the appropriate model and provider
   let model;
-  switch (selectedModel) {
-    case "claude-sonnet-4.5":
-      if (!process.env.ANTHROPIC_API_KEY) {
-        return new Response("ANTHROPIC_API_KEY not configured", {
-          status: 500,
-        });
-      }
-      model = anthropic("claude-sonnet-4-20250929");
-      break;
+  let effectiveModel = selectedModel;
 
-    case "claude-haiku-4.5":
-      if (!process.env.ANTHROPIC_API_KEY) {
-        return new Response("ANTHROPIC_API_KEY not configured", {
-          status: 500,
-        });
-      }
-      model = anthropic("claude-haiku-4-5-20251001");
-      break;
+  if (isDemoMode) {
+    if (!process.env.OPENROUTER_API_KEY) {
+      return new Response(
+        "Missing OPENROUTER_API_KEY in demo mode. Please configure it in the Vercel project environment.",
+        { status: 500 },
+      );
+    }
+    // Map any requested model onto an OpenRouter-hosted equivalent.
+    const demoModel =
+      selectedModel === "claude-sonnet-4.5"
+        ? "anthropic/claude-3.5-sonnet"
+        : selectedModel === "claude-haiku-4.5"
+          ? "anthropic/claude-3.5-haiku"
+          : selectedModel === "kimi-k2"
+            ? "moonshotai/kimi-k2"
+            : OPENROUTER_DEFAULT_MODEL;
+    model = openrouter(demoModel);
+    effectiveModel = "openrouter";
+  } else {
+    // Validate API keys
+    if (
+      !process.env.ANTHROPIC_API_KEY &&
+      !process.env.GROQ_API_KEY &&
+      !process.env.LETTA_API_KEY
+    ) {
+      return new Response(
+        "Missing API keys. Please configure ANTHROPIC_API_KEY, GROQ_API_KEY, or LETTA_API_KEY.",
+        { status: 500 },
+      );
+    }
 
-    case "kimi-k2":
-      if (!process.env.GROQ_API_KEY) {
-        return new Response("GROQ_API_KEY not configured", { status: 500 });
-      }
-      model = groq("moonshotai/kimi-k2-instruct-0905");
-      break;
+    switch (selectedModel) {
+      case "claude-sonnet-4.5":
+        if (!process.env.ANTHROPIC_API_KEY) {
+          return new Response("ANTHROPIC_API_KEY not configured", {
+            status: 500,
+          });
+        }
+        model = anthropic("claude-sonnet-4-20250929");
+        break;
 
-    case "stateful-argus":
-      if (!process.env.LETTA_API_KEY) {
-        return new Response("LETTA_API_KEY not configured", { status: 500 });
-      }
-      if (!process.env.LETTA_AGENT_ID) {
-        return new Response(
-          "LETTA_AGENT_ID not configured. Please set the ID of your 'stateful argus' agent.",
-          { status: 500 },
-        );
-      }
-      model = lettaCloud();
-      break;
-
-    default:
-      // Default to Claude Haiku if no model specified
-      if (process.env.ANTHROPIC_API_KEY) {
+      case "claude-haiku-4.5":
+        if (!process.env.ANTHROPIC_API_KEY) {
+          return new Response("ANTHROPIC_API_KEY not configured", {
+            status: 500,
+          });
+        }
         model = anthropic("claude-haiku-4-5-20251001");
-      } else {
-        return new Response("No API keys configured", { status: 500 });
-      }
+        break;
+
+      case "kimi-k2":
+        if (!process.env.GROQ_API_KEY) {
+          return new Response("GROQ_API_KEY not configured", { status: 500 });
+        }
+        model = groq("moonshotai/kimi-k2-instruct-0905");
+        break;
+
+      case "stateful-argus":
+        if (!process.env.LETTA_API_KEY) {
+          return new Response("LETTA_API_KEY not configured", { status: 500 });
+        }
+        if (!process.env.LETTA_AGENT_ID) {
+          return new Response(
+            "LETTA_AGENT_ID not configured. Please set the ID of your 'stateful argus' agent.",
+            { status: 500 },
+          );
+        }
+        model = lettaCloud();
+        break;
+
+      default:
+        // Default to Claude Haiku if no model specified
+        if (process.env.ANTHROPIC_API_KEY) {
+          model = anthropic("claude-haiku-4-5-20251001");
+        } else {
+          return new Response("No API keys configured", { status: 500 });
+        }
+    }
   }
 
   // Convert UIMessages to ModelMessages
   const modelMessages = convertToModelMessages(messages);
 
   // Configure provider-specific options
-  const providerOptions: any = {
-    anthropic: {
+  const providerOptions: any = {};
+  if (!isDemoMode) {
+    providerOptions.anthropic = {
       thinking: {
         type: "enabled",
         budgetTokens: 10000,
       },
-    },
-  };
+    };
+  }
 
   // Add Letta-specific options when using Letta model
-  if (selectedModel === "stateful-argus") {
+  if (!isDemoMode && selectedModel === "stateful-argus") {
     providerOptions.letta = {
       agent: {
         id: process.env.LETTA_AGENT_ID,
@@ -152,7 +180,7 @@ export async function POST(req: Request) {
 
   // Only add system prompt for non-Letta models
   // Letta agents use their own configured system prompt from Letta Cloud
-  if (selectedModel !== "stateful-argus") {
+  if (effectiveModel !== "stateful-argus") {
     const currentDateTime = new Date().toLocaleString("en-US", {
       weekday: "long",
       year: "numeric",
@@ -166,12 +194,18 @@ export async function POST(req: Request) {
 
     const baseSystemPrompt = `Current date and time: ${currentDateTime}\n\n`;
 
-    streamConfig.system =
-      elasticsearchUrl && apiKey
-        ? baseSystemPrompt +
-          "You are a helpful AI assistant named Argus with access to a video content database through Elastic Agent Builder. When users ask about videos, streams, or recorded content, use the available search tools to find relevant information. For more advanced filtering and complex queries, you can use the generate_esql tool to create ES|QL queries and then execute them with the execute_esql tool. When you mention specific events from search results, use the displayEvent or displayEventById tools to show them as interactive cards that users can click to watch the video at that moment. To show a full video asset with a player, use the displayAsset tool with the asset ID. You can also create comprehensive reports using the createReport tool - use this to generate documentation, analysis summaries, or investigation reports with properly formatted markdown content. Provide clear, concise responses based on the search results."
-        : baseSystemPrompt +
-          "You are a helpful AI assistant for a video streaming platform. You can help users with questions about their video content, streams, and recordings. When discussing specific events, use the displayEvent or displayEventById tools to show them as interactive cards. To show a full video asset with a player, use the displayAsset tool with the asset ID. You can also create comprehensive reports using the createReport tool - use this to generate documentation, analysis summaries, or investigation reports with properly formatted markdown content.";
+    if (isDemoMode) {
+      streamConfig.system =
+        baseSystemPrompt +
+        "You are Argus, an AI assistant for a video surveillance platform. You are currently running in a DEMO environment with sample data. When users ask about cameras, events, recordings, or reports, use the available tools to display them as interactive cards. Use displayEvent or displayEventById for specific events, displayAsset for video recordings, and createReport to generate investigation summaries or documentation. Keep responses concise, helpful, and grounded in the demo fixtures. Live streaming is disabled in this demo.";
+    } else {
+      streamConfig.system =
+        elasticsearchUrl && apiKey
+          ? baseSystemPrompt +
+            "You are a helpful AI assistant named Argus with access to a video content database through Elastic Agent Builder. When users ask about videos, streams, or recorded content, use the available search tools to find relevant information. For more advanced filtering and complex queries, you can use the generate_esql tool to create ES|QL queries and then execute them with the execute_esql tool. When you mention specific events from search results, use the displayEvent or displayEventById tools to show them as interactive cards that users can click to watch the video at that moment. To show a full video asset with a player, use the displayAsset tool with the asset ID. You can also create comprehensive reports using the createReport tool - use this to generate documentation, analysis summaries, or investigation reports with properly formatted markdown content. Provide clear, concise responses based on the search results."
+          : baseSystemPrompt +
+            "You are a helpful AI assistant for a video streaming platform. You can help users with questions about their video content, streams, and recordings. When discussing specific events, use the displayEvent or displayEventById tools to show them as interactive cards. To show a full video asset with a player, use the displayAsset tool with the asset ID. You can also create comprehensive reports using the createReport tool - use this to generate documentation, analysis summaries, or investigation reports with properly formatted markdown content.";
+    }
   }
 
   const result = streamText(streamConfig);

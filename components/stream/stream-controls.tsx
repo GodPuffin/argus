@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { isDemoMode } from "@/lib/demo/flag";
 
 interface StreamControlsProps {
   cameraName: string;
@@ -152,12 +153,13 @@ export function StreamControls({
             {!cameraEnabled ? (
               <Button
                 onClick={onEnableCamera}
-                disabled={!streamKey || loadingStream}
+                disabled={isDemoMode || !streamKey || loadingStream}
                 className="w-full"
                 size="lg"
+                title={isDemoMode ? "Disabled in demo" : undefined}
               >
                 <IconVideo className="mr-2 size-5" />
-                Enable Camera
+                {isDemoMode ? "Live streaming disabled in demo" : "Enable Camera"}
               </Button>
             ) : streaming ? (
               <Button
@@ -165,6 +167,8 @@ export function StreamControls({
                 variant="destructive"
                 className="w-full"
                 size="lg"
+                disabled={isDemoMode}
+                title={isDemoMode ? "Disabled in demo" : undefined}
               >
                 <IconVideoOff className="mr-2 size-5" />
                 Stop Streaming
@@ -172,12 +176,13 @@ export function StreamControls({
             ) : (
               <Button
                 onClick={onStartStreaming}
-                disabled={!streamKey}
+                disabled={isDemoMode || !streamKey}
                 className="w-full"
                 size="lg"
+                title={isDemoMode ? "Disabled in demo" : undefined}
               >
                 <IconVideo className="mr-2 size-5" />
-                Start Streaming
+                {isDemoMode ? "Live streaming disabled in demo" : "Start Streaming"}
               </Button>
             )}
           </>

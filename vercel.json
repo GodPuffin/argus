@@ -1,0 +1,7 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "functions": {
+    "app/api/chat/route.ts": { "maxDuration": 60 }
+  }
+}

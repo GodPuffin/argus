@@ -1,12 +1,41 @@
 import type { UIMessage } from "ai";
 import { generateId } from "ai";
+import { isDemoMode } from "./demo/flag";
 import { supabase } from "./supabase";
+
+interface DemoChatRecord {
+  id: string;
+  title: string | null;
+  messages: UIMessage[];
+  updated_at: string;
+}
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __demoChatStore: Map<string, DemoChatRecord> | undefined;
+}
+function demoChats(): Map<string, DemoChatRecord> {
+  if (!globalThis.__demoChatStore) {
+    globalThis.__demoChatStore = new Map();
+  }
+  return globalThis.__demoChatStore;
+}
 
 /**
  * Create a new chat with empty messages
  */
 export async function createChat(): Promise<string> {
   const id = generateId();
+
+  if (isDemoMode) {
+    demoChats().set(id, {
+      id,
+      title: null,
+      messages: [],
+      updated_at: new Date().toISOString(),
+    });
+    return id;
+  }
 
   const { error } = await supabase.from("chats").insert({ id, messages: [] });
 
@@ -22,6 +51,10 @@ export async function createChat(): Promise<string> {
  * Load chat messages by ID
  */
 export async function loadChat(id: string): Promise<UIMessage[]> {
+  if (isDemoMode) {
+    return demoChats().get(id)?.messages ?? [];
+  }
+
   const { data, error } = await supabase
     .from("chats")
     .select("messages")
@@ -49,6 +82,23 @@ export async function saveChat({
 }): Promise<void> {
   // Don't save if no messages
   if (!messages || messages.length === 0) {
+    return;
+  }
+
+  if (isDemoMode) {
+    const store = demoChats();
+    const existing = store.get(chatId);
+    let title = existing?.title ?? null;
+    if (!title) {
+      const firstUserMessage = messages.find((m) => m.role === "user");
+      title = firstUserMessage ? generateChatTitle(firstUserMessage) : "New Chat";
+    }
+    store.set(chatId, {
+      id: chatId,
+      title,
+      messages,
+      updated_at: new Date().toISOString(),
+    });
     return;
   }
 
@@ -96,6 +146,17 @@ export async function listChats(limit = 10): Promise<
     updated_at: string;
   }>
 > {
+  if (isDemoMode) {
+    return Array.from(demoChats().values())
+      .sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1))
+      .slice(0, limit)
+      .map((c) => ({
+        id: c.id,
+        title: c.title ?? "New Chat",
+        updated_at: c.updated_at,
+      }));
+  }
+
   const { data, error } = await supabase
     .from("chats")
     .select("id, title, updated_at")
@@ -114,6 +175,11 @@ export async function listChats(limit = 10): Promise<
  * Delete a chat by ID
  */
 export async function deleteChat(id: string): Promise<void> {
+  if (isDemoMode) {
+    demoChats().delete(id);
+    return;
+  }
+
   const { error } = await supabase.from("chats").delete().eq("id", id);
 
   if (error) {

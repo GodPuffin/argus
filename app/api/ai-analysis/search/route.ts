@@ -6,11 +6,33 @@
 
 import { NextResponse } from "next/server";
 import { getRecentResults, searchByTag } from "@/lib/ai-analysis-queries";
+import { isDemoMode } from "@/lib/demo/flag";
+import { mockAnalysisResults } from "@/lib/demo/mock-data";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const tag = searchParams.get("tag");
+
+    if (isDemoMode) {
+      if (tag) {
+        const limit = Number.parseInt(searchParams.get("limit") || "50", 10);
+        const results = mockAnalysisResults
+          .filter((r) => (r.tags as string[])?.includes(tag))
+          .slice(0, limit);
+        return NextResponse.json(results);
+      }
+      const page = Number.parseInt(searchParams.get("page") || "0", 10);
+      const pageSize = Number.parseInt(
+        searchParams.get("pageSize") || "20",
+        10,
+      );
+      const from = page * pageSize;
+      return NextResponse.json({
+        results: mockAnalysisResults.slice(from, from + pageSize),
+        total: mockAnalysisResults.length,
+      });
+    }
 
     if (tag) {
       // Search by tag

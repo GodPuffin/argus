@@ -1,16 +1,24 @@
 import { createClient } from "@supabase/supabase-js";
+import { isDemoMode } from "./demo/flag";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!isDemoMode && (!supabaseUrl || !supabaseAnonKey)) {
   throw new Error(
     "Missing Supabase environment variables. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY",
   );
 }
 
-// Client for both frontend and backend (no RLS in demo project)
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// In demo mode the client is never used — all API routes short-circuit to
+// mock data before touching it. We still export a typed placeholder so
+// imports don't fail at module load.
+export const supabase = isDemoMode
+  ? (createClient(
+      supabaseUrl || "https://demo.invalid.supabase.co",
+      supabaseAnonKey || "demo-anon-key",
+    ) as ReturnType<typeof createClient>)
+  : createClient(supabaseUrl!, supabaseAnonKey!);
 
 // Database types
 // Camera is now based on mux.live_streams table with camera-specific fields

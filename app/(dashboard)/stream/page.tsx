@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { DemoDisabledNotice } from "@/components/demo/demo-disabled-notice";
 import { SiteHeader } from "@/components/site-header";
 import { ExternalStreamSetup } from "@/components/stream/external-stream-setup";
 import { NetworkStats } from "@/components/stream/network-stats";
@@ -8,6 +9,7 @@ import { StreamControls } from "@/components/stream/stream-controls";
 import { VideoDisplay } from "@/components/stream/video-display";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { isDemoMode } from "@/lib/demo/flag";
 import { useCameraRealtime } from "@/hooks/use-camera-realtime";
 import { useStreamManager } from "@/hooks/use-stream-manager";
 import { useStreamState } from "@/hooks/use-stream-state";
@@ -360,6 +362,9 @@ export default function StreamPage() {
       <SiteHeader title="Stream" />
       <ScrollArea className="flex min-h-0 flex-1">
         <div className="@container/main flex min-h-0 flex-col gap-4 p-4 md:gap-6 md:p-6">
+          {isDemoMode && (
+            <DemoDisabledNotice />
+          )}
           <div className="flex justify-center">
             <AnimatedTabs
               tabs={["From Browser", "From Other"]}

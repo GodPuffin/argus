@@ -1,4 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { isDemoMode } from "@/lib/demo/flag";
+import { getMockDetectionsForAsset } from "@/lib/demo/mock-data";
 import { getDetectionsForSource } from "@/lib/detection-queries";
 
 /**
@@ -21,6 +23,17 @@ export async function GET(request: NextRequest) {
       { error: "sourceId is required" },
       { status: 400 },
     );
+  }
+
+  if (isDemoMode) {
+    const start = startTime ? Number.parseFloat(startTime) : undefined;
+    const end = endTime ? Number.parseFloat(endTime) : undefined;
+    const frames = getMockDetectionsForAsset(sourceId).filter((f) => {
+      if (start !== undefined && f.frame_timestamp < start) return false;
+      if (end !== undefined && f.frame_timestamp > end) return false;
+      return true;
+    });
+    return NextResponse.json({ detections: frames });
   }
 
   try {

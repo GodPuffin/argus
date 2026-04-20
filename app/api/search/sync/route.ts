@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { isDemoMode } from "@/lib/demo/flag";
 import {
   syncAllToElasticsearch,
   syncAnalysisToElasticsearch,
@@ -15,6 +16,13 @@ import {
  * - id: event_id or job_id (required if type is 'event' or 'analysis')
  */
 export async function POST(request: NextRequest) {
+  if (isDemoMode) {
+    return NextResponse.json({
+      success: true,
+      demo: true,
+      message: "Elasticsearch sync is a no-op in demo mode.",
+    });
+  }
   try {
     const searchParams = request.nextUrl.searchParams;
     const type = searchParams.get("type");

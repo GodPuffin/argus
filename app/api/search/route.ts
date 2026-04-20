@@ -1,4 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { isDemoMode } from "@/lib/demo/flag";
+import { mockAssets, mockEvents } from "@/lib/demo/mock-data";
 import { searchContent } from "@/lib/elasticsearch";
 import { supabase } from "@/lib/supabase";
 import type {
@@ -24,6 +26,50 @@ export async function GET(request: NextRequest) {
         { error: "Query parameter 'q' is required" },
         { status: 400 },
       );
+    }
+
+    if (isDemoMode) {
+      const q = query.trim().toLowerCase();
+      const matches = mockEvents.filter(
+        (e) =>
+          e.name.toLowerCase().includes(q) ||
+          e.description.toLowerCase().includes(q) ||
+          e.type.toLowerCase().includes(q),
+      );
+      const hits = matches.map((e) => ({
+        score: 1,
+        source: {
+          doc_type: "event",
+          asset_id: e.asset_id,
+          event_id: e.id,
+          name: e.name,
+          description: e.description,
+          severity: e.severity,
+          event_type: e.type,
+          timestamp_seconds: e.timestamp_seconds,
+          created_at: e.created_at,
+        },
+      }));
+      const grouped: Record<string, typeof hits> = {};
+      for (const h of hits) {
+        (grouped[h.source.asset_id] ??= []).push(h);
+      }
+      return NextResponse.json({
+        query: query.trim(),
+        results: hits,
+        grouped,
+        total: hits.length,
+        took: 1,
+        filters: {
+          doc_type: docType || null,
+          severity: severityParam ? severityParam.split(",") : null,
+          event_type: eventTypeParam ? eventTypeParam.split(",") : null,
+          dateRange: from && to ? { from, to } : null,
+        },
+        assets: mockAssets
+          .filter((a) => grouped[a.id])
+          .map((a) => ({ id: a.id, created_at: a.created_at })),
+      });
     }
 
     // Validate doc_type parameter

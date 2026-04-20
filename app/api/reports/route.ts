@@ -7,10 +7,15 @@ import { generateJSON } from "@tiptap/html";
 import StarterKit from "@tiptap/starter-kit";
 import { marked } from "marked";
 import { type NextRequest, NextResponse } from "next/server";
+import { isDemoMode } from "@/lib/demo/flag";
+import { demoReportStore } from "@/lib/demo/mock-data";
 import { supabase } from "@/lib/supabase";
 
 // GET /api/reports - List all reports
 export async function GET() {
+  if (isDemoMode) {
+    return NextResponse.json({ reports: demoReportStore() });
+  }
   try {
     const { data: reports, error } = await supabase
       .from("reports")
@@ -40,6 +45,29 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { title = "Untitled Report", markdown } = body;
+    if (isDemoMode) {
+      const now = new Date().toISOString();
+      const content = markdown
+        ? {
+            type: "doc",
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: markdown }],
+              },
+            ],
+          }
+        : { type: "doc", content: [{ type: "paragraph" }] };
+      const report = {
+        id: `demo-report-${Date.now()}`,
+        title,
+        content,
+        created_at: now,
+        updated_at: now,
+      };
+      demoReportStore().unshift(report);
+      return NextResponse.json({ report }, { status: 201 });
+    }
 
     // Convert markdown to Tiptap JSON if provided
     let content = { type: "doc", content: [{ type: "paragraph" }] };

@@ -4,6 +4,8 @@
  */
 
 import { NextResponse } from "next/server";
+import { isDemoMode } from "@/lib/demo/flag";
+import { mockStats } from "@/lib/demo/mock-data";
 import {
   getAllElasticsearchStats,
   getTimeRangeFromFilter,
@@ -15,6 +17,10 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const range =
       (searchParams.get("range") as "24h" | "7d" | "30d" | "all") || "all";
+
+    if (isDemoMode) {
+      return NextResponse.json(mockStats);
+    }
 
     // Validate range parameter
     if (!["24h", "7d", "30d", "all"].includes(range)) {
