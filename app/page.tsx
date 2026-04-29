@@ -4,14 +4,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { AsciiEye } from "@/components/ascii-eye";
-import Dither from '@/components/dither'
 import { FeaturesAlternating } from "@/components/features-alternating";
 import { NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { SiteFooter } from "@/components/site-footer";
 import { BrowserComponent } from "@/components/browser-component";
 import DecryptedText from "@/components/fancy/text/decrypted-text";
 import { NavigationMenu } from "@/components/ui/navigation-menu";
-import { LuxeButton } from "@/components/ui/luxe-button";
 import { ModelsSection } from "@/components/models-section";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
@@ -172,19 +170,6 @@ export default function Home() {
         </div>
       )}
 
-      <div className="fixed inset-0 z-0 bg-gradient-to-b from-background via-muted/30 to-background">
-        <Dither
-          waveColor={[0.15, 0.03, 0.03]}
-          disableAnimation={false}
-          enableMouseInteraction={false}
-          mouseRadius={1}
-          colorNum={4}
-          waveAmplitude={0.3}
-          waveFrequency={1}
-          waveSpeed={0.05}
-        />
-      </div>
-
       {/* Desktop Navigation */}
       <div className="hidden md:flex fixed top-0 left-0 right-0 z-20 items-center justify-center p-4">
         <NavigationMenu>
@@ -249,37 +234,86 @@ export default function Home() {
         </Sheet>
       </div>
 
-      <main id="overview" className="w-full min-h-screen flex items-center justify-center lg:justify-between overflow-hidden relative [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-mt-24">
-
-        {/* Desktop Layout */}
-        <div className="hidden lg:flex z-10 ml-0 w-1/3 items-start justify-center relative pointer-events-none">
-          <div className="text-left">
-            <h1 className="text-7xl mt-0 font-bold mb-4 pb-4">ARGUS</h1>
-            <LuxeButton variant="animated-border" className="pointer-events-auto px-4 py-2 text-base">
-              <Link href="/watch">Open Argus</Link>
-            </LuxeButton>
+      <main
+        id="overview"
+        className="w-full min-h-screen bg-background text-foreground relative scroll-mt-24"
+      >
+        <div className="max-w-[1500px] mx-auto px-6 sm:px-10 lg:px-12 pt-28 pb-20">
+          {/* Top meta */}
+          <div className="flex items-center justify-between text-[11px] tracking-[0.22em] uppercase text-muted-foreground border-b border-border pb-4">
+            <span>Manifest / Argus</span>
+            <span className="hidden sm:inline font-mono">
+              {"// What it does"}
+            </span>
+            <span>04 entries</span>
           </div>
-        </div>
 
-        <div className="hidden lg:flex z-10 mt-10 w-1/2 h-full items-center justify-center relative pointer-events-none">
-          <div className="w-full h-full flex items-center justify-center">
-            <AsciiEye />
-          </div>
-        </div>
+          <div className="mt-12 lg:mt-16 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12">
+            {/* Left: numbered manifest */}
+            <ol className="lg:col-span-5 space-y-3 lg:space-y-4">
+              {[
+                { n: "01", t: "See", d: "Live RTMP feeds, watched continuously." },
+                { n: "02", t: "Detect", d: "Entities and events, in real time.", active: true },
+                { n: "03", t: "Report", d: "Editable, rich incident reports — auto-drafted." },
+                { n: "04", t: "Understand", d: "Search every anomaly. Ask anything." },
+              ].map((row) => (
+                <li
+                  key={row.n}
+                  className={`group grid grid-cols-[3rem_1fr] items-baseline gap-4 py-3 border-b border-border ${
+                    row.active ? "text-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  <span className="font-mono text-xs tracking-widest">
+                    {row.n}
+                  </span>
+                  <div>
+                    <div
+                      className={`font-bold text-3xl sm:text-4xl lg:text-5xl leading-none tracking-tight ${
+                        row.active ? "text-foreground" : "text-foreground/40"
+                      }`}
+                    >
+                      {row.t}
+                    </div>
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      {row.d}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
 
-        {/* Mobile Layout - Centered with Overlay */}
-        <div className="lg:hidden relative w-full h-screen flex items-center justify-center px-4">
-          {/* ASCII Eye Background */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none scale-90 sm:scale-100">
-            <AsciiEye />
-          </div>
-          
-          {/* Overlayed Text Content */}
-          <div className="relative z-20 flex flex-col items-center justify-center text-center space-y-6">
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-white drop-shadow-2xl">ARGUS</h1>
-            <LuxeButton variant="animated-border" className="pointer-events-auto px-6 py-3 text-base">
-              <Link href="/watch">Open Argus</Link>
-            </LuxeButton>
+            {/* Right: specimen card */}
+            <div className="lg:col-span-7 lg:pl-8 lg:border-l border-border">
+              <div className="text-[11px] tracking-[0.22em] uppercase text-muted-foreground mb-4">
+                Specimen / Iris
+              </div>
+              <h1 className="font-bold text-[40px] sm:text-[56px] lg:text-[72px] leading-[0.95] tracking-tight max-w-[14ch]">
+                The watcher,
+                <br />
+                catalogued.
+              </h1>
+
+              <div className="mt-10 relative aspect-square w-full max-w-[460px] mx-auto lg:mx-0">
+                <div className="absolute inset-0 border border-border" />
+                <div className="absolute inset-3 [&_span]:!text-foreground flex items-center justify-center">
+                  <AsciiEye />
+                </div>
+              </div>
+              <div className="mt-3 max-w-[460px] flex items-center justify-between text-[10px] tracking-[0.22em] uppercase text-muted-foreground">
+                <span>fig. 01</span>
+                <span>braille · ascii · live</span>
+              </div>
+
+              <div className="mt-10">
+                <Link
+                  href="/watch"
+                  className="inline-flex items-center gap-2 bg-foreground text-background px-6 py-3 text-sm font-medium hover:opacity-90 transition-opacity"
+                >
+                  Open Argus
+                  <span aria-hidden>→</span>
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </main>

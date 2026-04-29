@@ -47,3 +47,7 @@ next-env.d.ts
 /videos/*.mov
 /videos/*.avi
 /videos/*.mkv
+.codex
+.claude
+.agents
+.mcp.json
