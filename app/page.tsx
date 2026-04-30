@@ -2,30 +2,17 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AsciiEye } from "@/components/ascii-eye";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { BrowserComponent } from "@/components/browser-component";
-import DecryptedText from "@/components/fancy/text/decrypted-text";
 import { StyleManifest } from "@/components/landing/style-manifest";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [fadeOut, setFadeOut] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const loadContent = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 3500));
-      setFadeOut(true);
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      setIsLoading(false);
-    };
-    loadContent();
-  }, []);
 
   const featuresContent = [
     {
@@ -136,30 +123,6 @@ export default function Home() {
 
   return (
     <>
-      {/* Loading Screen */}
-      {isLoading && (
-        <div
-          className={`fixed inset-0 z-50 flex items-center justify-center bg-black transition-opacity duration-800 ${
-            fadeOut ? "opacity-0" : "opacity-100"
-          }`}
-        >
-          <div className="flex flex-col items-center gap-6">
-            <DecryptedText
-              text="ARGUS"
-              revealDurationMs={1400}
-              scrambleSpeed={24}
-              className="text-6xl md:text-8xl font-extrabold tracking-widest text-white"
-            />
-            <DecryptedText
-              text="Computer Vision • Analytics • AI Assistant"
-              revealDurationMs={1600}
-              scrambleSpeed={28}
-              className="text-white/70 text-base md:text-lg tracking-wide"
-            />
-          </div>
-        </div>
-      )}
-
       {/* Desktop Navigation */}
       <div className="hidden md:flex fixed top-0 left-0 right-0 z-20 items-center justify-center p-4">
         <NavigationMenu>
