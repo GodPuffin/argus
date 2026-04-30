@@ -10,6 +10,7 @@ import { StyleManifest } from "@/components/landing/style-manifest";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ModeToggle } from "@/components/mode-toggle";
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -124,7 +125,8 @@ export default function Home() {
   return (
     <>
       {/* Desktop Navigation */}
-      <div className="hidden md:flex fixed top-0 left-0 right-0 z-20 items-center justify-center p-4">
+      <div className="hidden md:flex fixed top-0 left-0 right-0 z-20 items-center justify-between p-4">
+        <div className="w-[100px]" /> {/* Spacer */}
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem>
@@ -137,14 +139,21 @@ export default function Home() {
               <NavigationMenuLink href="#features">Features</NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
+              <NavigationMenuLink href="#pricing">Pricing</NavigationMenuLink>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
               <NavigationMenuLink href="/watch">Dashboard</NavigationMenuLink>
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
+        <div className="w-[100px] flex justify-end">
+          <ModeToggle />
+        </div>
       </div>
 
       {/* Mobile Navigation */}
-      <div className="md:hidden fixed top-4 right-4 z-20">
+      <div className="md:hidden fixed top-4 right-4 z-20 flex items-center gap-2">
+        <ModeToggle />
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
             <Button variant="outline" size="icon" className="bg-background/80 backdrop-blur-sm">
@@ -157,6 +166,7 @@ export default function Home() {
               <Link href="#overview" className="text-lg font-medium hover:text-primary transition-colors py-2 border-b border-border" onClick={() => setMobileMenuOpen(false)}>Overview</Link>
               <Link href="#models" className="text-lg font-medium hover:text-primary transition-colors py-2 border-b border-border" onClick={() => setMobileMenuOpen(false)}>Models</Link>
               <Link href="#features" className="text-lg font-medium hover:text-primary transition-colors py-2 border-b border-border" onClick={() => setMobileMenuOpen(false)}>Features</Link>
+              <Link href="#pricing" className="text-lg font-medium hover:text-primary transition-colors py-2 border-b border-border" onClick={() => setMobileMenuOpen(false)}>Pricing</Link>
               <Link href="/watch" className="text-lg font-medium hover:text-primary transition-colors py-2" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
             </nav>
           </SheetContent>

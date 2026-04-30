@@ -121,18 +121,35 @@ function MiniBrailleBg({ variant }: { variant: "matrix" | "wave" | "pulse" }) {
   }, [variant]);
 
   let colorClass = "";
+  let duration = "8s";
   if (variant === "matrix") {
-    colorClass = "text-emerald-500/30"; 
+    colorClass = "from-emerald-400/90 via-teal-500/70 to-emerald-600/90"; 
+    duration = "8s";
   } else if (variant === "wave") {
-    colorClass = "text-orange-500/30"; 
+    colorClass = "from-orange-400/90 via-amber-500/70 to-rose-600/90"; 
+    duration = "12s";
   } else if (variant === "pulse") {
-    colorClass = "text-indigo-500/30";
+    colorClass = "from-indigo-400/90 via-purple-500/70 to-blue-600/90";
+    duration = "10s";
   }
 
   return (
-    <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-      <div className={`absolute top-0 left-0 right-0 flex items-start justify-center ${colorClass}`}>
-        <div className="font-mono text-[16px] leading-[16px] tracking-[0.25em] whitespace-pre pt-4">
+    <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+      <style>{`
+        @keyframes braille-gradient-shift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+      `}</style>
+      <div className="absolute top-0 left-0 right-0 flex items-start justify-center">
+        <div 
+          className={`font-mono text-[16px] leading-[16px] tracking-[0.25em] whitespace-pre pt-4 bg-clip-text text-transparent bg-gradient-to-br ${colorClass}`}
+          style={{
+            backgroundSize: '200% 200%',
+            animation: `braille-gradient-shift ${duration} ease infinite`
+          }}
+        >
           {grid.map((row, i) => (
             <div key={i}>{row.join("")}</div>
           ))}
@@ -195,12 +212,34 @@ export function PricingSection() {
                   </ul>
                 </div>
                 <div className="p-8 lg:p-10 pt-0 mt-auto relative z-10">
-                  <button className={`w-full px-6 py-4 text-xs font-bold transition-colors font-[family-name:var(--font-inter)] uppercase tracking-wider rounded-none ${
+                  <button className={`relative overflow-hidden w-full px-6 py-4 text-xs font-bold transition-colors font-[family-name:var(--font-inter)] uppercase tracking-wider rounded-none ${
                     isStarter
                       ? "bg-foreground text-background hover:bg-foreground/90"
                       : "bg-secondary text-secondary-foreground hover:bg-foreground/10"
                     }`}>
-                    {tier.buttonText}
+                    {isStarter && (
+                      <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.15] mix-blend-luminosity">
+                        <style>{`
+                          @keyframes button-noise-anim {
+                            0% { background-position: 0px 0px; }
+                            20% { background-position: -32px 32px; }
+                            40% { background-position: 32px -32px; }
+                            60% { background-position: -32px -32px; }
+                            80% { background-position: 32px 32px; }
+                            100% { background-position: 0px 0px; }
+                          }
+                        `}</style>
+                        <div 
+                          className="absolute inset-0 w-full h-full"
+                          style={{
+                            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+                            backgroundSize: '128px',
+                            animation: 'button-noise-anim 0.4s infinite steps(2)'
+                          }}
+                        />
+                      </div>
+                    )}
+                    <span className="relative z-10">{tier.buttonText}</span>
                   </button>
                 </div>
               </div>
