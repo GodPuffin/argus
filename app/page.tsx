@@ -236,16 +236,7 @@ export default function Home() {
         className="w-full min-h-screen bg-background text-foreground relative scroll-mt-24"
       >
         <div className="max-w-[1500px] mx-auto px-6 sm:px-10 lg:px-12 pt-28 pb-20">
-          {/* Top meta */}
-          <div className="flex items-center justify-between text-[11px] tracking-[0.22em] uppercase text-muted-foreground border-b border-border pb-4">
-            <span>Manifest / Argus</span>
-            <span className="hidden sm:inline font-mono">
-              {"// What it does"}
-            </span>
-            <span>04 entries</span>
-          </div>
-
-          <div className="mt-12 lg:mt-16 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12">
             {/* Left: numbered manifest */}
             <ol className="lg:col-span-5 space-y-3 lg:space-y-4">
               {[
@@ -281,9 +272,6 @@ export default function Home() {
 
             {/* Right: specimen card */}
             <div className="lg:col-span-7 lg:pl-8 lg:border-l border-border">
-              <div className="text-[11px] tracking-[0.22em] uppercase text-muted-foreground mb-4">
-                Specimen / Iris
-              </div>
               <h1 className="font-bold text-[40px] sm:text-[56px] lg:text-[72px] leading-[0.95] tracking-tight max-w-[14ch]">
                 The watcher,
                 <br />
@@ -295,10 +283,6 @@ export default function Home() {
                 <div className="absolute inset-3 [&_span]:!text-foreground flex items-center justify-center">
                   <AsciiEye />
                 </div>
-              </div>
-              <div className="mt-3 max-w-[460px] flex items-center justify-between text-[10px] tracking-[0.22em] uppercase text-muted-foreground">
-                <span>fig. 01</span>
-                <span>braille · ascii · live</span>
               </div>
 
               <div className="mt-10">
