@@ -4,13 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { AsciiEye } from "@/components/ascii-eye";
-import { FeaturesAlternating } from "@/components/features-alternating";
-import { NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu";
-import { SiteFooter } from "@/components/site-footer";
+import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { BrowserComponent } from "@/components/browser-component";
 import DecryptedText from "@/components/fancy/text/decrypted-text";
-import { NavigationMenu } from "@/components/ui/navigation-menu";
-import { ModelsSection } from "@/components/models-section";
+import { StyleManifest } from "@/components/landing/style-manifest";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -318,25 +315,7 @@ export default function Home() {
         </div>
       </main>
 
-      <section id="models" className="w-full py-12 lg:py-20 relative z-10 scroll-mt-24">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-4 lg:mb-6 text-foreground">Technology for the Future</h2>
-          <p className="text-center text-sm sm:text-base text-muted-foreground mb-8 lg:mb-12 max-w-2xl mx-auto px-4">Argus is built on the latest and greatest technologies to deliver the best possible experience for you and your team.</p>
-          <ModelsSection />
-        </div>
-      </section>
-
-      <section id="features" className="w-full py-12 lg:py-20 relative z-10 scroll-mt-24">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-3 lg:mb-4 text-foreground">Features</h2>
-          <p className="text-center text-sm sm:text-base text-muted-foreground mb-8 lg:mb-12 max-w-2xl mx-auto px-4">
-            Discover the powerful capabilities that make Argus the ultimate surveillance and monitoring solution.
-          </p>
-          <FeaturesAlternating features={featuresContent} />
-        </div>
-      </section>
-
-      <SiteFooter />
+      <StyleManifest features={featuresContent} />
     </>
   );
 }
