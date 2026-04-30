@@ -19,18 +19,11 @@ export default function Home() {
 
   useEffect(() => {
     const loadContent = async () => {
-      // Wait for typing animation to complete
-      // "WELCOME TO ARGUS" = ~17 chars * 50ms = 850ms + 2000ms pause = ~2850ms
       await new Promise((resolve) => setTimeout(resolve, 3500));
-
-      // Start fade out animation
       setFadeOut(true);
-
-      // Remove loading screen after fade completes
       await new Promise((resolve) => setTimeout(resolve, 800));
       setIsLoading(false);
     };
-
     loadContent();
   }, []);
 
@@ -41,8 +34,8 @@ export default function Home() {
       content: (
         <div className="space-y-4">
           <BrowserComponent url="argus.io/dashboard" className="h-auto">
-            <Image 
-              src="/assets/argusdash.webp" 
+            <Image
+              src="/assets/argusdash.webp"
               alt="Argus Dashboard"
               height={1080}
               width={1920}
@@ -58,8 +51,8 @@ export default function Home() {
       content: (
         <div className="space-y-4">
           <BrowserComponent url="argus.io/watch/{asset_id}" className="h-auto">
-            <Image 
-              src="/assets/argusdetection.webp" 
+            <Image
+              src="/assets/argusdetection.webp"
               alt="Argus Detection"
               height={1080}
               width={1920}
@@ -77,8 +70,8 @@ export default function Home() {
       content: (
         <div className="space-y-4">
           <BrowserComponent url="argus.io/stats" className="h-auto">
-            <Image 
-              src="/assets/argusstats.webp" 
+            <Image
+              src="/assets/argusstats.webp"
               alt="Argus Statistics"
               height={1080}
               width={1920}
@@ -94,8 +87,8 @@ export default function Home() {
       content: (
         <div className="space-y-4">
           <BrowserComponent url="argus.io/reports" className="h-auto">
-            <Image 
-              src="/assets/argusreports.webp" 
+            <Image
+              src="/assets/argusreports.webp"
               alt="Argus Reports"
               height={1080}
               width={1920}
@@ -111,8 +104,8 @@ export default function Home() {
       content: (
         <div className="space-y-4">
           <BrowserComponent url="argus.io/search" className="h-auto">
-            <Image 
-              src="/assets/argussearch.webp" 
+            <Image
+              src="/assets/argussearch.webp"
               alt="Argus Search"
               height={1080}
               width={1920}
@@ -128,8 +121,8 @@ export default function Home() {
       content: (
         <div className="space-y-4">
           <BrowserComponent url="argus.io/chat" className="h-auto">
-            <Image 
-              src="/assets/arguschat.webp" 
+            <Image
+              src="/assets/arguschat.webp"
               alt="Argus Chat"
               height={1080}
               width={1920}
@@ -198,102 +191,45 @@ export default function Home() {
           </SheetTrigger>
           <SheetContent side="right" className="w-[250px] sm:w-[300px]">
             <nav className="flex flex-col gap-4 mt-8">
-              <Link 
-                href="#overview" 
-                className="text-lg font-medium hover:text-primary transition-colors py-2 border-b border-border"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Overview
-              </Link>
-              <Link 
-                href="#models" 
-                className="text-lg font-medium hover:text-primary transition-colors py-2 border-b border-border"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Models
-              </Link>
-              <Link 
-                href="#features" 
-                className="text-lg font-medium hover:text-primary transition-colors py-2 border-b border-border"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Features
-              </Link>
-              <Link 
-                href="/watch" 
-                className="text-lg font-medium hover:text-primary transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Dashboard
-              </Link>
+              <Link href="#overview" className="text-lg font-medium hover:text-primary transition-colors py-2 border-b border-border" onClick={() => setMobileMenuOpen(false)}>Overview</Link>
+              <Link href="#models" className="text-lg font-medium hover:text-primary transition-colors py-2 border-b border-border" onClick={() => setMobileMenuOpen(false)}>Models</Link>
+              <Link href="#features" className="text-lg font-medium hover:text-primary transition-colors py-2 border-b border-border" onClick={() => setMobileMenuOpen(false)}>Features</Link>
+              <Link href="/watch" className="text-lg font-medium hover:text-primary transition-colors py-2" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
             </nav>
           </SheetContent>
         </Sheet>
       </div>
 
-      <main
-        id="overview"
-        className="w-full min-h-screen bg-background text-foreground relative scroll-mt-24"
-      >
-        <div className="max-w-[1500px] mx-auto px-6 sm:px-10 lg:px-12 pt-28 pb-20">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12">
-            {/* Left: numbered manifest */}
-            <ol className="lg:col-span-5 space-y-3 lg:space-y-4">
-              {[
-                { n: "01", t: "See", d: "Live RTMP feeds, watched continuously." },
-                { n: "02", t: "Detect", d: "Entities and events, in real time.", active: true },
-                { n: "03", t: "Report", d: "Editable, rich incident reports — auto-drafted." },
-                { n: "04", t: "Understand", d: "Search every anomaly. Ask anything." },
-              ].map((row) => (
-                <li
-                  key={row.n}
-                  className={`group grid grid-cols-[3rem_1fr] items-baseline gap-4 py-3 border-b border-border ${
-                    row.active ? "text-foreground" : "text-muted-foreground"
-                  }`}
-                >
-                  <span className="font-mono text-xs tracking-widest">
-                    {row.n}
-                  </span>
-                  <div>
-                    <div
-                      className={`font-bold text-3xl sm:text-4xl lg:text-5xl leading-none tracking-tight ${
-                        row.active ? "text-foreground" : "text-foreground/40"
-                      }`}
-                    >
-                      {row.t}
-                    </div>
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      {row.d}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ol>
+      {/* Hero — Lateral (finalised) */}
+      <main id="overview" className="w-full bg-background text-foreground scroll-mt-24">
+        <div className="min-h-dvh flex flex-col justify-center">
+          <div className="max-w-[1500px] mx-auto px-6 sm:px-10 lg:px-12 pt-24 pb-16">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 lg:items-center">
 
-            {/* Right: specimen card */}
-            <div className="lg:col-span-7 lg:pl-8 lg:border-l border-border">
-              <h1 className="font-bold text-[40px] sm:text-[56px] lg:text-[72px] leading-[0.95] tracking-tight max-w-[14ch]">
-                The watcher,
-                <br />
-                catalogued.
-              </h1>
+              <div className="flex flex-col gap-8">
+                <h1 className="font-[family-name:var(--font-inter)] font-semibold text-5xl sm:text-6xl lg:text-7xl tracking-tight text-balance max-w-[14ch]">
+                  The watcher, catalogued.
+                </h1>
+                <p className="font-[family-name:var(--font-inter)] text-lg text-muted-foreground text-pretty max-w-[44ch]">
+                  Computer vision, analytics, and an AI assistant — watching your streams so you don&apos;t have to.
+                </p>
+                <div>
+                  <Link
+                    href="/watch"
+                    className="inline-flex items-center gap-2 bg-foreground text-background px-6 py-3 text-sm font-medium hover:opacity-90 transition-opacity font-[family-name:var(--font-inter)]"
+                  >
+                    Open Argus <span aria-hidden>→</span>
+                  </Link>
+                </div>
+              </div>
 
-              <div className="mt-10 relative aspect-square w-full max-w-[460px] mx-auto lg:mx-0">
+              <div className="relative aspect-square w-full max-w-[560px] lg:ml-auto">
                 <div className="absolute inset-0 border border-border" />
                 <div className="absolute inset-3 [&_span]:!text-foreground flex items-center justify-center">
                   <AsciiEye />
                 </div>
               </div>
 
-              <div className="mt-10">
-                <Link
-                  href="/watch"
-                  className="inline-flex items-center gap-2 bg-foreground text-background px-6 py-3 text-sm font-medium hover:opacity-90 transition-opacity"
-                >
-                  Open Argus
-                  <span aria-hidden>→</span>
-                </Link>
-              </div>
             </div>
           </div>
         </div>

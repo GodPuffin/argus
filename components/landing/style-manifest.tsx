@@ -20,67 +20,75 @@ const aiModels = [
   { code: "LLM-D", name: "Claude 4.5 Sonnet" },
 ];
 
+const contributors = [
+  {
+    n: "01",
+    name: "Carson Spriggs-Audet",
+    links: [
+      { label: "LinkedIn", href: "https://www.linkedin.com/in/carsonspriggs" },
+      { label: "GitHub", href: "https://github.com/carsonSgit" },
+    ],
+  },
+  {
+    n: "02",
+    name: "Marcus Lee",
+    links: [
+      { label: "LinkedIn", href: "https://www.linkedin.com/in/marcus-m-lee/" },
+      { label: "GitHub", href: "https://github.com/godpuffin" },
+    ],
+  },
+];
+
 export function StyleManifest({ features }: { features: FeatureItem[] }) {
   return (
     <>
       {/* Models */}
-      <section
-        id="models"
-        className="w-full bg-background text-foreground scroll-mt-24 border-t border-border"
-      >
+      <section id="models" className="w-full bg-background text-foreground scroll-mt-24 border-t border-border">
         <div className="max-w-[1500px] mx-auto px-6 sm:px-10 lg:px-12 py-20 lg:py-28">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
-            <div className="lg:col-span-5">
-              <h2 className="font-bold text-[40px] sm:text-[56px] lg:text-[64px] leading-[0.95] tracking-tight max-w-[14ch]">
-                Technology,
-                <br />
-                catalogued.
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 mb-14">
+            <div className="lg:col-span-7">
+              <h2 className="font-[family-name:var(--font-inter)] font-semibold text-5xl sm:text-6xl lg:text-[64px] tracking-tight text-balance max-w-[14ch]">
+                Technology, catalogued.
               </h2>
-              <p className="mt-8 text-sm sm:text-base text-muted-foreground max-w-[44ch] leading-relaxed">
-                Argus is built on a real-time streaming pipeline — Mux ingest,
-                FFmpeg transmuxing, Roboflow detection at the edge, Gemini
-                summaries, indexed in Elasticsearch and served through Supabase
-                Realtime.
+            </div>
+            <div className="lg:col-span-5 lg:pl-8 lg:border-l border-border flex flex-col justify-end gap-4">
+              <p className="font-[family-name:var(--font-inter)] text-base text-muted-foreground text-pretty max-w-[44ch]">
+                Argus is built on a real-time streaming pipeline — Mux ingest, FFmpeg transmuxing, Roboflow detection at the edge, Gemini summaries, indexed in Elasticsearch and served through Supabase Realtime.
               </p>
-              <p className="mt-4 text-sm sm:text-base text-muted-foreground max-w-[44ch] leading-relaxed">
-                Each component is a working part of that loop — no vapourware,
-                no stand-ins.
+              <p className="font-[family-name:var(--font-inter)] text-base text-muted-foreground text-pretty max-w-[44ch]">
+                Each component is a working part of that loop — no vapourware, no stand-ins.
               </p>
             </div>
-
-            <ol className="lg:col-span-7 lg:pl-8 lg:border-l border-border">
-              {aiModels.map((m, i) => (
-                <li
-                  key={m.code}
-                  className="grid grid-cols-[3rem_5rem_1fr] items-baseline gap-4 py-4 border-b border-border"
-                >
-                  <span className="font-mono text-xs tracking-widest text-muted-foreground">
-                    {(i + 1).toString().padStart(2, "0")}
-                  </span>
-                  <span className="font-mono text-[10px] tracking-[0.22em] uppercase text-muted-foreground">
-                    {m.code}
-                  </span>
-                  <span className="font-bold text-xl sm:text-2xl lg:text-3xl tracking-tight leading-tight">
-                    {m.name}
-                  </span>
-                </li>
-              ))}
-            </ol>
           </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px bg-border border border-border">
+            {aiModels.map((m) => (
+              <div key={m.code} className="bg-background p-6 flex flex-col gap-2">
+                <span className="font-[family-name:var(--font-inter)] text-[10px] uppercase tracking-widest text-muted-foreground">
+                  {m.code}
+                </span>
+                <span className="font-[family-name:var(--font-inter)] font-semibold text-base sm:text-lg tracking-tight">
+                  {m.name}
+                </span>
+              </div>
+            ))}
+          </div>
+
         </div>
       </section>
 
       {/* Features */}
       <FeaturesAlternating features={features} />
 
+      {/* CTA */}
       <section className="w-full bg-background text-foreground border-t border-border">
         <div className="max-w-[1500px] mx-auto px-6 sm:px-10 lg:px-12 py-12 lg:py-16 flex justify-end">
           <Link
             href="/watch"
-            className="inline-flex items-center gap-2 bg-foreground text-background px-6 py-3 text-sm font-medium hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-2 bg-foreground text-background px-6 py-3 text-sm font-medium hover:opacity-90 transition-opacity font-[family-name:var(--font-inter)]"
           >
-            Open Argus
-            <span aria-hidden>→</span>
+            Open Argus <span aria-hidden>→</span>
           </Link>
         </div>
       </section>
@@ -90,65 +98,41 @@ export function StyleManifest({ features }: { features: FeatureItem[] }) {
         <div className="max-w-[1500px] mx-auto px-6 sm:px-10 lg:px-12 py-16 lg:py-20">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
             <div className="lg:col-span-5">
-              <div className="font-bold text-5xl sm:text-6xl lg:text-7xl tracking-tight leading-none">
+              <div className="font-[family-name:var(--font-inter)] font-semibold text-5xl sm:text-6xl lg:text-7xl tracking-tight">
                 ARGUS
               </div>
-              <p className="mt-6 text-sm text-muted-foreground max-w-[36ch] leading-relaxed">
-                Computer vision, analytics, and an AI assistant — watching your
-                streams so you don&apos;t have to.
+              <p className="mt-6 font-[family-name:var(--font-inter)] text-sm text-muted-foreground max-w-[36ch] text-pretty">
+                Computer vision, analytics, and an AI assistant — watching your streams so you don&apos;t have to.
               </p>
             </div>
 
-            <div className="lg:col-span-7 lg:pl-8 lg:border-l border-border grid grid-cols-1 sm:grid-cols-2 gap-8">
-              {[
-                {
-                  n: "01",
-                  name: "Carson Spriggs-Audet",
-                  links: [
-                    { label: "LinkedIn", href: "https://www.linkedin.com/in/carsonspriggs" },
-                    { label: "GitHub", href: "https://github.com/carsonSgit" },
-                  ],
-                },
-                {
-                  n: "02",
-                  name: "Marcus Lee",
-                  links: [
-                    { label: "LinkedIn", href: "https://www.linkedin.com/in/marcus-m-lee/" },
-                    { label: "GitHub", href: "https://github.com/godpuffin" },
-                  ],
-                },
-              ].map((p) => (
-                <div
-                  key={p.n}
-                  className="grid grid-cols-[3rem_1fr] items-baseline gap-4 border-b border-border pb-6"
-                >
-                  <span className="font-mono text-xs tracking-widest text-muted-foreground">
-                    {p.n}
-                  </span>
-                  <div>
-                    <div className="font-bold text-2xl tracking-tight leading-none">
+            <div className="lg:col-span-7 lg:pl-8 lg:border-l border-border">
+              <div className="grid grid-cols-2 gap-px bg-border border border-border">
+                {contributors.map((p) => (
+                  <div key={p.n} className="bg-background p-6">
+                    <div className="font-[family-name:var(--font-inter)] font-semibold text-xl tracking-tight">
                       {p.name}
                     </div>
-                    <div className="mt-3 flex items-center gap-4 text-xs font-mono tracking-widest uppercase">
+                    <div className="mt-3 flex gap-4">
                       {p.links.map((l) => (
                         <a
                           key={l.label}
                           href={l.href}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+                          className="font-[family-name:var(--font-inter)] text-xs text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
                         >
                           {l.label}
                         </a>
                       ))}
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="mt-10 pt-4 border-t border-border flex items-center justify-between text-[10px] tracking-[0.22em] uppercase text-muted-foreground font-mono">
+          <div className="mt-10 pt-4 border-t border-border flex items-center justify-between font-[family-name:var(--font-inter)] text-[10px] tracking-widest uppercase text-muted-foreground">
             <span>© {new Date().getFullYear()} Argus</span>
             <span>v1.0</span>
           </div>
@@ -189,10 +173,9 @@ function FeatureBlock({
         </div>
 
         <div className={`flex flex-col justify-center p-10 lg:p-16 ${reverse ? "lg:order-1" : ""}`}>
-          <p className="font-[family-name:var(--font-inter)] text-lg text-muted-foreground max-w-[44ch] leading-relaxed">
+          <p className="font-[family-name:var(--font-inter)] text-lg text-muted-foreground max-w-[44ch] text-pretty">
             {feature.description}
           </p>
-
         </div>
       </div>
     </article>
