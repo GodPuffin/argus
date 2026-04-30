@@ -160,6 +160,64 @@ function MiniBrailleBg({ variant }: { variant: "matrix" | "wave" | "pulse" }) {
   );
 }
 
+function ButtonBrailleBg() {
+  const [grid, setGrid] = useState<string[][]>([]);
+
+  useEffect(() => {
+    const rows = 8;
+    const cols = 50;
+    let frameCount = 0;
+
+    const id = setInterval(() => {
+      frameCount++;
+      const next: string[][] = Array(rows).fill(null).map(() => Array(cols).fill(""));
+      
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const x = c * 0.15;
+          const y = r * 0.3;
+          const t = frameCount * 0.06;
+          
+          // Organic fluid noise combining multiple sine waves to simulate water/fire
+          const n1 = Math.sin(x + t);
+          const n2 = Math.cos(y - t * 0.8);
+          const n3 = Math.sin(x * 0.5 + y * 0.5 + t * 1.2);
+          
+          const noise = (n1 + n2 + n3) / 3; // roughly -1 to 1
+          
+          // Map to 0-1
+          let v = noise * 0.5 + 0.5;
+          
+          // Threshold to create sparse flowing "islands" of braille
+          v = v > 0.55 ? (v - 0.55) * 2.2 : 0;
+          
+          const charIdx = Math.min(255, Math.max(0, Math.floor(v * 255)));
+          next[r][c] = DENSITY_CHARS[charIdx];
+        }
+      }
+      setGrid(next);
+    }, 50); // 20fps for smooth character transitions
+
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div 
+      className="absolute inset-0 z-0 pointer-events-none overflow-hidden opacity-[0.65] flex items-center justify-center"
+      style={{
+        maskImage: 'radial-gradient(ellipse at center, transparent 45%, black 100%)',
+        WebkitMaskImage: 'radial-gradient(ellipse at center, transparent 45%, black 100%)'
+      }}
+    >
+      <div className="font-mono text-[8px] leading-[8px] tracking-[0.2em] whitespace-pre text-background">
+        {grid.map((row, i) => (
+          <div key={i}>{row.join("")}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function PricingSection() {
   return (
     <section id="pricing" className="w-full bg-background text-foreground border-border relative">
@@ -218,26 +276,7 @@ export function PricingSection() {
                       : "bg-secondary text-secondary-foreground hover:bg-foreground/10"
                     }`}>
                     {isStarter && (
-                      <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.15] mix-blend-luminosity">
-                        <style>{`
-                          @keyframes button-noise-anim {
-                            0% { background-position: 0px 0px; }
-                            20% { background-position: -32px 32px; }
-                            40% { background-position: 32px -32px; }
-                            60% { background-position: -32px -32px; }
-                            80% { background-position: 32px 32px; }
-                            100% { background-position: 0px 0px; }
-                          }
-                        `}</style>
-                        <div 
-                          className="absolute inset-0 w-full h-full"
-                          style={{
-                            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-                            backgroundSize: '128px',
-                            animation: 'button-noise-anim 0.4s infinite steps(2)'
-                          }}
-                        />
-                      </div>
+                      <ButtonBrailleBg />
                     )}
                     <span className="relative z-10">{tier.buttonText}</span>
                   </button>
