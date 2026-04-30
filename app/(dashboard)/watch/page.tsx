@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useState, Suspense } from "react";
+import { BrailleLoader } from "@/components/braille-loader";
 import { SiteHeader } from "@/components/site-header";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { CameraGrid } from "@/components/watch/camera-grid";
@@ -150,9 +151,9 @@ export default function WatchPage() {
       <div className="flex flex-1 flex-col min-h-0">
         <SiteHeader title="Watch" />
         <div className="flex-1 min-h-0 flex items-center justify-center">
-          <div className="text-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading watch...</p>
+          <div className="flex flex-col items-center gap-3 text-muted-foreground">
+            <BrailleLoader className="text-3xl font-mono" />
+            <p className="font-[family-name:var(--font-inter)] text-sm">Loading watch...</p>
           </div>
         </div>
       </div>

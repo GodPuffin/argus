@@ -4,9 +4,9 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function DashboardLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <SidebarProvider
       className="h-full"
@@ -17,7 +17,7 @@ export default function DashboardLayout({
       }
     >
       <AppSidebar variant="inset" />
-      <SidebarInset className="flex min-h-0 flex-1 overflow-hidden">
+      <SidebarInset className="flex min-h-0 flex-1 overflow-hidden font-[family-name:var(--font-inter)]">
         {children}
       </SidebarInset>
       <CommandMenu />
