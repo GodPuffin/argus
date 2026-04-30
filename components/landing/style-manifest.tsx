@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { BrowserComponent } from "@/components/browser-component";
+import { PricingSection } from "@/components/landing/pricing-section";
 
 export type FeatureItem = {
   title: string;
@@ -92,6 +93,8 @@ export function StyleManifest({ features }: { features: FeatureItem[] }) {
           </Link>
         </div>
       </section>
+
+      <PricingSection />
 
       {/* Footer */}
       <footer className="w-full bg-background text-foreground border-t border-border">
