@@ -51,3 +51,5 @@ next-env.d.ts
 .claude
 .agents
 .mcp.json
+.omx
+.cursor
