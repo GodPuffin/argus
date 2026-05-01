@@ -2,7 +2,16 @@
 
 import { AlertTriangle, Database, RefreshCw } from "lucide-react";
 import { useState } from "react";
+import { PageContainer } from "@/components/page-container";
+import { PageHeader } from "@/components/page-header";
 import { SiteHeader } from "@/components/site-header";
+import {
+  Surface,
+  SurfaceContent,
+  SurfaceDescription,
+  SurfaceHeader,
+  SurfaceTitle,
+} from "@/components/surface";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,13 +25,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 export default function DatabasePage() {
   const [syncing, setSyncing] = useState(false);
@@ -59,41 +61,46 @@ export default function DatabasePage() {
   return (
     <div className="flex flex-1 flex-col">
       <SiteHeader title="Database" />
-      <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Database</CardTitle>
-            <CardDescription>
+      <PageContainer>
+        <PageHeader
+          title="Database"
+          description="Explore events, entities, and admin tools for the search index."
+        />
+
+        <Surface>
+          <SurfaceHeader>
+            <SurfaceTitle>Database</SurfaceTitle>
+            <SurfaceDescription>
               Explore Events, Entities, and more.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </SurfaceDescription>
+          </SurfaceHeader>
+          <SurfaceContent>
             <p className="text-muted-foreground">Database UI coming soon.</p>
-          </CardContent>
-        </Card>
+          </SurfaceContent>
+        </Surface>
 
         {/* Admin Section */}
-        <Card className="border-orange-500/50">
-          <CardHeader>
+        <Surface className="border-orange-500/50">
+          <SurfaceHeader>
             <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
+              <div className="flex flex-col gap-1">
+                <SurfaceTitle className="flex items-center gap-2">
                   <Database className="h-5 w-5" />
                   Admin Tools
                   <Badge variant="outline" className="text-orange-600">
                     <AlertTriangle className="h-3 w-3 mr-1" />
                     Dev/Admin Only
                   </Badge>
-                </CardTitle>
-                <CardDescription>
+                </SurfaceTitle>
+                <SurfaceDescription>
                   Administrative operations for managing search indices
-                </CardDescription>
+                </SurfaceDescription>
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          </SurfaceHeader>
+          <SurfaceContent className="space-y-4">
             {/* Reindex Button */}
-            <div className="flex flex-col gap-3 p-4 border rounded-lg bg-muted/50">
+            <div className="flex flex-col gap-3 p-4 border border-border bg-muted/50">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <h3 className="font-semibold mb-1">Reindex Search Data</h3>
@@ -142,7 +149,7 @@ export default function DatabasePage() {
               </AlertDialog>
 
               {syncResult && (
-                <div className="mt-3 p-3 bg-green-500/10 border border-green-500/20 rounded-md">
+                <div className="mt-3 p-3 bg-green-500/10 border border-green-500/20">
                   <p className="text-sm font-medium text-green-700 dark:text-green-400">
                     ✓ Reindex completed successfully
                   </p>
@@ -157,9 +164,9 @@ export default function DatabasePage() {
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </SurfaceContent>
+        </Surface>
+      </PageContainer>
     </div>
   );
 }

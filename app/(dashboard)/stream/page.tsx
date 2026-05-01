@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { DemoDisabledNotice } from "@/components/demo/demo-disabled-notice";
+import { PageContainer } from "@/components/page-container";
+import { PageHeader } from "@/components/page-header";
 import { SiteHeader } from "@/components/site-header";
 import { ExternalStreamSetup } from "@/components/stream/external-stream-setup";
 import { NetworkStats } from "@/components/stream/network-stats";
@@ -9,10 +11,10 @@ import { StreamControls } from "@/components/stream/stream-controls";
 import { VideoDisplay } from "@/components/stream/video-display";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { isDemoMode } from "@/lib/demo/flag";
 import { useCameraRealtime } from "@/hooks/use-camera-realtime";
 import { useStreamManager } from "@/hooks/use-stream-manager";
 import { useStreamState } from "@/hooks/use-stream-state";
+import { isDemoMode } from "@/lib/demo/flag";
 
 export default function StreamPage() {
   const state = useStreamState();
@@ -175,7 +177,7 @@ export default function StreamPage() {
     state.setStreaming(true);
     const settings = streamManager.getRecorderSettings();
     console.log("📹 MediaRecorder settings:", settings);
-    
+
     const protocol = window.location.protocol.replace("http", "ws");
     const wsUrl = new URL(`${protocol}//${window.location.host}/rtmp`);
     wsUrl.searchParams.set("format", settings.format);
@@ -183,7 +185,10 @@ export default function StreamPage() {
     wsUrl.searchParams.set("audio", settings.audio);
     wsUrl.searchParams.set("key", state.streamKey);
 
-    console.log("🔌 Connecting to streaming server:", wsUrl.toString().replace(state.streamKey, "***"));
+    console.log(
+      "🔌 Connecting to streaming server:",
+      wsUrl.toString().replace(state.streamKey, "***"),
+    );
     wsRef.current = new WebSocket(wsUrl.toString());
 
     wsRef.current.addEventListener("open", () => {
@@ -215,7 +220,7 @@ export default function StreamPage() {
           if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
             try {
               wsRef.current.send(e.data);
-              
+
               bytesSentRef.current += e.data.size;
               const now = Date.now();
               const timeDiff = (now - lastUpdateTimeRef.current) / 1000;
@@ -279,7 +284,7 @@ export default function StreamPage() {
           mimeType: mediaRecorderRef.current?.mimeType,
         });
       });
-      
+
       mediaRecorderRef.current.addEventListener("start", () => {
         console.log("MediaRecorder started event", {
           state: mediaRecorderRef.current?.state,
@@ -339,7 +344,10 @@ export default function StreamPage() {
       if (requestAnimationRef.current) {
         cancelAnimationFrame(requestAnimationRef.current);
       }
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      if (
+        mediaRecorderRef.current &&
+        mediaRecorderRef.current.state === "recording"
+      ) {
         console.log("Stopping MediaRecorder on unmount");
         mediaRecorderRef.current.stop();
       }
@@ -361,10 +369,12 @@ export default function StreamPage() {
     <div className="flex min-h-0 flex-1 flex-col">
       <SiteHeader title="Stream" />
       <ScrollArea className="flex min-h-0 flex-1">
-        <div className="@container/main flex min-h-0 flex-col gap-4 p-4 md:gap-6 md:p-6">
-          {isDemoMode && (
-            <DemoDisabledNotice />
-          )}
+        <PageContainer>
+          <PageHeader
+            title="Stream"
+            description="Broadcast a live feed from your browser or an external RTMP source."
+          />
+          {isDemoMode && <DemoDisabledNotice />}
           <div className="flex justify-center">
             <AnimatedTabs
               tabs={["From Browser", "From Other"]}
@@ -448,7 +458,7 @@ export default function StreamPage() {
               </div>
             </>
           )}
-        </div>
+        </PageContainer>
       </ScrollArea>
     </div>
   );

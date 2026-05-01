@@ -9,19 +9,21 @@ import {
   X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState, Suspense } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import type { DateRange } from "react-day-picker";
+import { PageContainer } from "@/components/page-container";
+import { PageHeader } from "@/components/page-header";
 import { SiteHeader } from "@/components/site-header";
+import {
+  Surface,
+  SurfaceContent,
+  SurfaceDescription,
+  SurfaceHeader,
+  SurfaceTitle,
+} from "@/components/surface";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -274,15 +276,19 @@ function SearchContent() {
     <div className="flex flex-1 flex-col min-h-0">
       <SiteHeader title="Search" />
       <ScrollArea className="flex-1 min-h-0">
-        <div className="@container/main flex flex-col gap-4 p-4 md:gap-6 md:p-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Search Content</CardTitle>
-              <CardDescription>
+        <PageContainer>
+          <PageHeader
+            title="Search"
+            description="Query AI analysis and event documents indexed in Elasticsearch."
+          />
+          <Surface>
+            <SurfaceHeader>
+              <SurfaceTitle>Search Content</SurfaceTitle>
+              <SurfaceDescription>
                 Search across AI-detected events and video analysis
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </SurfaceDescription>
+            </SurfaceHeader>
+            <SurfaceContent className="space-y-4">
               {/* Search Bar with Filters */}
               <div className="flex flex-col gap-2">
                 <div className="flex gap-2">
@@ -554,12 +560,12 @@ function SearchContent() {
                                 : analysisDoc!.asset_start_seconds;
 
                               return (
-                                <Card
+                                <Surface
                                   key={hit.id}
-                                  className="cursor-pointer transition-all hover:shadow-md py-0"
+                                  className="cursor-pointer transition-colors hover:bg-accent/30"
                                   onClick={() => handleResultClick(hit)}
                                 >
-                                  <CardContent className="p-4">
+                                  <SurfaceContent className="p-4">
                                     <div className="flex gap-4">
                                       {/* Left: Content */}
                                       <div className="flex-1 min-w-0">
@@ -682,7 +688,7 @@ function SearchContent() {
                                             timestamp,
                                           )}
                                           alt={source.title}
-                                          className="w-48 h-28 object-cover rounded border"
+                                          className="w-48 h-28 object-cover border border-border"
                                           onError={(e) => {
                                             // Fallback to placeholder if thumbnail fails
                                             e.currentTarget.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='80'%3E%3Crect fill='%23ddd' width='128' height='80'/%3E%3Ctext fill='%23999' font-family='sans-serif' font-size='14' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3ENo preview%3C/text%3E%3C/svg%3E`;
@@ -690,8 +696,8 @@ function SearchContent() {
                                         />
                                       </div>
                                     </div>
-                                  </CardContent>
-                                </Card>
+                                  </SurfaceContent>
+                                </Surface>
                               );
                             })}
 
@@ -720,9 +726,9 @@ function SearchContent() {
                   )}
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
+            </SurfaceContent>
+          </Surface>
+        </PageContainer>
       </ScrollArea>
     </div>
   );
@@ -730,17 +736,19 @@ function SearchContent() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={
-      <div className="flex flex-1 flex-col min-h-0">
-        <SiteHeader title="Search" />
-        <div className="flex-1 min-h-0 flex items-center justify-center">
-          <div className="text-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading search...</p>
+    <Suspense
+      fallback={
+        <div className="flex flex-1 flex-col min-h-0">
+          <SiteHeader title="Search" />
+          <div className="flex-1 min-h-0 flex items-center justify-center">
+            <div className="text-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto mb-4" />
+              <p className="text-muted-foreground">Loading search...</p>
+            </div>
           </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <SearchContent />
     </Suspense>
   );

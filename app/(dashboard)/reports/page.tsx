@@ -4,9 +4,11 @@ import { IconLoader2, IconPlus } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { CtaLink } from "@/components/cta-link";
+import { PageContainer } from "@/components/page-container";
+import { PageHeader } from "@/components/page-header";
 import { ReportsList } from "@/components/reports/reports-list";
 import { SiteHeader } from "@/components/site-header";
-import { Button } from "@/components/ui/button";
 import { useReportsRealtime } from "@/hooks/use-reports-realtime";
 
 export default function ReportsPage() {
@@ -55,47 +57,42 @@ export default function ReportsPage() {
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      <SiteHeader title="Reports">
-        <Button
-          onClick={handleCreateReport}
-          disabled={creating}
-          className="gap-2"
-        >
-          {creating ? (
-            <>
-              <IconLoader2 className="h-4 w-4 animate-spin" />
-              Creating...
-            </>
-          ) : (
-            <>
-              <IconPlus className="h-4 w-4" />
-              New Report
-            </>
-          )}
-        </Button>
-      </SiteHeader>
+      <SiteHeader title="Reports" />
 
       <div className="flex-1 overflow-y-auto">
-        <div className="container mx-auto max-w-7xl p-6">
-          <div className="mb-8">
-            <h2 className="mb-2 font-semibold text-3xl">Your Reports</h2>
-            <p className="text-muted-foreground">
-              Create and manage your documentation and reports
-            </p>
-          </div>
+        <PageContainer>
+          <PageHeader
+            title="Your Reports"
+            description="Create and manage your documentation and reports."
+            actions={
+              <CtaLink onClick={handleCreateReport} disabled={creating}>
+                {creating ? (
+                  <>
+                    <IconLoader2 className="h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <IconPlus className="h-4 w-4" />
+                    New Report
+                  </>
+                )}
+              </CtaLink>
+            }
+          />
 
           {loading ? (
             <div className="flex h-[400px] items-center justify-center">
               <IconLoader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : error ? (
-            <div className="rounded-lg border border-destructive bg-destructive/10 p-4">
+            <div className="border border-destructive bg-destructive/10 p-4">
               <p className="text-destructive text-sm">{error}</p>
             </div>
           ) : (
             <ReportsList reports={reports} onDelete={handleDeleteReport} />
           )}
-        </div>
+        </PageContainer>
       </div>
     </div>
   );

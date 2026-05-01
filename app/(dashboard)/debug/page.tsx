@@ -2,14 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { PageContainer } from "@/components/page-container";
+import { PageHeader } from "@/components/page-header";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Surface,
+  SurfaceContent,
+  SurfaceDescription,
+  SurfaceHeader,
+  SurfaceTitle,
+} from "@/components/surface";
+import { Button } from "@/components/ui/button";
 
 export default function DebugPage() {
   const router = useRouter();
@@ -119,25 +121,23 @@ export default function DebugPage() {
   };
 
   return (
-    <div className="flex-1 overflow-auto p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Debug Tools</h1>
-          <p className="text-muted-foreground">
-            Test various components and features in development
-          </p>
-        </div>
+    <div className="flex-1 overflow-auto">
+      <PageContainer>
+        <PageHeader
+          title="Debug Tools"
+          description="Test various components and features in development."
+        />
 
         {/* Sonner Toast Tests */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Sonner Toast Notifications</CardTitle>
-            <CardDescription>
+        <Surface>
+          <SurfaceHeader>
+            <SurfaceTitle>Sonner Toast Notifications</SurfaceTitle>
+            <SurfaceDescription>
               Test different types of toast notifications with JetBrains Mono
               font
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </SurfaceDescription>
+          </SurfaceHeader>
+          <SurfaceContent className="space-y-4">
             <div>
               <h3 className="text-sm font-semibold mb-3">Standard Toasts</h3>
               <div className="flex flex-wrap gap-2">
@@ -183,24 +183,24 @@ export default function DebugPage() {
                 right.
               </p>
             </div>
-          </CardContent>
-        </Card>
+          </SurfaceContent>
+        </Surface>
 
         {/* Placeholder for future debug tools */}
-        <Card>
-          <CardHeader>
-            <CardTitle>More Debug Tools</CardTitle>
-            <CardDescription>
+        <Surface>
+          <SurfaceHeader>
+            <SurfaceTitle>More Debug Tools</SurfaceTitle>
+            <SurfaceDescription>
               Additional debugging utilities will be added here
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </SurfaceDescription>
+          </SurfaceHeader>
+          <SurfaceContent>
             <p className="text-sm text-muted-foreground">
               More debug tools coming soon...
             </p>
-          </CardContent>
-        </Card>
-      </div>
+          </SurfaceContent>
+        </Surface>
+      </PageContainer>
     </div>
   );
 }

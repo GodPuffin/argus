@@ -1,8 +1,10 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import React, { useEffect, useState, Suspense } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { BrailleLoader } from "@/components/braille-loader";
+import { PageContainer } from "@/components/page-container";
+import { PageHeader } from "@/components/page-header";
 import { SiteHeader } from "@/components/site-header";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { CameraGrid } from "@/components/watch/camera-grid";
@@ -114,7 +116,11 @@ function WatchContent() {
   return (
     <div className="flex flex-1 flex-col min-h-0">
       <SiteHeader title="Watch" />
-      <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6 min-h-0">
+      <PageContainer>
+        <PageHeader
+          title="Watch"
+          description="Live cameras and recordings from every connected stream."
+        />
         <div className="flex flex-col flex-1 min-h-0">
           <AnimatedTabs
             tabs={["Live Cameras", "Recordings"]}
@@ -140,24 +146,28 @@ function WatchContent() {
             )}
           </div>
         </div>
-      </div>
+      </PageContainer>
     </div>
   );
 }
 
 export default function WatchPage() {
   return (
-    <Suspense fallback={
-      <div className="flex flex-1 flex-col min-h-0">
-        <SiteHeader title="Watch" />
-        <div className="flex-1 min-h-0 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-3 text-muted-foreground">
-            <BrailleLoader className="text-3xl font-mono" />
-            <p className="font-[family-name:var(--font-inter)] text-sm">Loading watch...</p>
+    <Suspense
+      fallback={
+        <div className="flex flex-1 flex-col min-h-0">
+          <SiteHeader title="Watch" />
+          <div className="flex-1 min-h-0 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3 text-muted-foreground">
+              <BrailleLoader className="text-3xl font-mono" />
+              <p className="font-[family-name:var(--font-inter)] text-sm">
+                Loading watch...
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <WatchContent />
     </Suspense>
   );
