@@ -13,6 +13,7 @@ import {
   LuxeCardHeader as CardHeader,
   LuxeCardTitle as CardTitle,
 } from "@/components/ui/luxe-card";
+import { useChartAnimation } from "@/hooks/use-chart-animation";
 import { STREAM_STATUS_COLORS } from "@/lib/chart-colors";
 import { ChartBackground } from "./chart-background";
 
@@ -40,6 +41,7 @@ const chartConfig = {
 };
 
 export function StreamStatusChart({ data }: StreamStatusChartProps) {
+  const animate = useChartAnimation("stream-status");
   const chartData = [
     { name: "Active", value: data.active, fill: chartConfig.active.color },
     { name: "Idle", value: data.idle, fill: chartConfig.idle.color },
@@ -87,6 +89,7 @@ export function StreamStatusChart({ data }: StreamStatusChartProps) {
                   }
                   labelLine={false}
                   paddingAngle={2}
+                  isAnimationActive={animate}
                 />
               </PieChart>
             </ChartContainer>

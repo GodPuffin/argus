@@ -4,6 +4,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { isDemoMode } from "@/lib/demo/flag";
 import type { StatsData } from "@/lib/stats-queries";
 import { supabase } from "@/lib/supabase";
 
@@ -41,7 +42,7 @@ export function useStatsRealtime({
   }, [onUpdate]);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || isDemoMode) {
       return;
     }
 

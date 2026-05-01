@@ -13,6 +13,7 @@ import {
   LuxeCardHeader as CardHeader,
   LuxeCardTitle as CardTitle,
 } from "@/components/ui/luxe-card";
+import { useChartAnimation } from "@/hooks/use-chart-animation";
 import { DETECTION_CLASS_COLORS } from "@/lib/chart-colors";
 import { ChartBackground } from "./chart-background";
 
@@ -21,6 +22,7 @@ interface DetectionClassChartProps {
 }
 
 export function DetectionClassChart({ data }: DetectionClassChartProps) {
+  const animate = useChartAnimation("detection-class");
   const chartData = data.map((item, index) => ({
     name: item.class,
     value: item.count,
@@ -66,6 +68,7 @@ export function DetectionClassChart({ data }: DetectionClassChartProps) {
                   }
                   labelLine={false}
                   paddingAngle={2}
+                  isAnimationActive={animate}
                 />
               </PieChart>
             </ChartContainer>

@@ -16,6 +16,7 @@ import {
   LuxeCardHeader as CardHeader,
   LuxeCardTitle as CardTitle,
 } from "@/components/ui/luxe-card";
+import { useChartAnimation } from "@/hooks/use-chart-animation";
 import { JOBS_TIMELINE_COLORS } from "@/lib/chart-colors";
 import { ChartBackground } from "./chart-background";
 
@@ -44,6 +45,7 @@ const chartConfig = {
 };
 
 export function JobsTimelineChart({ data }: JobsTimelineChartProps) {
+  const animate = useChartAnimation("jobs-timeline");
   const chartData = data.map((item) => ({
     ...item,
     date: new Date(item.date).toLocaleDateString("en-US", {
@@ -88,6 +90,7 @@ export function JobsTimelineChart({ data }: JobsTimelineChartProps) {
                     dot={{ r: 3, strokeWidth: 2 }}
                     activeDot={{ r: 5 }}
                     animationDuration={800}
+                    isAnimationActive={animate}
                   />
                   <Line
                     type="monotone"
@@ -97,6 +100,7 @@ export function JobsTimelineChart({ data }: JobsTimelineChartProps) {
                     dot={{ r: 3, strokeWidth: 2 }}
                     activeDot={{ r: 5 }}
                     animationDuration={800}
+                    isAnimationActive={animate}
                   />
                   <Line
                     type="monotone"
@@ -106,6 +110,7 @@ export function JobsTimelineChart({ data }: JobsTimelineChartProps) {
                     dot={{ r: 3, strokeWidth: 2 }}
                     activeDot={{ r: 5 }}
                     animationDuration={800}
+                    isAnimationActive={animate}
                   />
                 </LineChart>
               </ChartContainer>

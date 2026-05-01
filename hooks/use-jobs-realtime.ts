@@ -1,13 +1,19 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
+import { isDemoMode } from "@/lib/demo/flag";
+import { mockAnalysisJobs } from "@/lib/demo/mock-data";
 import { type AIAnalysisJob, supabase } from "@/lib/supabase";
 
 export function useJobsRealtime() {
-  const [jobs, setJobs] = useState<AIAnalysisJob[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [jobs, setJobs] = useState<AIAnalysisJob[]>(
+    isDemoMode ? mockAnalysisJobs : [],
+  );
+  const [loading, setLoading] = useState(!isDemoMode);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isDemoMode) return;
+
     // Initial fetch from ai_analysis_jobs table
     const fetchJobs = async () => {
       try {

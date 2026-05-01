@@ -15,6 +15,7 @@ import {
   LuxeCardHeader as CardHeader,
   LuxeCardTitle as CardTitle,
 } from "@/components/ui/luxe-card";
+import { useChartAnimation } from "@/hooks/use-chart-animation";
 import { getEntityTypeColor } from "@/lib/chart-colors";
 import { ChartBackground } from "./chart-background";
 
@@ -23,6 +24,7 @@ interface TopEntitiesChartProps {
 }
 
 export function TopEntitiesChart({ data }: TopEntitiesChartProps) {
+  const animate = useChartAnimation("top-entities");
   const total = data.reduce((sum, item) => sum + item.count, 0);
   const topData = data.slice(0, 10).map((item) => ({
     entity: item.entity,
@@ -82,6 +84,7 @@ export function TopEntitiesChart({ data }: TopEntitiesChartProps) {
                   dataKey="count"
                   radius={[0, 4, 4, 0]}
                   animationDuration={800}
+                  isAnimationActive={animate}
                 >
                   {topData.map((entry) => (
                     <Cell key={entry.entity} fill={entry.fill} />

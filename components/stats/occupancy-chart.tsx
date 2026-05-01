@@ -14,6 +14,7 @@ import {
   LuxeCardHeader as CardHeader,
   LuxeCardTitle as CardTitle,
 } from "@/components/ui/luxe-card";
+import { useChartAnimation } from "@/hooks/use-chart-animation";
 import { OCCUPANCY_COLOR } from "@/lib/chart-colors";
 import { ChartBackground } from "./chart-background";
 
@@ -29,6 +30,7 @@ const chartConfig = {
 };
 
 export function OccupancyChart({ data }: OccupancyChartProps) {
+  const animate = useChartAnimation("occupancy");
   // Sample data points for visualization (take every nth point to avoid clutter)
   const sampleRate = Math.max(1, Math.floor(data.length / 100));
   const sampledData = data.filter((_, index) => index % sampleRate === 0);
@@ -120,6 +122,7 @@ export function OccupancyChart({ data }: OccupancyChartProps) {
                     fillOpacity={1}
                     fill="url(#fillCount)"
                     animationDuration={800}
+                    isAnimationActive={animate}
                   />
                 </AreaChart>
               </ChartContainer>

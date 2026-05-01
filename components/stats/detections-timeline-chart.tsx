@@ -15,6 +15,7 @@ import {
   LuxeCardHeader as CardHeader,
   LuxeCardTitle as CardTitle,
 } from "@/components/ui/luxe-card";
+import { useChartAnimation } from "@/hooks/use-chart-animation";
 import { DETECTIONS_TIMELINE_COLORS } from "@/lib/chart-colors";
 import { ChartBackground } from "./chart-background";
 
@@ -36,6 +37,7 @@ const chartConfig = {
 export function DetectionsTimelineChart({
   data,
 }: DetectionsTimelineChartProps) {
+  const animate = useChartAnimation("detections-timeline");
   const chartData = data.map((item) => ({
     ...item,
     date: new Date(item.date).toLocaleDateString("en-US", {
@@ -80,6 +82,7 @@ export function DetectionsTimelineChart({
                     dot={{ r: 3, strokeWidth: 2 }}
                     activeDot={{ r: 5 }}
                     animationDuration={800}
+                    isAnimationActive={animate}
                   />
                   <Line
                     type="monotone"
@@ -89,6 +92,7 @@ export function DetectionsTimelineChart({
                     dot={{ r: 3, strokeWidth: 2 }}
                     activeDot={{ r: 5 }}
                     animationDuration={800}
+                    isAnimationActive={animate}
                   />
                 </LineChart>
               </ChartContainer>

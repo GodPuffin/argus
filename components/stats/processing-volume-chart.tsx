@@ -14,6 +14,7 @@ import {
   LuxeCardHeader as CardHeader,
   LuxeCardTitle as CardTitle,
 } from "@/components/ui/luxe-card";
+import { useChartAnimation } from "@/hooks/use-chart-animation";
 import { PROCESSING_VOLUME_COLOR } from "@/lib/chart-colors";
 import { ChartBackground } from "./chart-background";
 
@@ -29,6 +30,7 @@ const chartConfig = {
 };
 
 export function ProcessingVolumeChart({ data }: ProcessingVolumeChartProps) {
+  const animate = useChartAnimation("processing-volume");
   const chartData = data.map((item) => ({
     date: new Date(item.date).toLocaleDateString("en-US", {
       month: "short",
@@ -83,6 +85,7 @@ export function ProcessingVolumeChart({ data }: ProcessingVolumeChartProps) {
                     fillOpacity={1}
                     fill="url(#fillVolume)"
                     animationDuration={800}
+                    isAnimationActive={animate}
                   />
                 </AreaChart>
               </ChartContainer>

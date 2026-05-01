@@ -1,13 +1,19 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
+import { isDemoMode } from "@/lib/demo/flag";
+import { mockCameras } from "@/lib/demo/mock-data";
 import { type Camera, supabase } from "@/lib/supabase";
 
 export function useCamerasRealtime() {
-  const [cameras, setCameras] = useState<Camera[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [cameras, setCameras] = useState<Camera[]>(
+    isDemoMode ? mockCameras : [],
+  );
+  const [loading, setLoading] = useState(!isDemoMode);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isDemoMode) return;
+
     // Initial fetch from mux.live_streams table
     const fetchCameras = async () => {
       try {

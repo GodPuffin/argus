@@ -13,6 +13,7 @@ import {
   LuxeCardHeader as CardHeader,
   LuxeCardTitle as CardTitle,
 } from "@/components/ui/luxe-card";
+import { useChartAnimation } from "@/hooks/use-chart-animation";
 import { JOB_STATUS_COLORS } from "@/lib/chart-colors";
 import { ChartBackground } from "./chart-background";
 
@@ -50,6 +51,7 @@ const chartConfig = {
 };
 
 export function JobStatusChart({ data }: JobStatusChartProps) {
+  const animate = useChartAnimation("job-status");
   const chartData = [
     { name: "Queued", value: data.queued, fill: chartConfig.queued.color },
     {
@@ -103,6 +105,7 @@ export function JobStatusChart({ data }: JobStatusChartProps) {
                     percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ""
                   }
                   labelLine={false}
+                  isAnimationActive={animate}
                 />
               </PieChart>
             </ChartContainer>

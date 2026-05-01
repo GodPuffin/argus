@@ -15,6 +15,7 @@ import {
   LuxeCardHeader as CardHeader,
   LuxeCardTitle as CardTitle,
 } from "@/components/ui/luxe-card";
+import { useChartAnimation } from "@/hooks/use-chart-animation";
 import { EVENT_TYPE_COLORS } from "@/lib/chart-colors";
 import { ChartBackground } from "./chart-background";
 
@@ -23,6 +24,7 @@ interface EventTypeChartProps {
 }
 
 export function EventTypeChart({ data }: EventTypeChartProps) {
+  const animate = useChartAnimation("event-type");
   const chartData = data.slice(0, 8).map((item, index) => ({
     type: item.type,
     count: item.count,
@@ -83,6 +85,7 @@ export function EventTypeChart({ data }: EventTypeChartProps) {
                   dataKey="count"
                   radius={[4, 4, 0, 0]}
                   animationDuration={800}
+                  isAnimationActive={animate}
                 >
                   {chartData.map((entry) => (
                     <Cell key={entry.type} fill={entry.fill} />

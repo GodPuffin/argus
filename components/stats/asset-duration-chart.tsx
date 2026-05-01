@@ -15,6 +15,7 @@ import {
   LuxeCardHeader as CardHeader,
   LuxeCardTitle as CardTitle,
 } from "@/components/ui/luxe-card";
+import { useChartAnimation } from "@/hooks/use-chart-animation";
 import { ChartBackground } from "./chart-background";
 
 interface AssetDurationChartProps {
@@ -29,6 +30,7 @@ const chartConfig = {
 };
 
 export function AssetDurationChart({ data }: AssetDurationChartProps) {
+  const animate = useChartAnimation("asset-duration");
   const chartData = data.map((item) => ({
     range: item.range,
     count: item.count,
@@ -69,6 +71,7 @@ export function AssetDurationChart({ data }: AssetDurationChartProps) {
                   dot={{ r: 4, strokeWidth: 2, fill: chartConfig.count.color }}
                   activeDot={{ r: 6 }}
                   animationDuration={800}
+                  isAnimationActive={animate}
                 />
               </LineChart>
             </ChartContainer>

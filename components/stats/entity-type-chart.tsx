@@ -15,6 +15,7 @@ import {
   LuxeCardHeader as CardHeader,
   LuxeCardTitle as CardTitle,
 } from "@/components/ui/luxe-card";
+import { useChartAnimation } from "@/hooks/use-chart-animation";
 import { ENTITY_TYPE_COLORS, getEntityTypeColor } from "@/lib/chart-colors";
 import { ChartBackground } from "./chart-background";
 
@@ -50,6 +51,7 @@ const chartConfig = {
 };
 
 export function EntityTypeChart({ data }: EntityTypeChartProps) {
+  const animate = useChartAnimation("entity-type");
   const chartData = data.map((item) => ({
     name: item.type,
     value: item.count,
@@ -94,6 +96,7 @@ export function EntityTypeChart({ data }: EntityTypeChartProps) {
                     percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ""
                   }
                   labelLine={false}
+                  isAnimationActive={animate}
                 />
                 <ChartLegend content={<ChartLegendContent />} />
               </PieChart>

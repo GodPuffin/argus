@@ -15,6 +15,7 @@ import {
   LuxeCardHeader as CardHeader,
   LuxeCardTitle as CardTitle,
 } from "@/components/ui/luxe-card";
+import { useChartAnimation } from "@/hooks/use-chart-animation";
 import { getTagColor } from "@/lib/chart-colors";
 import { ChartBackground } from "./chart-background";
 
@@ -23,6 +24,7 @@ interface TopTagsChartProps {
 }
 
 export function TopTagsChart({ data }: TopTagsChartProps) {
+  const animate = useChartAnimation("top-tags");
   const chartData = data.slice(0, 10).map((item) => ({
     tag: item.tag,
     count: item.count,
@@ -79,6 +81,7 @@ export function TopTagsChart({ data }: TopTagsChartProps) {
                   dataKey="count"
                   radius={[4, 4, 0, 0]}
                   animationDuration={800}
+                  isAnimationActive={animate}
                 >
                   {chartData.map((entry) => (
                     <Cell key={entry.tag} fill={entry.fill} />

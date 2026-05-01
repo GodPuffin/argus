@@ -1,13 +1,19 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
+import { isDemoMode } from "@/lib/demo/flag";
+import { demoReportStore } from "@/lib/demo/mock-data";
 import { type Report, supabase } from "@/lib/supabase";
 
 export function useReportsRealtime() {
-  const [reports, setReports] = useState<Report[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [reports, setReports] = useState<Report[]>(
+    isDemoMode ? demoReportStore() : [],
+  );
+  const [loading, setLoading] = useState(!isDemoMode);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isDemoMode) return;
+
     // Initial fetch from reports table
     const fetchReports = async () => {
       try {

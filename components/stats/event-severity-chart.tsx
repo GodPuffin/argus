@@ -15,6 +15,7 @@ import {
   LuxeCardHeader as CardHeader,
   LuxeCardTitle as CardTitle,
 } from "@/components/ui/luxe-card";
+import { useChartAnimation } from "@/hooks/use-chart-animation";
 import { getSeverityChartColor } from "@/lib/severity-styles";
 import { ChartBackground } from "./chart-background";
 
@@ -38,6 +39,7 @@ const chartConfig = {
 };
 
 export function EventSeverityChart({ data }: EventSeverityChartProps) {
+  const animate = useChartAnimation("event-severity");
   const chartData = data.map((item) => ({
     name: item.severity,
     value: item.count,
@@ -84,6 +86,7 @@ export function EventSeverityChart({ data }: EventSeverityChartProps) {
                     percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ""
                   }
                   labelLine={false}
+                  isAnimationActive={animate}
                 />
                 <ChartLegend content={<ChartLegendContent />} />
               </PieChart>
