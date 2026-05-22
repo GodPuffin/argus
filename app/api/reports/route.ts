@@ -45,32 +45,12 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { title = "Untitled Report", markdown } = body;
-    if (isDemoMode) {
-      const now = new Date().toISOString();
-      const content = markdown
-        ? {
-            type: "doc",
-            content: [
-              {
-                type: "paragraph",
-                content: [{ type: "text", text: markdown }],
-              },
-            ],
-          }
-        : { type: "doc", content: [{ type: "paragraph" }] };
-      const report = {
-        id: `demo-report-${Date.now()}`,
-        title,
-        content,
-        created_at: now,
-        updated_at: now,
-      };
-      demoReportStore().unshift(report);
-      return NextResponse.json({ report }, { status: 201 });
-    }
 
     // Convert markdown to Tiptap JSON if provided
-    let content = { type: "doc", content: [{ type: "paragraph" }] };
+    let content: Record<string, unknown> = {
+      type: "doc",
+      content: [{ type: "paragraph" }],
+    };
 
     if (markdown) {
       try {
@@ -112,6 +92,19 @@ export async function POST(req: NextRequest) {
           ],
         };
       }
+    }
+
+    if (isDemoMode) {
+      const now = new Date().toISOString();
+      const report = {
+        id: `demo-report-${Date.now()}`,
+        title,
+        content,
+        created_at: now,
+        updated_at: now,
+      };
+      demoReportStore().unshift(report);
+      return NextResponse.json({ report }, { status: 201 });
     }
 
     const { data: report, error } = await supabase

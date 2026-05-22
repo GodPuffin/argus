@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { BrowserComponent } from "@/components/browser-component";
 import { PricingSection } from "@/components/landing/pricing-section";
 
@@ -44,9 +44,11 @@ export function StyleManifest({ features }: { features: FeatureItem[] }) {
   return (
     <>
       {/* Models */}
-      <section id="models" className="w-full bg-background text-foreground scroll-mt-24 border-t border-border">
+      <section
+        id="models"
+        className="w-full bg-background text-foreground scroll-mt-24 border-t border-border"
+      >
         <div className="max-w-[1500px] mx-auto px-6 sm:px-10 lg:px-12 py-20 lg:py-28">
-
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 mb-14">
             <div className="lg:col-span-7">
               <h2 className="font-[family-name:var(--font-inter)] font-semibold text-5xl sm:text-6xl lg:text-[64px] tracking-tight text-balance max-w-[14ch]">
@@ -55,17 +57,24 @@ export function StyleManifest({ features }: { features: FeatureItem[] }) {
             </div>
             <div className="lg:col-span-5 lg:pl-8 lg:border-l border-border flex flex-col justify-end gap-4">
               <p className="font-[family-name:var(--font-inter)] text-base text-muted-foreground text-pretty max-w-[44ch]">
-                Argus is built on a real-time streaming pipeline — Mux ingest, FFmpeg transmuxing, Roboflow detection at the edge, Gemini summaries, indexed in Elasticsearch and served through Supabase Realtime.
+                Argus is built on a real-time streaming pipeline — Mux ingest,
+                FFmpeg transmuxing, Roboflow detection at the edge, Gemini
+                summaries, indexed in Elasticsearch and served through Supabase
+                Realtime.
               </p>
               <p className="font-[family-name:var(--font-inter)] text-base text-muted-foreground text-pretty max-w-[44ch]">
-                Each component is a working part of that loop — no vapourware, no stand-ins.
+                Each component is a working part of that loop — no vapourware,
+                no stand-ins.
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px bg-border border border-border">
             {aiModels.map((m) => (
-              <div key={m.code} className="bg-background p-6 flex flex-col gap-2">
+              <div
+                key={m.code}
+                className="bg-background p-6 flex flex-col gap-2"
+              >
                 <span className="font-[family-name:var(--font-inter)] text-[10px] uppercase tracking-widest text-muted-foreground">
                   {m.code}
                 </span>
@@ -75,7 +84,6 @@ export function StyleManifest({ features }: { features: FeatureItem[] }) {
               </div>
             ))}
           </div>
-
         </div>
       </section>
 
@@ -105,7 +113,8 @@ export function StyleManifest({ features }: { features: FeatureItem[] }) {
                 ARGUS
               </div>
               <p className="mt-6 font-[family-name:var(--font-inter)] text-sm text-muted-foreground max-w-[36ch] text-pretty">
-                Computer vision, analytics, and an AI assistant — watching your streams so you don&apos;t have to.
+                Computer vision, analytics, and an AI assistant — watching your
+                streams so you don&apos;t have to.
               </p>
             </div>
 
@@ -161,7 +170,9 @@ function FeatureBlock({
   return (
     <article className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 border border-border min-h-[520px]">
-        <div className={`relative overflow-hidden ${reverse ? "lg:order-2" : ""}`}>
+        <div
+          className={`relative overflow-hidden ${reverse ? "lg:order-2" : ""}`}
+        >
           <Image
             src={bg}
             alt=""
@@ -171,11 +182,15 @@ function FeatureBlock({
             priority={index === 0}
           />
           <div className="absolute inset-0 flex flex-col justify-center p-4 sm:p-6 lg:p-8">
-            <div className="w-full max-w-[640px] self-center">{feature.content}</div>
+            <div className="w-full max-w-[640px] self-center">
+              {feature.content}
+            </div>
           </div>
         </div>
 
-        <div className={`flex flex-col justify-center p-10 lg:p-16 ${reverse ? "lg:order-1" : ""}`}>
+        <div
+          className={`flex flex-col justify-center p-10 lg:p-16 ${reverse ? "lg:order-1" : ""}`}
+        >
           <p className="font-[family-name:var(--font-inter)] text-lg text-muted-foreground max-w-[44ch] text-pretty">
             {feature.description}
           </p>
@@ -185,7 +200,11 @@ function FeatureBlock({
   );
 }
 
-function FeaturesAlternating({ features }: { readonly features: FeatureItem[] }) {
+function FeaturesAlternating({
+  features,
+}: {
+  readonly features: FeatureItem[];
+}) {
   const backgrounds = [
     "/assets/bg1.webp",
     "/assets/bg2.webp",
@@ -195,7 +214,10 @@ function FeaturesAlternating({ features }: { readonly features: FeatureItem[] })
   ];
 
   return (
-    <div id="features" className="w-full bg-background py-16 lg:py-24 space-y-12 lg:space-y-16 border-t border-border">
+    <div
+      id="features"
+      className="w-full bg-background py-16 lg:py-24 space-y-12 lg:space-y-16 border-t border-border"
+    >
       {features.map((feature, i) => (
         <FeatureBlock
           key={feature.title}

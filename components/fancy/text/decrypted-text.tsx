@@ -40,7 +40,11 @@ export default function DecryptedText({
         const remaining = text
           .slice(revealCount)
           .split("")
-          .map((ch) => (ch === " " ? " " : charPool[Math.floor(Math.random() * charPool.length)]))
+          .map((ch) =>
+            ch === " "
+              ? " "
+              : charPool[Math.floor(Math.random() * charPool.length)],
+          )
           .join("");
         return revealed + remaining;
       });
@@ -63,7 +67,11 @@ export default function DecryptedText({
         const remaining = text
           .slice(revealCount)
           .split("")
-          .map((ch) => (ch === " " ? " " : charPool[Math.floor(Math.random() * charPool.length)]))
+          .map((ch) =>
+            ch === " "
+              ? " "
+              : charPool[Math.floor(Math.random() * charPool.length)],
+          )
           .join("");
         return revealed + remaining;
       });
@@ -79,5 +87,3 @@ export default function DecryptedText({
 
   return <span className={className}>{display}</span>;
 }
-
-

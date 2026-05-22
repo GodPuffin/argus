@@ -1,79 +1,84 @@
-"use client"
+"use client";
 
 import {
-  ElementType,
+  motion,
+  type Transition,
+  type UseInViewOptions,
+  useInView,
+} from "motion/react";
+import {
+  type ElementType,
   forwardRef,
   useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
   useState,
-} from "react"
-import { motion, Transition, useInView, UseInViewOptions } from "motion/react"
+} from "react";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
-type HighlightDirection = "ltr" | "rtl" | "ttb" | "btt"
+type HighlightDirection = "ltr" | "rtl" | "ttb" | "btt";
 
 type TextHighlighterProps = {
   /**
    * The text content to be highlighted
    */
-  children: React.ReactNode
+  children: React.ReactNode;
 
   /**
    * HTML element to render as
    * @default "p"
    */
-  as?: ElementType
+  as?: ElementType;
 
   /**
    * How to trigger the animation
    * @default "inView"
    */
-  triggerType?: "hover" | "ref" | "inView" | "auto"
+  triggerType?: "hover" | "ref" | "inView" | "auto";
 
   /**
    * Animation transition configuration
    * @default { duration: 0.4, type: "spring", bounce: 0 }
    */
-  transition?: Transition
+  transition?: Transition;
 
   /**
    * Options for useInView hook when triggerType is "inView"
    */
-  useInViewOptions?: UseInViewOptions
+  useInViewOptions?: UseInViewOptions;
 
   /**
    * Class name for the container element
    */
-  className?: string
+  className?: string;
 
   /**
    * Highlight color (CSS color string). Also can be a function that returns a color string, eg:
    * @default 'hsl(60, 90%, 68%)' (yellow)
    */
-  highlightColor?: string
+  highlightColor?: string;
 
   /**
    * Direction of the highlight animation
    * @default "ltr" (left to right)
    */
-  direction?: HighlightDirection
-} & React.HTMLAttributes<HTMLElement>
+  direction?: HighlightDirection;
+} & React.HTMLAttributes<HTMLElement>;
 
 export type TextHighlighterRef = {
   /**
    * Trigger the highlight animation
    * @param direction - Optional direction override for this animation
    */
-  animate: (direction?: HighlightDirection) => void
+  animate: (direction?: HighlightDirection) => void;
 
   /**
    * Reset the highlight animation
    */
-  reset: () => void
-}
+  reset: () => void;
+};
 
 export const TextHighlighter = forwardRef<
   TextHighlighterRef,
@@ -95,33 +100,33 @@ export const TextHighlighter = forwardRef<
       direction = "ltr",
       ...props
     },
-    ref
+    ref,
   ) => {
-    const componentRef = useRef<HTMLDivElement>(null)
-    const [isAnimating, setIsAnimating] = useState(false)
-    const [isHovered, setIsHovered] = useState(false)
+    const componentRef = useRef<HTMLDivElement>(null);
+    const [isAnimating, setIsAnimating] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
     const [currentDirection, setCurrentDirection] =
-      useState<HighlightDirection>(direction)
+      useState<HighlightDirection>(direction);
 
     // this allows us to change the direction whenever the direction prop changes
     useEffect(() => {
-      setCurrentDirection(direction)
-    }, [direction])
+      setCurrentDirection(direction);
+    }, [direction]);
 
     const isInView =
       triggerType === "inView"
         ? useInView(componentRef, useInViewOptions)
-        : false
+        : false;
 
     useImperativeHandle(ref, () => ({
       animate: (animationDirection?: HighlightDirection) => {
         if (animationDirection) {
-          setCurrentDirection(animationDirection)
+          setCurrentDirection(animationDirection);
         }
-        setIsAnimating(true)
+        setIsAnimating(true);
       },
       reset: () => setIsAnimating(false),
-    }))
+    }));
 
     const shouldAnimate =
       triggerType === "hover"
@@ -132,45 +137,54 @@ export const TextHighlighter = forwardRef<
             ? isAnimating
             : triggerType === "auto"
               ? true
-              : false
+              : false;
 
-    const ElementTag = as || "span"
+    const ElementTag = as || "span";
 
     // Get background size based on direction
     const getBackgroundSize = (animated: boolean) => {
       switch (currentDirection) {
         case "ltr":
-          return animated ? "100% 100%" : "0% 100%"
+          return animated ? "100% 100%" : "0% 100%";
         case "rtl":
-          return animated ? "100% 100%" : "0% 100%"
+          return animated ? "100% 100%" : "0% 100%";
         case "ttb":
-          return animated ? "100% 100%" : "100% 0%"
+          return animated ? "100% 100%" : "100% 0%";
         case "btt":
-          return animated ? "100% 100%" : "100% 0%"
+          return animated ? "100% 100%" : "100% 0%";
         default:
-          return animated ? "100% 100%" : "0% 100%"
+          return animated ? "100% 100%" : "0% 100%";
       }
-    }
+    };
 
     // Get background position based on direction
     const getBackgroundPosition = () => {
       switch (currentDirection) {
         case "ltr":
-          return "0% 0%"
+          return "0% 0%";
         case "rtl":
-          return "100% 0%"
+          return "100% 0%";
         case "ttb":
-          return "0% 0%"
+          return "0% 0%";
         case "btt":
-          return "0% 100%"
+          return "0% 100%";
         default:
-          return "0% 0%"
+          return "0% 0%";
       }
-    }
+    };
 
-    const animatedSize = useMemo(() => getBackgroundSize(shouldAnimate), [shouldAnimate, currentDirection])
-    const initialSize = useMemo(() => getBackgroundSize(false), [currentDirection])
-    const backgroundPosition = useMemo(() => getBackgroundPosition(), [currentDirection])
+    const animatedSize = useMemo(
+      () => getBackgroundSize(shouldAnimate),
+      [shouldAnimate, currentDirection],
+    );
+    const initialSize = useMemo(
+      () => getBackgroundSize(false),
+      [currentDirection],
+    );
+    const backgroundPosition = useMemo(
+      () => getBackgroundPosition(),
+      [currentDirection],
+    );
 
     const highlightStyle = {
       backgroundImage: `linear-gradient(${highlightColor}, ${highlightColor})`,
@@ -179,7 +193,7 @@ export const TextHighlighter = forwardRef<
       backgroundSize: animatedSize,
       boxDecorationBreak: "clone",
       WebkitBoxDecorationBreak: "clone",
-    } as React.CSSProperties
+    } as React.CSSProperties;
 
     return (
       <ElementTag
@@ -202,10 +216,10 @@ export const TextHighlighter = forwardRef<
           {children}
         </motion.span>
       </ElementTag>
-    )
-  }
-)
+    );
+  },
+);
 
-TextHighlighter.displayName = "TextHighlighter"
+TextHighlighter.displayName = "TextHighlighter";
 
-export default TextHighlighter
+export default TextHighlighter;

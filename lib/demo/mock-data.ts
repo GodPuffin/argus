@@ -264,7 +264,7 @@ for (let i = 0; i < 30; i++) {
     severity: seed.severity,
     type: seed.type,
     timestamp_seconds: Math.floor(
-      (asset.duration_seconds ?? 600) * (0.05 + 0.9 * ((i * 37) % 100) / 100),
+      (asset.duration_seconds ?? 600) * (0.05 + (0.9 * ((i * 37) % 100)) / 100),
     ),
     affected_entities:
       seed.type === "Traffic Incident"
@@ -326,8 +326,7 @@ export const mockAnalysisResults: AIAnalysisResult[] = mockAnalysisJobs
   .map((j, i) => ({
     job_id: j.id,
     summary: `Routine surveillance footage for ${
-      mockCameras.find((c) => c.id === j.source_id)?.camera_name ??
-      "camera"
+      mockCameras.find((c) => c.id === j.source_id)?.camera_name ?? "camera"
     }. ${i % 3 === 0 ? "Minor loitering detected." : "No incidents."}`,
     tags: ["person", "vehicle", i % 2 === 0 ? "indoor" : "outdoor"],
     entities: [
@@ -353,7 +352,9 @@ export interface MockDetectionFrame {
   }>;
 }
 
-export function getMockDetectionsForAsset(assetId: string): MockDetectionFrame[] {
+export function getMockDetectionsForAsset(
+  assetId: string,
+): MockDetectionFrame[] {
   const asset = mockAssets.find((a) => a.id === assetId);
   if (!asset) return [];
   const frames: MockDetectionFrame[] = [];
@@ -362,7 +363,7 @@ export function getMockDetectionsForAsset(assetId: string): MockDetectionFrame[]
   for (let i = 0; i < frameCount; i++) {
     const t = (duration * i) / frameCount;
     const detections = [];
-    const personCount = ((i * 7) % 4);
+    const personCount = (i * 7) % 4;
     for (let p = 0; p < personCount; p++) {
       detections.push({
         class: "person",
@@ -502,7 +503,8 @@ export const mockStats = {
   jobStats: {
     total: mockAnalysisJobs.length,
     queued: mockAnalysisJobs.filter((j) => j.status === "queued").length,
-    processing: mockAnalysisJobs.filter((j) => j.status === "processing").length,
+    processing: mockAnalysisJobs.filter((j) => j.status === "processing")
+      .length,
     succeeded: mockAnalysisJobs.filter((j) => j.status === "succeeded").length,
     failed: mockAnalysisJobs.filter((j) => j.status === "failed").length,
     dead: 0,
@@ -570,9 +572,18 @@ export const mockStats = {
   ],
   esMetrics: {
     eventSeverity: [
-      { severity: "High", count: mockEvents.filter((e) => e.severity === "High").length },
-      { severity: "Medium", count: mockEvents.filter((e) => e.severity === "Medium").length },
-      { severity: "Minor", count: mockEvents.filter((e) => e.severity === "Minor").length },
+      {
+        severity: "High",
+        count: mockEvents.filter((e) => e.severity === "High").length,
+      },
+      {
+        severity: "Medium",
+        count: mockEvents.filter((e) => e.severity === "Medium").length,
+      },
+      {
+        severity: "Minor",
+        count: mockEvents.filter((e) => e.severity === "Minor").length,
+      },
     ],
     eventTypes: Array.from(
       mockEvents.reduce((acc, e) => {
@@ -592,12 +603,17 @@ export const mockStats = {
       { type: "object", count: 24 },
     ],
     assetTypes: [
-      { type: "live" as const, count: mockCameras.filter((c) => c.status === "active").length },
+      {
+        type: "live" as const,
+        count: mockCameras.filter((c) => c.status === "active").length,
+      },
       { type: "vod" as const, count: mockAssets.length },
     ],
     cameraEventPatterns: mockCameras.map((c) => {
       const evs = mockEvents.filter((e) =>
-        mockAssets.some((a) => a.id === e.asset_id && a.live_stream_id === c.id),
+        mockAssets.some(
+          (a) => a.id === e.asset_id && a.live_stream_id === c.id,
+        ),
       );
       const high = evs.filter((e) => e.severity === "High").length;
       const medium = evs.filter((e) => e.severity === "Medium").length;

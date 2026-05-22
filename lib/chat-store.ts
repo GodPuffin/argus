@@ -91,7 +91,9 @@ export async function saveChat({
     let title = existing?.title ?? null;
     if (!title) {
       const firstUserMessage = messages.find((m) => m.role === "user");
-      title = firstUserMessage ? generateChatTitle(firstUserMessage) : "New Chat";
+      title = firstUserMessage
+        ? generateChatTitle(firstUserMessage)
+        : "New Chat";
     }
     store.set(chatId, {
       id: chatId,

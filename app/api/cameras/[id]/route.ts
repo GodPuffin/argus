@@ -15,7 +15,9 @@ export async function PATCH(
     const body = await request.json().catch(() => ({}));
     const cam = mockCameras.find((c) => c.id === params.id);
     return NextResponse.json({
-      camera: cam ? { ...cam, camera_name: body.cameraName ?? cam.camera_name } : null,
+      camera: cam
+        ? { ...cam, camera_name: body.cameraName ?? cam.camera_name }
+        : null,
     });
   }
   try {

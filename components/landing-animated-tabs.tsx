@@ -10,8 +10,11 @@ type AnimatedTabsProps = {
   onTabChange: (tab: string) => void;
 };
 
-export function AnimatedTabs({ tabs, activeTab, onTabChange }: AnimatedTabsProps) {
-
+export function AnimatedTabs({
+  tabs,
+  activeTab,
+  onTabChange,
+}: AnimatedTabsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const activeTabRef = useRef<HTMLButtonElement>(null);
 

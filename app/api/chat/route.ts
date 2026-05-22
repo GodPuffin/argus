@@ -11,10 +11,7 @@ import {
 import { aiTools } from "@/lib/ai-tools";
 import { loadChat, saveChat } from "@/lib/chat-store";
 import { isDemoMode } from "@/lib/demo/flag";
-import {
-  OPENROUTER_DEFAULT_MODEL,
-  openrouter,
-} from "@/lib/demo/openrouter";
+import { OPENROUTER_DEFAULT_MODEL, openrouter } from "@/lib/demo/openrouter";
 
 export const maxDuration = 30;
 

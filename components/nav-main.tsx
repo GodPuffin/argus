@@ -33,7 +33,9 @@ export function NavMain({
       {items.map((section) => (
         <SidebarGroup key={section.title || "main"}>
           {section.title && (
-            <SidebarGroupLabel className={labelClassName}>{section.title}</SidebarGroupLabel>
+            <SidebarGroupLabel className={labelClassName}>
+              {section.title}
+            </SidebarGroupLabel>
           )}
           <SidebarGroupContent className="flex flex-col gap-2">
             <SidebarMenu>

@@ -1,7 +1,6 @@
 "use client";
+import { motion, useMotionValueEvent, useScroll } from "motion/react";
 import React, { useEffect, useRef, useState } from "react";
-import { useMotionValueEvent, useScroll } from "motion/react";
-import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 export const StickyScroll = ({
@@ -34,9 +33,9 @@ export const StickyScroll = ({
     // Divide scroll progress into equal segments for each card
     const newActiveCard = Math.min(
       cardLength - 1,
-      Math.floor(latest * cardLength)
+      Math.floor(latest * cardLength),
     );
-    
+
     if (newActiveCard !== activeCard) {
       setActiveCard(newActiveCard);
       if (onActiveCardChange) {
@@ -44,7 +43,6 @@ export const StickyScroll = ({
       }
     }
   });
-
 
   return (
     <motion.div
@@ -54,7 +52,10 @@ export const StickyScroll = ({
       <div className="div relative flex items-start px-4">
         <div className="max-w-2xl">
           {content.map((item, index) => (
-            <div key={item.title + index} className="min-h-[800px] flex items-center">
+            <div
+              key={item.title + index}
+              className="min-h-[800px] flex items-center"
+            >
               <div className="bg-primary-foreground/70 p-6 rounded-md border border-primary/10">
                 <motion.h2
                   initial={{

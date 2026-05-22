@@ -27,9 +27,9 @@ function SurfaceHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function SurfaceTitle({ className, ...props }: React.ComponentProps<"div">) {
+function SurfaceTitle({ className, ...props }: React.ComponentProps<"h3">) {
   return (
-    <div
+    <h3
       data-slot="surface-title"
       className={cn(
         "font-[family-name:var(--font-inter)] font-semibold text-base tracking-tight",

@@ -87,9 +87,7 @@ export const displayEventById = tool({
         .eq("id", event_id)
         .single();
       if (error) {
-        throw new Error(
-          `Failed to fetch event ${event_id}: ${error.message}`,
-        );
+        throw new Error(`Failed to fetch event ${event_id}: ${error.message}`);
       }
       if (!data) {
         throw new Error(`Event ${event_id} not found`);

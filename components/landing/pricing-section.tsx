@@ -2,6 +2,15 @@
 
 import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const tiers = [
   {
@@ -9,7 +18,8 @@ const tiers = [
     monthlyPrice: null as number | null,
     yearlyPrice: null as number | null,
     priceLabel: "Free",
-    description: "For developers who want full control over their own infrastructure.",
+    description:
+      "For developers who want full control over their own infrastructure.",
     features: [
       "Bring Your Own Key (BYOK)",
       "1 camera stream",
@@ -26,7 +36,8 @@ const tiers = [
     monthlyPrice: 299,
     yearlyPrice: 239,
     priceLabel: null as string | null,
-    description: "For small teams securing physical spaces with intelligent monitoring.",
+    description:
+      "For small teams securing physical spaces with intelligent monitoring.",
     features: [
       "Up to 3 cameras",
       "AI threat detection (Gemini 2.5 Pro)",
@@ -45,7 +56,8 @@ const tiers = [
     monthlyPrice: 699,
     yearlyPrice: 559,
     priceLabel: null as string | null,
-    description: "For security teams that need the full power of agentic AI surveillance.",
+    description:
+      "For security teams that need the full power of agentic AI surveillance.",
     features: [
       "Up to 15 cameras",
       "Full AI model suite (Claude + Gemini)",
@@ -65,7 +77,8 @@ const tiers = [
     monthlyPrice: null as number | null,
     yearlyPrice: null as number | null,
     priceLabel: "Custom",
-    description: "For organizations with mission-critical security and compliance requirements.",
+    description:
+      "For organizations with mission-critical security and compliance requirements.",
     features: [
       "Unlimited cameras",
       "All Professional features",
@@ -88,12 +101,21 @@ const DENSITY_CHARS = Array.from({ length: 256 }, (_, i) => {
     if ((i >> b) & 1) count++;
   }
   return { char: String.fromCharCode(0x2800 + i), count };
-}).sort((a, b) => a.count - b.count).map(x => x.char);
+})
+  .sort((a, b) => a.count - b.count)
+  .map((x) => x.char);
 
-function MiniBrailleBg({ variant }: { variant: "matrix" | "wave" | "pulse" | "vortex" }) {
+function MiniBrailleBg({
+  variant,
+  active,
+}: {
+  variant: "matrix" | "wave" | "pulse" | "vortex";
+  active: boolean;
+}) {
   const [grid, setGrid] = useState<string[][]>([]);
 
   useEffect(() => {
+    if (!active) return;
     const rows = 25;
     const cols = 45;
     let frameCount = 0;
@@ -101,12 +123,14 @@ function MiniBrailleBg({ variant }: { variant: "matrix" | "wave" | "pulse" | "vo
     const drops = Array.from({ length: cols }, () => ({
       y: Math.random() * -rows,
       speed: 0.2 + Math.random() * 0.5,
-      length: 5 + Math.random() * 10
+      length: 5 + Math.random() * 10,
     }));
 
     const id = setInterval(() => {
       frameCount++;
-      const next: string[][] = Array(rows).fill(null).map(() => Array(cols).fill(""));
+      const next: string[][] = Array(rows)
+        .fill(null)
+        .map(() => Array(cols).fill(""));
 
       for (let c = 0; c < cols; c++) {
         if (variant === "matrix") {
@@ -118,7 +142,6 @@ function MiniBrailleBg({ variant }: { variant: "matrix" | "wave" | "pulse" | "vo
         }
       }
 
-
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
           let v = 0;
@@ -126,7 +149,7 @@ function MiniBrailleBg({ variant }: { variant: "matrix" | "wave" | "pulse" | "vo
             const drop = drops[c];
             const dist = drop.y - r;
             if (dist >= 0 && dist < drop.length) {
-              v = 1 - (dist / drop.length);
+              v = 1 - dist / drop.length;
               v = v * 0.8 + Math.random() * 0.2;
             } else {
               v = Math.random() > 0.98 ? Math.random() * 0.2 : 0;
@@ -139,7 +162,7 @@ function MiniBrailleBg({ variant }: { variant: "matrix" | "wave" | "pulse" | "vo
             const dist1 = Math.abs(r - y1);
             const dist2 = Math.abs(r - y2);
             const dist = Math.min(dist1, dist2);
-            v = dist < 4 ? 1 - (dist / 4) : 0;
+            v = dist < 4 ? 1 - dist / 4 : 0;
             v = v * (0.7 + Math.random() * 0.3);
           } else if (variant === "pulse") {
             const t = frameCount * 0.05;
@@ -147,12 +170,9 @@ function MiniBrailleBg({ variant }: { variant: "matrix" | "wave" | "pulse" | "vo
             const y1 = rows / 2 + Math.cos(t * 1.3) * 5;
             const x2 = cols / 2 + Math.cos(t * 0.8) * 15;
             const y2 = rows / 2 + Math.sin(t * 1.1) * 8;
-            const d1 = Math.sqrt(Math.pow(c - x1, 2) + Math.pow((r - y1) * 2, 2));
-            const d2 = Math.sqrt(Math.pow(c - x2, 2) + Math.pow((r - y2) * 2, 2));
-            v = Math.max(
-              d1 < 12 ? 1 - d1 / 12 : 0,
-              d2 < 12 ? 1 - d2 / 12 : 0
-            );
+            const d1 = Math.sqrt((c - x1) ** 2 + ((r - y1) * 2) ** 2);
+            const d2 = Math.sqrt((c - x2) ** 2 + ((r - y2) * 2) ** 2);
+            v = Math.max(d1 < 12 ? 1 - d1 / 12 : 0, d2 < 12 ? 1 - d2 / 12 : 0);
             if (v > 0) v = v * 0.8 + Math.random() * 0.2;
           } else if (variant === "vortex") {
             const t = frameCount * 0.04;
@@ -164,8 +184,8 @@ function MiniBrailleBg({ variant }: { variant: "matrix" | "wave" | "pulse" | "vo
             const angle = Math.atan2(dy, dx);
             // Two counter-rotating spiral arms tightening toward center
             const spiralPhase = angle - dist * 0.35 + t * 2.5;
-            const arm = Math.pow(Math.max(0, Math.cos(spiralPhase * 2)), 2);
-            const falloff = dist < 22 ? Math.pow(1 - dist / 22, 0.6) : 0;
+            const arm = Math.max(0, Math.cos(spiralPhase * 2)) ** 2;
+            const falloff = dist < 22 ? (1 - dist / 22) ** 0.6 : 0;
             v = arm * falloff;
             // Inner core glow
             if (dist < 3) v = Math.max(v, 0.6 + Math.random() * 0.4);
@@ -180,7 +200,7 @@ function MiniBrailleBg({ variant }: { variant: "matrix" | "wave" | "pulse" | "vo
     }, 50);
 
     return () => clearInterval(id);
-  }, [variant]);
+  }, [variant, active]);
 
   let colorClass = "";
   let duration = "8s";
@@ -235,7 +255,9 @@ function ButtonBrailleBg() {
 
     const id = setInterval(() => {
       frameCount++;
-      const next: string[][] = Array(rows).fill(null).map(() => Array(cols).fill(""));
+      const next: string[][] = Array(rows)
+        .fill(null)
+        .map(() => Array(cols).fill(""));
 
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
@@ -266,8 +288,10 @@ function ButtonBrailleBg() {
     <div
       className="absolute inset-0 z-0 pointer-events-none overflow-hidden opacity-[0.65] flex items-center justify-center"
       style={{
-        maskImage: "radial-gradient(ellipse at center, transparent 45%, black 100%)",
-        WebkitMaskImage: "radial-gradient(ellipse at center, transparent 45%, black 100%)",
+        maskImage:
+          "radial-gradient(ellipse at center, transparent 45%, black 100%)",
+        WebkitMaskImage:
+          "radial-gradient(ellipse at center, transparent 45%, black 100%)",
       }}
     >
       <div className="font-mono text-[8px] leading-[8px] tracking-[0.2em] whitespace-pre text-background">
@@ -281,9 +305,14 @@ function ButtonBrailleBg() {
 
 export function PricingSection() {
   const [isYearly, setIsYearly] = useState(false);
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const [noticeOpen, setNoticeOpen] = useState(false);
 
   return (
-    <section id="pricing" className="w-full bg-background text-foreground border-border relative">
+    <section
+      id="pricing"
+      className="w-full bg-background text-foreground border-border relative"
+    >
       <div className="max-w-[1500px] mx-auto px-6 sm:px-10 lg:px-12 py-20 lg:py-28 relative z-10">
         <div className="mb-14 flex flex-col sm:flex-row sm:items-end justify-between gap-8">
           <div>
@@ -298,26 +327,29 @@ export function PricingSection() {
           <div className="flex items-center gap-0 border border-border shrink-0">
             <button
               onClick={() => setIsYearly(false)}
-              className={`font-[family-name:var(--font-inter)] text-xs font-bold uppercase tracking-wider px-5 py-2.5 ${!isYearly
-                ? "bg-foreground text-background"
-                : "bg-transparent text-muted-foreground hover:text-foreground"
-                }`}
+              className={`font-[family-name:var(--font-inter)] text-xs font-bold uppercase tracking-wider px-5 py-2.5 ${
+                !isYearly
+                  ? "bg-foreground text-background"
+                  : "bg-transparent text-muted-foreground hover:text-foreground"
+              }`}
             >
               Monthly
             </button>
             <button
               onClick={() => setIsYearly(true)}
-              className={`font-[family-name:var(--font-inter)] text-xs font-bold uppercase tracking-wider px-5 py-2.5 flex items-center gap-2 ${isYearly
-                ? "bg-foreground text-background"
-                : "bg-transparent text-muted-foreground hover:text-foreground"
-                }`}
+              className={`font-[family-name:var(--font-inter)] text-xs font-bold uppercase tracking-wider px-5 py-2.5 flex items-center gap-2 ${
+                isYearly
+                  ? "bg-foreground text-background"
+                  : "bg-transparent text-muted-foreground hover:text-foreground"
+              }`}
             >
               Yearly
               <span
-                className={`text-[0.625rem] font-bold px-1.5 py-0.5 ${isYearly
-                  ? "bg-background/20 text-background"
-                  : "bg-foreground/10 text-foreground"
-                  }`}
+                className={`text-[0.625rem] font-bold px-1.5 py-0.5 ${
+                  isYearly
+                    ? "bg-background/20 text-background"
+                    : "bg-foreground/10 text-foreground"
+                }`}
               >
                 −20%
               </span>
@@ -336,12 +368,19 @@ export function PricingSection() {
                 : null;
 
             return (
+              // biome-ignore lint/a11y/noStaticElementInteractions: hover only drives a decorative background animation
               <div
                 key={tier.name}
-                className={`flex flex-col justify-between h-full group relative overflow-hidden transition-all duration-300 bg-background ${idx < tiers.length - 1 ? "border-r border-border" : ""
-                  }`}
+                onMouseEnter={() => setHoveredIdx(idx)}
+                onMouseLeave={() => setHoveredIdx(null)}
+                className={`flex flex-col justify-between h-full group relative overflow-hidden transition-all duration-300 bg-background ${
+                  idx < tiers.length - 1 ? "border-r border-border" : ""
+                }`}
               >
-                <MiniBrailleBg variant={tier.variant} />
+                <MiniBrailleBg
+                  variant={tier.variant}
+                  active={hoveredIdx === idx}
+                />
 
                 <div className="p-8 lg:p-10 relative z-10 pt-10">
                   <h3 className="font-[family-name:var(--font-inter)] font-semibold text-3xl tracking-tight mb-2 text-foreground">
@@ -383,10 +422,13 @@ export function PricingSection() {
 
                 <div className="p-8 lg:p-10 pt-0 relative z-10">
                   <button
-                    className={`relative overflow-hidden w-full px-6 py-4 text-xs font-bold font-[family-name:var(--font-inter)] uppercase tracking-wider rounded-none ${isPopular
-                      ? "bg-foreground text-background hover:bg-foreground/90"
-                      : "bg-secondary text-secondary-foreground hover:bg-foreground/10"
-                      }`}
+                    type="button"
+                    onClick={() => setNoticeOpen(true)}
+                    className={`relative overflow-hidden w-full px-6 py-4 text-xs font-bold font-[family-name:var(--font-inter)] uppercase tracking-wider rounded-none ${
+                      isPopular
+                        ? "bg-foreground text-background hover:bg-foreground/90"
+                        : "bg-secondary text-secondary-foreground hover:bg-foreground/10"
+                    }`}
                   >
                     {isPopular && <ButtonBrailleBg />}
                     <span className="relative z-10">{tier.buttonText}</span>
@@ -401,6 +443,21 @@ export function PricingSection() {
           All paid plans include a 14-day free trial. No credit card required.
         </p>
       </div>
+
+      <AlertDialog open={noticeOpen} onOpenChange={setNoticeOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Coming soon</AlertDialogTitle>
+            <AlertDialogDescription>
+              Our general release is still in the works and not quite ready yet.
+              Check back soon.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>Got it</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }

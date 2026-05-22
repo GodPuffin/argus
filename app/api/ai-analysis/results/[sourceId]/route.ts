@@ -6,10 +6,7 @@
 import { NextResponse } from "next/server";
 import { getResultsForSource } from "@/lib/ai-analysis-queries";
 import { isDemoMode } from "@/lib/demo/flag";
-import {
-  mockAnalysisJobs,
-  mockAnalysisResults,
-} from "@/lib/demo/mock-data";
+import { mockAnalysisJobs, mockAnalysisResults } from "@/lib/demo/mock-data";
 
 export async function GET(
   request: Request,

@@ -159,7 +159,9 @@ export function StreamControls({
                 title={isDemoMode ? "Disabled in demo" : undefined}
               >
                 <IconVideo className="mr-2 size-5" />
-                {isDemoMode ? "Live streaming disabled in demo" : "Enable Camera"}
+                {isDemoMode
+                  ? "Live streaming disabled in demo"
+                  : "Enable Camera"}
               </Button>
             ) : streaming ? (
               <Button
@@ -182,7 +184,9 @@ export function StreamControls({
                 title={isDemoMode ? "Disabled in demo" : undefined}
               >
                 <IconVideo className="mr-2 size-5" />
-                {isDemoMode ? "Live streaming disabled in demo" : "Start Streaming"}
+                {isDemoMode
+                  ? "Live streaming disabled in demo"
+                  : "Start Streaming"}
               </Button>
             )}
           </>

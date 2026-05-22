@@ -28,9 +28,7 @@ const data = {
   navMain: [
     {
       title: "Stream",
-      items: [
-        { title: "Create Stream", url: "/stream", icon: IconVideo },
-      ],
+      items: [{ title: "Create Stream", url: "/stream", icon: IconVideo }],
     },
     {
       title: "Dashboard",

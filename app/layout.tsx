@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Instrument_Serif, Inter } from "next/font/google";
+import { Instrument_Serif, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { CriticalEventsMonitor } from "@/components/critical-events-monitor";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -35,7 +35,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${jetbrainsMono.variable} ${instrumentSerif.variable} ${inter.variable} antialiased`}>
+      <body
+        className={`${jetbrainsMono.variable} ${instrumentSerif.variable} ${inter.variable} antialiased`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

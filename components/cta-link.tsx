@@ -45,6 +45,7 @@ export function CtaLink({
         href={href}
         className={composed}
         aria-disabled={disabled || undefined}
+        tabIndex={disabled ? -1 : undefined}
         {...rest}
       >
         {children}
