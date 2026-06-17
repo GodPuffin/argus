@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
@@ -12,14 +13,54 @@ import {
   SurfaceTitle,
 } from "@/components/surface";
 import { Button } from "@/components/ui/button";
+import { isDemoMode } from "@/lib/demo/flag";
+
+type Severity = "High" | "Medium";
+
+interface CriticalEventPreview {
+  severity: Severity;
+  title: string;
+  description: string;
+  timestamp: string;
+}
+
+const SEVERITY_PILL_CLASS: Record<Severity, string> = {
+  High: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  Medium:
+    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+};
+
+const SAMPLE_CRITICAL_EVENTS: Record<"high" | "medium", CriticalEventPreview> =
+  {
+    high: {
+      severity: "High",
+      title: "Shoplifting Incident",
+      description:
+        "A person wearing a blue jacket is seen taking a product from the shelf and concealing it without paying.",
+      timestamp: "0:05",
+    },
+    medium: {
+      severity: "Medium",
+      title: "Suspicious Behavior",
+      description:
+        "Individual loitering near high-value merchandise for extended period.",
+      timestamp: "2:34",
+    },
+  };
 
 export default function DebugPage() {
   const router = useRouter();
 
+  // Debug tools are not part of the public demo — redirect home.
+  useEffect(() => {
+    if (isDemoMode) router.replace("/watch");
+  }, [router]);
+
+  if (isDemoMode) return null;
+
   const showRegularToast = () => {
     toast("Regular Toast", {
-      description:
-        "This is a regular Sonner toast notification with JetBrains Mono font.",
+      description: "This is a regular Sonner toast notification.",
     });
   };
 
@@ -53,22 +94,26 @@ export default function DebugPage() {
     });
   };
 
-  const showCriticalEventToast = () => {
+  const showCriticalEventToast = (event: CriticalEventPreview) => {
     toast.warning(
       <div className="flex flex-col gap-2 max-w-sm">
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-            High
+          <span
+            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${SEVERITY_PILL_CLASS[event.severity]}`}
+          >
+            {event.severity}
           </span>
-          <div className="font-semibold">Shoplifting Incident</div>
+          <div className="font-semibold">{event.title}</div>
         </div>
         <div className="text-sm text-muted-foreground line-clamp-2">
-          A person wearing a blue jacket is seen taking a product from the shelf
-          and concealing it without paying.
+          {event.description}
         </div>
         <div className="flex items-center justify-between mt-1">
-          <span className="text-xs text-muted-foreground">0:05</span>
+          <span className="text-xs text-muted-foreground">
+            {event.timestamp}
+          </span>
           <button
+            type="button"
             onClick={() => {
               toast.info("View Video clicked!", {
                 description:
@@ -81,42 +126,7 @@ export default function DebugPage() {
           </button>
         </div>
       </div>,
-      {
-        duration: 8000,
-      },
-    );
-  };
-
-  const showCriticalEventMediumSeverity = () => {
-    toast.warning(
-      <div className="flex flex-col gap-2 max-w-sm">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-            Medium
-          </span>
-          <div className="font-semibold">Suspicious Behavior</div>
-        </div>
-        <div className="text-sm text-muted-foreground line-clamp-2">
-          Individual loitering near high-value merchandise for extended period.
-        </div>
-        <div className="flex items-center justify-between mt-1">
-          <span className="text-xs text-muted-foreground">2:34</span>
-          <button
-            onClick={() => {
-              toast.info("View Video clicked!", {
-                description:
-                  "This would navigate to the video at the specified timestamp.",
-              });
-            }}
-            className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            View Video
-          </button>
-        </div>
-      </div>,
-      {
-        duration: 8000,
-      },
+      { duration: 8000 },
     );
   };
 
@@ -128,13 +138,11 @@ export default function DebugPage() {
           description="Test various components and features in development."
         />
 
-        {/* Sonner Toast Tests */}
         <Surface>
           <SurfaceHeader>
             <SurfaceTitle>Sonner Toast Notifications</SurfaceTitle>
             <SurfaceDescription>
-              Test different types of toast notifications with JetBrains Mono
-              font
+              Test different types of toast notifications
             </SurfaceDescription>
           </SurfaceHeader>
           <SurfaceContent className="space-y-4">
@@ -167,11 +175,18 @@ export default function DebugPage() {
                 Critical Event Toasts
               </h3>
               <div className="flex flex-wrap gap-2">
-                <Button onClick={showCriticalEventToast} variant="destructive">
+                <Button
+                  onClick={() =>
+                    showCriticalEventToast(SAMPLE_CRITICAL_EVENTS.high)
+                  }
+                  variant="destructive"
+                >
                   Critical Event (High)
                 </Button>
                 <Button
-                  onClick={showCriticalEventMediumSeverity}
+                  onClick={() =>
+                    showCriticalEventToast(SAMPLE_CRITICAL_EVENTS.medium)
+                  }
                   variant="default"
                 >
                   Critical Event (Medium)
@@ -183,21 +198,6 @@ export default function DebugPage() {
                 right.
               </p>
             </div>
-          </SurfaceContent>
-        </Surface>
-
-        {/* Placeholder for future debug tools */}
-        <Surface>
-          <SurfaceHeader>
-            <SurfaceTitle>More Debug Tools</SurfaceTitle>
-            <SurfaceDescription>
-              Additional debugging utilities will be added here
-            </SurfaceDescription>
-          </SurfaceHeader>
-          <SurfaceContent>
-            <p className="text-sm text-muted-foreground">
-              More debug tools coming soon...
-            </p>
           </SurfaceContent>
         </Surface>
       </PageContainer>

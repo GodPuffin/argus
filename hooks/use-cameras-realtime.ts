@@ -1,15 +1,22 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useDemoSession } from "@/hooks/use-demo-session";
 import { isDemoMode } from "@/lib/demo/flag";
 import { mockCameras } from "@/lib/demo/mock-data";
+import { useDemoListState } from "@/lib/demo/use-realtime-demo";
 import { type Camera, supabase } from "@/lib/supabase";
 
 export function useCamerasRealtime() {
-  const [cameras, setCameras] = useState<Camera[]>(
-    isDemoMode ? mockCameras : [],
-  );
-  const [loading, setLoading] = useState(!isDemoMode);
+  const [cameras, setCameras, loading, setLoading] =
+    useDemoListState<Camera>(mockCameras);
   const [error, setError] = useState<string | null>(null);
+
+  // Session-added cameras (onboarding overlay) sit in front of the base mocks.
+  const { cameras: sessionCameras } = useDemoSession();
+  const demoCameras = useMemo(
+    () => [...sessionCameras, ...mockCameras],
+    [sessionCameras],
+  );
 
   useEffect(() => {
     if (isDemoMode) return;
@@ -49,8 +56,6 @@ export function useCamerasRealtime() {
           table: "live_streams",
         },
         (payload) => {
-          console.log("Live stream realtime event:", payload);
-
           if (payload.eventType === "INSERT") {
             const newCamera = payload.new as Camera;
             // Only add if it has a browser_id (is a camera)
@@ -93,6 +98,10 @@ export function useCamerasRealtime() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  if (isDemoMode) {
+    return { cameras: demoCameras, loading: false, error: null };
+  }
 
   return { cameras, loading, error };
 }

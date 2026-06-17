@@ -1,13 +1,23 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
+import { isDemoMode } from "@/lib/demo/flag";
+import { mockEvents } from "@/lib/demo/mock-data";
+import { useDemoListState } from "@/lib/demo/use-realtime-demo";
 import { type AIAnalysisEvent, supabase } from "@/lib/supabase";
 
+const demoCriticalEvents = mockEvents
+  .filter((e) => e.severity === "High")
+  .slice(0, 20);
+
 export function useCriticalEventsRealtime() {
-  const [events, setEvents] = useState<AIAnalysisEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [events, setEvents, loading, setLoading] =
+    useDemoListState<AIAnalysisEvent>(demoCriticalEvents);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // No backend in demo — serve mock critical events, skip Supabase.
+    if (isDemoMode) return;
+
     // Initial fetch of recent critical events
     const fetchCriticalEvents = async () => {
       try {
@@ -46,8 +56,6 @@ export function useCriticalEventsRealtime() {
           filter: "severity=eq.High",
         },
         (payload) => {
-          console.log("Critical event realtime:", payload);
-
           const newEvent = payload.new as AIAnalysisEvent;
           setEvents((current) => [newEvent, ...current].slice(0, 20)); // Keep only recent 20
         },

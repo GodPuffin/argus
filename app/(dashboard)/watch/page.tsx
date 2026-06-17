@@ -1,26 +1,34 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import React, { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { BrailleLoader } from "@/components/braille-loader";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { SiteHeader } from "@/components/site-header";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { CameraGrid } from "@/components/watch/camera-grid";
+import { FirstRunNextStepsCard } from "@/components/watch/first-run-next-steps-card";
 import { RecordingGrid } from "@/components/watch/recording-grid";
 import { useAssetsRealtime } from "@/hooks/use-assets-realtime";
 import { useCamerasRealtime } from "@/hooks/use-cameras-realtime";
+import { useDemoSession } from "@/hooks/use-demo-session";
+import { isDemoMode } from "@/lib/demo/flag";
+import { removeCamera, renameCamera } from "@/lib/demo/session-store";
 
 const WATCH_TAB_STORAGE_KEY = "watch-last-tab";
+const WATCH_NEXT_STEPS_SEEN_KEY = "argus.demo.watch.nextStepsSeen.v1";
 
 function WatchContent() {
   const searchParams = useSearchParams();
 
   const { cameras, loading: loadingCameras } = useCamerasRealtime();
   const { assets, loading: loadingAssets } = useAssetsRealtime();
+  const session = useDemoSession();
 
   const [activeTab, setActiveTab] = useState<string>("cameras");
+  const [showNextSteps, setShowNextSteps] = useState(false);
 
   useEffect(() => {
     const urlTab = searchParams.get("tab");
@@ -35,6 +43,14 @@ function WatchContent() {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    if (!session.onboardingComplete) {
+      setShowNextSteps(false);
+      return;
+    }
+    setShowNextSteps(!localStorage.getItem(WATCH_NEXT_STEPS_SEEN_KEY));
+  }, [session.onboardingComplete]);
+
   const handleTabChange = (tab: string) => {
     // Map display name to internal value
     const value = tab === "Live Cameras" ? "cameras" : "recordings";
@@ -42,7 +58,22 @@ function WatchContent() {
     localStorage.setItem(WATCH_TAB_STORAGE_KEY, value);
   };
 
+  const dismissNextSteps = () => {
+    localStorage.setItem(WATCH_NEXT_STEPS_SEEN_KEY, "true");
+    setShowNextSteps(false);
+  };
+
+  const openRecordings = () => {
+    setActiveTab("recordings");
+    localStorage.setItem(WATCH_TAB_STORAGE_KEY, "recordings");
+  };
+
   const handleRenameCamera = async (cameraId: string, newName: string) => {
+    // Session-added cameras live in the client overlay, not the backend.
+    if (isDemoMode && cameraId.startsWith("session-cam-")) {
+      renameCamera(cameraId, newName);
+      return;
+    }
     try {
       const response = await fetch(`/api/cameras/${cameraId}`, {
         method: "PATCH",
@@ -57,11 +88,15 @@ function WatchContent() {
       }
     } catch (error) {
       console.error("Error updating camera:", error);
-      alert("Failed to update camera name");
+      toast.error("Failed to update camera name");
     }
   };
 
   const handleDeleteCamera = async (cameraId: string) => {
+    if (isDemoMode && cameraId.startsWith("session-cam-")) {
+      removeCamera(cameraId);
+      return;
+    }
     try {
       const response = await fetch(`/api/cameras/${cameraId}`, {
         method: "DELETE",
@@ -72,7 +107,7 @@ function WatchContent() {
       }
     } catch (error) {
       console.error("Error deleting camera:", error);
-      alert("Failed to delete camera");
+      toast.error("Failed to delete camera");
     }
   };
 
@@ -94,7 +129,7 @@ function WatchContent() {
       }
     } catch (error) {
       console.error("Error updating asset:", error);
-      alert("Failed to update recording");
+      toast.error("Failed to update recording");
     }
   };
 
@@ -109,7 +144,7 @@ function WatchContent() {
       }
     } catch (error) {
       console.error("Error deleting asset:", error);
-      alert("Failed to delete recording");
+      toast.error("Failed to delete recording");
     }
   };
 
@@ -121,6 +156,12 @@ function WatchContent() {
           title="Watch"
           description="Live cameras and recordings from every connected stream."
         />
+        {showNextSteps && (
+          <FirstRunNextStepsCard
+            onDismiss={dismissNextSteps}
+            onOpenRecordings={openRecordings}
+          />
+        )}
         <div className="flex flex-col flex-1 min-h-0">
           <AnimatedTabs
             tabs={["Live Cameras", "Recordings"]}
@@ -160,7 +201,7 @@ export default function WatchPage() {
           <div className="flex-1 min-h-0 flex items-center justify-center">
             <div className="flex flex-col items-center gap-3 text-muted-foreground">
               <BrailleLoader className="text-3xl font-mono" />
-              <p className="font-[family-name:var(--font-inter)] text-sm">
+              <p className="text-sm">
                 Loading watch...
               </p>
             </div>

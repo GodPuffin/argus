@@ -23,18 +23,22 @@ const DAY = 24 * HOUR;
 
 const isoAt = (msAgo: number) => new Date(NOW - msAgo).toISOString();
 
-// Public Mux demo playback IDs (Mux publishes these as sample content).
-const PUBLIC_PLAYBACKS = [
+// Public Mux demo playback IDs (Mux publishes these as sample content). Shared
+// with the demo-session store so session-added cameras render live tiles too.
+export const PUBLIC_PLAYBACKS = [
   "DS00Spx1CV902MCtPj5WknGlR102V5HFkDe",
   "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4",
   "VZtzUzGRv02OhRnZCxcNg49OilvolTqdnFLEqBsTwaxU",
   "OZpQKVuPJhKyp9cAMuAx63GVAjtDLfLuurGLCSx01oxgI",
 ];
 
-function poster(seed: number) {
-  // Deterministic placeholder frames for camera thumbnails.
-  return `https://picsum.photos/seed/argus-${seed}/800/450`;
-}
+// Deterministic 0–99 pseudo-random value from an index, used to vary fixtures
+// without pulling in real randomness (so renders stay stable).
+const pseudoRandom = (i: number) => (i * 37) % 100;
+
+// First IDs for the demo event / job sequences (kept clear of real-data ranges).
+const EVENT_ID_BASE = 1000;
+const JOB_ID_BASE = 500;
 
 // ────────────────────────────────────────────────────────────────────────
 // Cameras
@@ -129,11 +133,6 @@ export const mockAssets: Asset[] = ASSET_DEFS.map((a, i) => {
     duration: a.durationSec,
   };
 });
-
-// Helper for consumers that want a thumbnail image.
-export function mockAssetPoster(assetIndex: number) {
-  return poster(assetIndex);
-}
 
 // ────────────────────────────────────────────────────────────────────────
 // AI analysis events
@@ -251,20 +250,20 @@ const EVENT_SEEDS: EventSeed[] = [
 ];
 
 export const mockEvents: AIAnalysisEvent[] = [];
-let _eventId = 1000;
+let _eventId = EVENT_ID_BASE;
 for (let i = 0; i < 30; i++) {
   const seed = EVENT_SEEDS[i % EVENT_SEEDS.length];
   const asset = mockAssets[i % mockAssets.length];
   mockEvents.push({
     id: _eventId++,
-    job_id: 500 + (i % mockAssets.length),
+    job_id: JOB_ID_BASE + (i % mockAssets.length),
     asset_id: asset.id,
     name: seed.name,
     description: seed.description,
     severity: seed.severity,
     type: seed.type,
     timestamp_seconds: Math.floor(
-      (asset.duration_seconds ?? 600) * (0.05 + (0.9 * ((i * 37) % 100)) / 100),
+      (asset.duration_seconds ?? 600) * (0.05 + (0.9 * pseudoRandom(i)) / 100),
     ),
     affected_entities:
       seed.type === "Traffic Incident"
@@ -283,61 +282,107 @@ for (let i = 0; i < 30; i++) {
 // AI analysis jobs / results
 // ────────────────────────────────────────────────────────────────────────
 
-export const mockAnalysisJobs: AIAnalysisJob[] = mockAssets.flatMap(
-  (asset, i) => {
-    const statuses: AIAnalysisJob["status"][] = [
-      "succeeded",
-      "succeeded",
-      "succeeded",
-      "processing",
-      "queued",
-      "failed",
-    ];
-    return [
-      {
-        id: 500 + i,
-        source_type: "vod",
-        source_id: asset.id,
-        playback_id:
-          (Array.isArray(asset.playback_ids) && asset.playback_ids[0]?.id) ||
-          PUBLIC_PLAYBACKS[0],
-        start_epoch: Math.floor(new Date(asset.created_at).getTime() / 1000),
-        end_epoch:
-          Math.floor(new Date(asset.created_at).getTime() / 1000) +
-          (asset.duration_seconds ?? 600),
-        asset_start_seconds: 0,
-        asset_end_seconds: asset.duration_seconds ?? 600,
-        status: statuses[i % statuses.length],
-        attempts: 1,
-        error:
-          statuses[i % statuses.length] === "failed"
-            ? "Worker timed out after 300s"
-            : null,
-        result_ref: null,
-        created_at: asset.created_at,
-        updated_at: asset.created_at,
-      },
-    ];
-  },
-);
+// CV pipeline catalog — the models that ran over the footage in this demo.
+// Mirrors a realistic Roboflow + SAM + supporting-model stack.
+export const CV_MODELS = [
+  "Roboflow: People Detection (YOLOv8)",
+  "SAM 2 — instance segmentation",
+  "Roboflow: PPE & Safety Compliance",
+  "Roboflow: Vehicle & ALPR",
+  "Roboflow: Weapon Detection",
+  "CLIP — scene embeddings",
+  "Whisper — audio transcript",
+  "DETR — object detection",
+];
+
+// Deterministically assign 2–3 models to a job by index.
+function pickModels(i: number): string[] {
+  const a = CV_MODELS[i % CV_MODELS.length];
+  const b = CV_MODELS[(i * 3 + 1) % CV_MODELS.length];
+  const c = CV_MODELS[(i * 5 + 2) % CV_MODELS.length];
+  return Array.from(new Set([a, b, ...(i % 2 === 0 ? [c] : [])]));
+}
+
+// Status assigned to demo jobs, cycled by index.
+const JOB_STATUS_CYCLE: AIAnalysisJob["status"][] = [
+  "succeeded",
+  "succeeded",
+  "succeeded",
+  "processing",
+  "queued",
+  "failed",
+];
+
+export const mockAnalysisJobs: AIAnalysisJob[] = mockAssets.map((asset, i) => {
+  const status = JOB_STATUS_CYCLE[i % JOB_STATUS_CYCLE.length];
+  return {
+    id: JOB_ID_BASE + i,
+    source_type: "vod",
+    source_id: asset.id,
+    playback_id:
+      (Array.isArray(asset.playback_ids) && asset.playback_ids[0]?.id) ||
+      PUBLIC_PLAYBACKS[0],
+    start_epoch: Math.floor(new Date(asset.created_at).getTime() / 1000),
+    end_epoch:
+      Math.floor(new Date(asset.created_at).getTime() / 1000) +
+      (asset.duration_seconds ?? 600),
+    asset_start_seconds: 0,
+    asset_end_seconds: asset.duration_seconds ?? 600,
+    status,
+    attempts: 1,
+    error: status === "failed" ? "Worker timed out after 300s" : null,
+    // Succeeded jobs reference their result row.
+    result_ref: status === "succeeded" ? JOB_ID_BASE + i : null,
+    created_at: asset.created_at,
+    updated_at: asset.created_at,
+    models: pickModels(i),
+  };
+});
 
 export const mockAnalysisResults: AIAnalysisResult[] = mockAnalysisJobs
   .filter((j) => j.status === "succeeded")
-  .map((j, i) => ({
-    job_id: j.id,
-    summary: `Routine surveillance footage for ${
-      mockCameras.find((c) => c.id === j.source_id)?.camera_name ?? "camera"
-    }. ${i % 3 === 0 ? "Minor loitering detected." : "No incidents."}`,
-    tags: ["person", "vehicle", i % 2 === 0 ? "indoor" : "outdoor"],
-    entities: [
-      { type: "person", count: 2 + (i % 4) },
-      { type: "vehicle", count: i % 3 },
-    ],
-    transcript_ref: null,
-    embeddings_ref: null,
-    raw: {},
-    created_at: j.updated_at,
-  }));
+  .map((j, i) => {
+    const cameraName =
+      mockAssets.find((a) => a.id === j.source_id)?.meta?.title ?? "camera";
+    const personCount = 2 + (i % 4);
+    const vehicleCount = i % 3;
+    const models = j.models ?? CV_MODELS.slice(0, 2);
+    return {
+      job_id: j.id,
+      summary: `${models[0].split(":")[0].trim()} + ${
+        models[1]?.split("—")[0].trim() ?? "SAM 2"
+      } processed ${cameraName}. Detected ${personCount} ${
+        personCount === 1 ? "person" : "people"
+      }${vehicleCount ? ` and ${vehicleCount} vehicle(s)` : ""}. ${
+        i % 3 === 0
+          ? "Flagged brief loitering near the entrance."
+          : "No safety violations or anomalies."
+      }`,
+      tags: [
+        "person",
+        ...(vehicleCount ? ["vehicle"] : []),
+        i % 2 === 0 ? "indoor" : "outdoor",
+        i % 3 === 0 ? "loitering" : "normal",
+      ],
+      entities: [
+        { type: "person", count: personCount },
+        { type: "vehicle", count: vehicleCount },
+      ],
+      transcript_ref: models.some((m) => m.includes("Whisper"))
+        ? `transcript-${j.id}`
+        : null,
+      embeddings_ref: models.some((m) => m.includes("CLIP"))
+        ? `clip-${j.id}`
+        : null,
+      raw: {
+        models,
+        pipeline: "roboflow-workflow → sam2 → vlm-summary",
+        frames_processed: Math.round((j.asset_end_seconds ?? 600) / 2),
+        mean_confidence: 0.78 + (i % 10) / 100,
+      },
+      created_at: j.updated_at,
+    };
+  });
 
 // ────────────────────────────────────────────────────────────────────────
 // Detections (object detection frames per asset)

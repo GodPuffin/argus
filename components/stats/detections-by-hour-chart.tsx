@@ -6,14 +6,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import {
-  LuxeCard as Card,
-  LuxeCardContent as CardContent,
-  LuxeCardDescription as CardDescription,
-  LuxeCardHeader as CardHeader,
-  LuxeCardTitle as CardTitle,
-} from "@/components/ui/luxe-card";
-import { ChartBackground } from "./chart-background";
+import { useChartAnimation } from "@/hooks/use-chart-animation";
+import { ChartShell } from "./chart-shell";
 
 interface DetectionsByHourChartProps {
   data: Array<{ timestamp: number; count: number }>;
@@ -27,12 +21,10 @@ const chartConfig = {
 };
 
 export function DetectionsByHourChart({ data }: DetectionsByHourChartProps) {
-  // Group detections by hour
+  const chartAnimation = useChartAnimation("detections-by-hour");
   const hourlyData = new Map<number, number>();
-
   for (const item of data) {
-    const date = new Date(item.timestamp * 1000);
-    const hour = date.getHours();
+    const hour = new Date(item.timestamp * 1000).getHours();
     hourlyData.set(hour, (hourlyData.get(hour) || 0) + item.count);
   }
 
@@ -42,45 +34,36 @@ export function DetectionsByHourChart({ data }: DetectionsByHourChartProps) {
   }));
 
   return (
-    <Card variant="revealed-pointer">
-      <CardHeader>
-        <CardTitle>Detections by Hour</CardTitle>
-        <CardDescription>Hourly detection patterns over time</CardDescription>
-      </CardHeader>
-      <CardContent className="pb-6">
-        <ChartBackground>
-          {data.length > 0 ? (
-            <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <BarChart data={chartData} margin={{ left: 0, right: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis
-                  dataKey="hour"
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={11}
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
-                />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <ChartTooltip
-                  cursor={{ fill: "hsl(var(--muted))" }}
-                  content={<ChartTooltipContent />}
-                />
-                <Bar
-                  dataKey="count"
-                  fill={chartConfig.count.color}
-                  radius={[4, 4, 0, 0]}
-                  animationDuration={800}
-                />
-              </BarChart>
-            </ChartContainer>
-          ) : (
-            <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-              No hourly data available
-            </div>
-          )}
-        </ChartBackground>
-      </CardContent>
-    </Card>
+    <ChartShell
+      title="Detections by Hour"
+      description="Hourly detection patterns over time"
+      isEmpty={data.length === 0}
+      emptyMessage="No hourly data available"
+    >
+      <ChartContainer config={chartConfig} className="h-[300px] w-full">
+        <BarChart data={chartData} margin={{ left: 0, right: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+          <XAxis
+            dataKey="hour"
+            stroke="hsl(var(--muted-foreground))"
+            fontSize={11}
+            angle={-45}
+            textAnchor="end"
+            height={60}
+          />
+          <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+          <ChartTooltip
+            cursor={{ fill: "hsl(var(--muted))" }}
+            content={<ChartTooltipContent />}
+          />
+          <Bar
+            dataKey="count"
+            fill={chartConfig.count.color}
+            radius={[4, 4, 0, 0]}
+            {...chartAnimation}
+          />
+        </BarChart>
+      </ChartContainer>
+    </ChartShell>
   );
 }

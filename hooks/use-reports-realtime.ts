@@ -2,13 +2,13 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { isDemoMode } from "@/lib/demo/flag";
 import { demoReportStore } from "@/lib/demo/mock-data";
+import { useDemoListState } from "@/lib/demo/use-realtime-demo";
 import { type Report, supabase } from "@/lib/supabase";
 
 export function useReportsRealtime() {
-  const [reports, setReports] = useState<Report[]>(
+  const [reports, setReports, loading, setLoading] = useDemoListState<Report>(
     isDemoMode ? demoReportStore() : [],
   );
-  const [loading, setLoading] = useState(!isDemoMode);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -48,8 +48,6 @@ export function useReportsRealtime() {
           table: "reports",
         },
         (payload) => {
-          console.log("Report realtime event:", payload);
-
           if (payload.eventType === "INSERT") {
             const newReport = payload.new as Report;
             setReports((current) => [newReport, ...current]);

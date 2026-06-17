@@ -1,21 +1,9 @@
 import type { Metadata } from "next";
-import { Instrument_Serif, Inter, JetBrains_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { CriticalEventsMonitor } from "@/components/critical-events-monitor";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
-  subsets: ["latin"],
-});
-
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument-serif",
-  subsets: ["latin"],
-  weight: ["400"],
-  style: ["normal", "italic"],
-});
 
 const inter = Inter({
   variable: "--font-inter",
@@ -25,7 +13,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Argus",
   description:
-    "Stream live from your browser to Mux RTMP and watch recorded streams",
+    "Computer-vision analytics for live and recorded video, with an AI assistant for search and insights.",
 };
 
 export default function RootLayout({
@@ -35,12 +23,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${jetbrainsMono.variable} ${instrumentSerif.variable} ${inter.variable} antialiased`}
-      >
+      <body className={`${inter.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >

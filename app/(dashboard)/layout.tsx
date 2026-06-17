@@ -17,7 +17,7 @@ export default function DashboardLayout({
       }
     >
       <AppSidebar variant="inset" />
-      <SidebarInset className="flex min-h-0 flex-1 overflow-hidden font-[family-name:var(--font-inter)]">
+      <SidebarInset className="flex min-h-0 flex-1 overflow-hidden">
         {children}
       </SidebarInset>
       <CommandMenu />

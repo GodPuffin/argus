@@ -1,7 +1,19 @@
 import type { UIMessage } from "ai";
 import { generateId } from "ai";
 import { isDemoMode } from "./demo/flag";
+import { mockEvents } from "./demo/mock-data";
 import { supabase } from "./supabase";
+
+const NEW_CHAT = "New Chat";
+
+/** Concatenate the text from a message's text parts (ignores tool parts etc.). */
+export function extractTextFromParts(message: UIMessage): string {
+  const texts: string[] = [];
+  for (const part of message.parts) {
+    if (part.type === "text") texts.push(part.text);
+  }
+  return texts.join(" ");
+}
 
 interface DemoChatRecord {
   id: string;
@@ -10,15 +22,124 @@ interface DemoChatRecord {
   updated_at: string;
 }
 
+// A pre-baked example conversation so the AI Chat history is populated in demo.
+function seedDemoChats(store: Map<string, DemoChatRecord>) {
+  const highEvent =
+    mockEvents.find((e) => e.severity === "High") ?? mockEvents[0];
+  const welcome: DemoChatRecord = {
+    id: "demo-chat-welcome",
+    title: "Most serious incidents this week",
+    updated_at: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+    messages: [
+      {
+        id: "seed-u1",
+        role: "user",
+        parts: [
+          {
+            type: "text",
+            text: "What were the most serious incidents this week?",
+          },
+        ],
+      },
+      {
+        id: "seed-a1",
+        role: "assistant",
+        parts: [
+          {
+            type: "text",
+            text: `This week the analysis pipeline (Roboflow detection + SAM 2 segmentation) flagged ${mockEvents.filter((e) => e.severity === "High").length} high-severity events across your cameras. The most urgent one:`,
+          },
+          {
+            type: "tool-displayEvent",
+            toolCallId: "seed-call-1",
+            state: "output-available",
+            input: { event_id: highEvent.id },
+            output: {
+              asset_id: highEvent.asset_id,
+              event_id: highEvent.id,
+              name: highEvent.name,
+              description: highEvent.description,
+              severity: highEvent.severity,
+              type: highEvent.type,
+              timestamp_seconds: highEvent.timestamp_seconds,
+              affected_entities: highEvent.affected_entities ?? [],
+            },
+          },
+          {
+            type: "text",
+            text: "Want me to compile the week's high-severity events into an incident report?",
+          },
+        ],
+      },
+      // The `tool-displayEvent` part is shaped exactly like the SDK's streamed
+      // tool-output part, but `UIMessage`'s generic tool-part union isn't
+      // structurally inferable from a plain object literal, so a single cast is
+      // the cleanest way to seed this fixture.
+    ] as UIMessage[],
+  };
+  store.set(welcome.id, welcome);
+}
+
 declare global {
   // eslint-disable-next-line no-var
   var __demoChatStore: Map<string, DemoChatRecord> | undefined;
 }
 function demoChats(): Map<string, DemoChatRecord> {
   if (!globalThis.__demoChatStore) {
-    globalThis.__demoChatStore = new Map();
+    const store = new Map<string, DemoChatRecord>();
+    if (isDemoMode) seedDemoChats(store);
+    globalThis.__demoChatStore = store;
   }
   return globalThis.__demoChatStore;
+}
+
+/**
+ * In-memory implementation of the chat store used in demo mode. Mirrors the
+ * Supabase-backed code paths below; each public function branches here once.
+ */
+const demoChatStore = {
+  create(id: string): void {
+    demoChats().set(id, {
+      id,
+      title: null,
+      messages: [],
+      updated_at: new Date().toISOString(),
+    });
+  },
+  load(id: string): UIMessage[] {
+    return demoChats().get(id)?.messages ?? [];
+  },
+  save(chatId: string, messages: UIMessage[], derivedTitle: string): void {
+    const store = demoChats();
+    const existing = store.get(chatId);
+    store.set(chatId, {
+      id: chatId,
+      title: existing?.title ?? derivedTitle,
+      messages,
+      updated_at: new Date().toISOString(),
+    });
+  },
+  list(
+    limit: number,
+  ): Array<{ id: string; title: string; updated_at: string }> {
+    return Array.from(demoChats().values())
+      .sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1))
+      .slice(0, limit)
+      .map((c) => ({
+        id: c.id,
+        title: c.title ?? NEW_CHAT,
+        updated_at: c.updated_at,
+      }));
+  },
+  delete(id: string): void {
+    demoChats().delete(id);
+  },
+};
+
+/** Derive a chat title from the first user message, falling back to NEW_CHAT. */
+function deriveTitle(messages: UIMessage[]): string {
+  const firstUserMessage = messages.find((m) => m.role === "user");
+  return firstUserMessage ? generateChatTitle(firstUserMessage) : NEW_CHAT;
 }
 
 /**
@@ -28,12 +149,7 @@ export async function createChat(): Promise<string> {
   const id = generateId();
 
   if (isDemoMode) {
-    demoChats().set(id, {
-      id,
-      title: null,
-      messages: [],
-      updated_at: new Date().toISOString(),
-    });
+    demoChatStore.create(id);
     return id;
   }
 
@@ -52,7 +168,7 @@ export async function createChat(): Promise<string> {
  */
 export async function loadChat(id: string): Promise<UIMessage[]> {
   if (isDemoMode) {
-    return demoChats().get(id)?.messages ?? [];
+    return demoChatStore.load(id);
   }
 
   const { data, error } = await supabase
@@ -85,22 +201,11 @@ export async function saveChat({
     return;
   }
 
+  // Title to use when the chat doesn't already have one (same in both stores).
+  const derivedTitle = deriveTitle(messages);
+
   if (isDemoMode) {
-    const store = demoChats();
-    const existing = store.get(chatId);
-    let title = existing?.title ?? null;
-    if (!title) {
-      const firstUserMessage = messages.find((m) => m.role === "user");
-      title = firstUserMessage
-        ? generateChatTitle(firstUserMessage)
-        : "New Chat";
-    }
-    store.set(chatId, {
-      id: chatId,
-      title,
-      messages,
-      updated_at: new Date().toISOString(),
-    });
+    demoChatStore.save(chatId, messages, derivedTitle);
     return;
   }
 
@@ -111,17 +216,7 @@ export async function saveChat({
     .eq("id", chatId)
     .single();
 
-  let title = existingChat?.title;
-
-  // Generate title if not set
-  if (!title) {
-    const firstUserMessage = messages.find((m) => m.role === "user");
-    if (firstUserMessage) {
-      title = generateChatTitle(firstUserMessage);
-    } else {
-      title = "New Chat";
-    }
-  }
+  const title = existingChat?.title || derivedTitle;
 
   const { error } = await supabase
     .from("chats")
@@ -149,14 +244,7 @@ export async function listChats(limit = 10): Promise<
   }>
 > {
   if (isDemoMode) {
-    return Array.from(demoChats().values())
-      .sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1))
-      .slice(0, limit)
-      .map((c) => ({
-        id: c.id,
-        title: c.title ?? "New Chat",
-        updated_at: c.updated_at,
-      }));
+    return demoChatStore.list(limit);
   }
 
   const { data, error } = await supabase
@@ -178,7 +266,7 @@ export async function listChats(limit = 10): Promise<
  */
 export async function deleteChat(id: string): Promise<void> {
   if (isDemoMode) {
-    demoChats().delete(id);
+    demoChatStore.delete(id);
     return;
   }
 
@@ -194,16 +282,11 @@ export async function deleteChat(id: string): Promise<void> {
  * Generate a chat title from the first user message
  */
 export function generateChatTitle(message: UIMessage): string {
-  // Extract text from message parts
-  const textParts = message.parts
-    .filter((part) => part.type === "text")
-    .map((part) => (part as any).text)
-    .join(" ");
+  const text = extractTextFromParts(message);
 
-  // Truncate to 50 characters
-  if (textParts.length > 50) {
-    return textParts.substring(0, 50).trim() + "...";
+  if (text.length > 50) {
+    return `${text.substring(0, 50).trim()}...`;
   }
 
-  return textParts || "New Chat";
+  return text || NEW_CHAT;
 }

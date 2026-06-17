@@ -10,14 +10,19 @@ if (!isDemoMode && (!supabaseUrl || !supabaseAnonKey)) {
   );
 }
 
+// Placeholder credentials for demo mode, where the client is never actually
+// used (these are never sent anywhere).
+const DEMO_SUPABASE_URL = "https://demo.invalid.supabase.co";
+const DEMO_SUPABASE_ANON_KEY = "demo-anon-key";
+
 // In demo mode the client is never used — all API routes short-circuit to
 // mock data before touching it. We still export a typed placeholder so
 // imports don't fail at module load.
 export const supabase = isDemoMode
-  ? (createClient(
-      supabaseUrl || "https://demo.invalid.supabase.co",
-      supabaseAnonKey || "demo-anon-key",
-    ) as ReturnType<typeof createClient>)
+  ? createClient(
+      supabaseUrl || DEMO_SUPABASE_URL,
+      supabaseAnonKey || DEMO_SUPABASE_ANON_KEY,
+    )
   : createClient(supabaseUrl!, supabaseAnonKey!);
 
 // Database types
@@ -107,6 +112,8 @@ export interface AIAnalysisJob {
   result_ref: number | null;
   created_at: string;
   updated_at: string;
+  // CV pipeline that processed this job (e.g. Roboflow, SAM). Demo metadata.
+  models?: string[];
 }
 
 export interface AIAnalysisResult {

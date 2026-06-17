@@ -55,8 +55,6 @@ export function useEventsRealtime(assetId: string | null) {
           filter: `asset_id=eq.${assetId}`,
         },
         (payload) => {
-          console.log("Event realtime update:", payload);
-
           if (payload.eventType === "INSERT") {
             const newEvent = payload.new as AIAnalysisEvent;
             setEvents((current) => {

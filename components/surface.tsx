@@ -31,10 +31,7 @@ function SurfaceTitle({ className, ...props }: React.ComponentProps<"h3">) {
   return (
     <h3
       data-slot="surface-title"
-      className={cn(
-        "font-[family-name:var(--font-inter)] font-semibold text-base tracking-tight",
-        className,
-      )}
+      className={cn("font-semibold text-base tracking-tight", className)}
       {...props}
     />
   );
@@ -47,10 +44,7 @@ function SurfaceDescription({
   return (
     <div
       data-slot="surface-description"
-      className={cn(
-        "font-[family-name:var(--font-inter)] text-sm text-muted-foreground",
-        className,
-      )}
+      className={cn("text-sm text-muted-foreground", className)}
       {...props}
     />
   );

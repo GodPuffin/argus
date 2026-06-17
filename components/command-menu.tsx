@@ -1,17 +1,6 @@
 "use client";
 
-import {
-  IconBug,
-  IconChartBar,
-  IconDatabase,
-  IconEye,
-  IconFileText,
-  IconList,
-  IconMessageChatbot,
-  IconPlayerPlay,
-  IconSearch,
-  IconVideo,
-} from "@tabler/icons-react";
+import { IconRefresh, IconRocket } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
@@ -24,69 +13,8 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-
-const navigationItems = [
-  {
-    group: "Stream",
-    items: [
-      {
-        title: "Create Stream",
-        url: "/stream",
-        icon: IconVideo,
-      },
-    ],
-  },
-  {
-    group: "Dashboard",
-    items: [
-      {
-        title: "Watch",
-        url: "/watch",
-        icon: IconPlayerPlay,
-      },
-      {
-        title: "Stats",
-        url: "/stats",
-        icon: IconChartBar,
-      },
-      {
-        title: "Search",
-        url: "/search",
-        icon: IconSearch,
-      },
-      {
-        title: "AI Chat",
-        url: "/ai-chat",
-        icon: IconMessageChatbot,
-      },
-      {
-        title: "Reports",
-        url: "/reports",
-        icon: IconFileText,
-      },
-    ],
-  },
-  {
-    group: "Admin",
-    items: [
-      {
-        title: "Jobs",
-        url: "/jobs",
-        icon: IconList,
-      },
-      {
-        title: "Database",
-        url: "/database",
-        icon: IconDatabase,
-      },
-      {
-        title: "Debug",
-        url: "/debug",
-        icon: IconBug,
-      },
-    ],
-  },
-];
+import { isDemoMode } from "@/lib/demo/flag";
+import { navSections, resetDemoAndReload } from "@/lib/navigation";
 
 export function CommandMenu() {
   const [open, setOpen] = React.useState(false);
@@ -109,15 +37,20 @@ export function CommandMenu() {
     router.push(url);
   };
 
+  const handleResetDemo = () => {
+    setOpen(false);
+    resetDemoAndReload();
+  };
+
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
       <CommandInput placeholder="Type a command or search..." />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
-        {navigationItems.map((section, idx) => (
-          <React.Fragment key={section.group}>
+        {navSections.map((section, idx) => (
+          <React.Fragment key={section.title}>
             {idx > 0 && <CommandSeparator />}
-            <CommandGroup heading={section.group}>
+            <CommandGroup heading={section.title}>
               {section.items.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -134,6 +67,27 @@ export function CommandMenu() {
             </CommandGroup>
           </React.Fragment>
         ))}
+        {isDemoMode && (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading="Demo">
+              <CommandItem
+                onSelect={() => handleSelect("/onboarding")}
+                className="cursor-pointer"
+              >
+                <IconRocket className="mr-2 h-4 w-4" />
+                <span>Run setup copilot</span>
+              </CommandItem>
+              <CommandItem
+                onSelect={handleResetDemo}
+                className="cursor-pointer"
+              >
+                <IconRefresh className="mr-2 h-4 w-4" />
+                <span>Reset demo</span>
+              </CommandItem>
+            </CommandGroup>
+          </>
+        )}
       </CommandList>
     </CommandDialog>
   );

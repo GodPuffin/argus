@@ -2,7 +2,7 @@ import type * as React from "react";
 import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
-  title: string;
+  title: React.ReactNode;
   description?: string;
   actions?: React.ReactNode;
   className?: string;
@@ -22,11 +22,11 @@ export function PageHeader({
       )}
     >
       <div className="flex flex-col gap-2">
-        <h1 className="font-[family-name:var(--font-inter)] font-semibold text-3xl sm:text-4xl tracking-tight text-balance">
+        <h1 className="font-semibold text-3xl sm:text-4xl tracking-tight text-balance">
           {title}
         </h1>
         {description && (
-          <p className="font-[family-name:var(--font-inter)] text-base text-muted-foreground text-pretty max-w-[60ch]">
+          <p className="text-base text-muted-foreground text-pretty max-w-[60ch]">
             {description}
           </p>
         )}

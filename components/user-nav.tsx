@@ -17,6 +17,28 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
+const USER = {
+  name: "Admin",
+  email: "admin@argus.ai",
+  avatar: "/assets/admin.png",
+  initials: "AD",
+};
+
+function UserIdentity() {
+  return (
+    <>
+      <Avatar className="h-8 w-8 rounded-lg">
+        <AvatarImage src={USER.avatar} alt={USER.name} />
+        <AvatarFallback className="rounded-lg">{USER.initials}</AvatarFallback>
+      </Avatar>
+      <div className="grid flex-1 text-left text-sm leading-tight">
+        <span className="truncate font-semibold">{USER.name}</span>
+        <span className="truncate text-xs">{USER.email}</span>
+      </div>
+    </>
+  );
+}
+
 export function UserNav() {
   return (
     <SidebarMenu>
@@ -27,13 +49,7 @@ export function UserNav() {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src="assets/admin.png" alt="Admin" />
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">Admin</span>
-                <span className="truncate text-xs">admin@argus.ai</span>
-              </div>
+              <UserIdentity />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -44,13 +60,7 @@ export function UserNav() {
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src="assets/admin.png" alt="Admin" />
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Admin</span>
-                  <span className="truncate text-xs">admin@argus.ai</span>
-                </div>
+                <UserIdentity />
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

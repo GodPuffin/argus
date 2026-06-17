@@ -1,133 +1,90 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { AsciiEye } from "@/components/ascii-eye";
-import { BrowserComponent } from "@/components/browser-component";
-import { StyleManifest } from "@/components/landing/style-manifest";
+import { FeatureShot } from "@/components/landing/feature-shot";
+import {
+  type FeatureItem,
+  LandingSections,
+} from "@/components/landing/style-manifest";
 import { ModeToggle } from "@/components/mode-toggle";
+import { Button } from "@/components/ui/button";
+
+const features: Array<{
+  title: string;
+  description: string;
+  url: string;
+  src: string;
+  alt: string;
+}> = [
+  {
+    title: "Live Dashboard",
+    description:
+      "Dashboard showcasing all current RTMP streams with automated video asset creation.",
+    url: "argus.io/dashboard",
+    src: "/assets/argusdash.webp",
+    alt: "Argus Dashboard",
+  },
+  {
+    title: "Entity & Event Detection",
+    description: "Entity and event detection with AI-powered analysis.",
+    url: "argus.io/watch/{asset_id}",
+    src: "/assets/argusdetection.webp",
+    alt: "Argus Detection",
+  },
+  {
+    title: "Analytics & Statistics",
+    description: "Comprehensive stats from all events and anomalies detected.",
+    url: "argus.io/stats",
+    src: "/assets/argusstats.webp",
+    alt: "Argus Statistics",
+  },
+  {
+    title: "Automated Reports",
+    description:
+      "Auto-generated editable rich incident reports based on detected events.",
+    url: "argus.io/reports",
+    src: "/assets/argusreports.webp",
+    alt: "Argus Reports",
+  },
+  {
+    title: "Elasticsearch Agent",
+    description:
+      "Search through all detected anomalies and events with powerful Elasticsearch Agent integration.",
+    url: "argus.io/search",
+    src: "/assets/argussearch.webp",
+    alt: "Argus Search",
+  },
+  {
+    title: "AI Assistant",
+    description:
+      "Search for specific event types, ask questions, generate reports, and more.",
+    url: "argus.io/chat",
+    src: "/assets/arguschat.webp",
+    alt: "Argus Chat",
+  },
+];
+
+const featuresContent: FeatureItem[] = features.map((feature, i) => ({
+  title: feature.title,
+  description: feature.description,
+  content: (
+    <FeatureShot
+      url={feature.url}
+      src={feature.src}
+      alt={feature.alt}
+      priority={i === 1}
+    />
+  ),
+}));
 
 export default function Home() {
-  const featuresContent = [
-    {
-      title: "Live Dashboard",
-      description:
-        "Dashboard showcasing all current RTMP streams with automated video asset creation.",
-      content: (
-        <div className="space-y-4">
-          <BrowserComponent url="argus.io/dashboard" className="h-auto">
-            <Image
-              src="/assets/argusdash.webp"
-              alt="Argus Dashboard"
-              height={1080}
-              width={1920}
-              className="w-full h-auto object-contain"
-            />
-          </BrowserComponent>
-        </div>
-      ),
-    },
-    {
-      title: "Entity & Event Detection",
-      description: "Entity and event detection with AI-powered analysis.",
-      content: (
-        <div className="space-y-4">
-          <BrowserComponent url="argus.io/watch/{asset_id}" className="h-auto">
-            <Image
-              src="/assets/argusdetection.webp"
-              alt="Argus Detection"
-              height={1080}
-              width={1920}
-              className="w-full h-auto object-contain"
-              priority
-              unoptimized
-            />
-          </BrowserComponent>
-        </div>
-      ),
-    },
-    {
-      title: "Analytics & Statistics",
-      description:
-        "Comprehensive stats from all events and anomalies detected.",
-      content: (
-        <div className="space-y-4">
-          <BrowserComponent url="argus.io/stats" className="h-auto">
-            <Image
-              src="/assets/argusstats.webp"
-              alt="Argus Statistics"
-              height={1080}
-              width={1920}
-              className="w-full h-auto object-contain"
-            />
-          </BrowserComponent>
-        </div>
-      ),
-    },
-    {
-      title: "Automated Reports",
-      description:
-        "Auto-generated editable rich incident reports based on detected events.",
-      content: (
-        <div className="space-y-4">
-          <BrowserComponent url="argus.io/reports" className="h-auto">
-            <Image
-              src="/assets/argusreports.webp"
-              alt="Argus Reports"
-              height={1080}
-              width={1920}
-              className="w-full h-auto object-contain"
-            />
-          </BrowserComponent>
-        </div>
-      ),
-    },
-    {
-      title: "Elasticsearch Agent",
-      description:
-        "Search through all detected anomalies and events with powerful Elasticsearch Agent integration.",
-      content: (
-        <div className="space-y-4">
-          <BrowserComponent url="argus.io/search" className="h-auto">
-            <Image
-              src="/assets/argussearch.webp"
-              alt="Argus Search"
-              height={1080}
-              width={1920}
-              className="w-full h-auto object-contain"
-            />
-          </BrowserComponent>
-        </div>
-      ),
-    },
-    {
-      title: "AI Assistant",
-      description:
-        "Search for specific event types, ask questions, generate reports, and more.",
-      content: (
-        <div className="space-y-4">
-          <BrowserComponent url="argus.io/chat" className="h-auto">
-            <Image
-              src="/assets/arguschat.webp"
-              alt="Argus Chat"
-              height={1080}
-              width={1920}
-              className="w-full h-auto object-contain"
-            />
-          </BrowserComponent>
-        </div>
-      ),
-    },
-  ];
-
   return (
     <>
-      {/* Theme toggle */}
       <div className="fixed top-4 right-4 z-20">
         <ModeToggle />
       </div>
 
-      {/* Hero — Lateral (finalised) */}
       <main
         id="overview"
         className="w-full bg-background text-foreground scroll-mt-24"
@@ -136,20 +93,29 @@ export default function Home() {
           <div className="max-w-[1500px] mx-auto px-6 sm:px-10 lg:px-12 pt-24 pb-16">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 lg:items-center">
               <div className="flex flex-col gap-8">
-                <h1 className="font-[family-name:var(--font-inter)] font-semibold text-5xl sm:text-6xl lg:text-7xl tracking-tight text-balance max-w-[14ch]">
+                <h1 className="font-semibold text-5xl sm:text-6xl lg:text-7xl tracking-tight text-balance max-w-[14ch]">
                   The watcher, catalogued.
                 </h1>
-                <p className="font-[family-name:var(--font-inter)] text-lg text-muted-foreground text-pretty max-w-[44ch]">
+                <p className="text-lg text-muted-foreground text-pretty max-w-[44ch]">
                   Computer vision, analytics, and an AI assistant — watching
                   your streams so you don&apos;t have to.
                 </p>
-                <div>
-                  <Link
-                    href="/watch"
-                    className="inline-flex items-center gap-2 bg-foreground text-background px-6 py-3 text-sm font-medium hover:opacity-90 transition-opacity font-[family-name:var(--font-inter)]"
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    asChild
+                    className="h-auto px-6 py-3 text-white hover:bg-[var(--linear-primary-hover)] transition-colors"
                   >
-                    Open Argus <span aria-hidden>→</span>
-                  </Link>
+                    <Link href="/onboarding">
+                      Get Started <span aria-hidden>→</span>
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="h-auto px-6 py-3 transition-colors"
+                  >
+                    <Link href="/watch">Skip to Dashboard</Link>
+                  </Button>
                 </div>
               </div>
 
@@ -164,7 +130,7 @@ export default function Home() {
         </div>
       </main>
 
-      <StyleManifest features={featuresContent} />
+      <LandingSections features={featuresContent} />
     </>
   );
 }
