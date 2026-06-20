@@ -5,29 +5,123 @@ import { lettaCloud } from "@letta-ai/vercel-ai-sdk-provider";
 import {
   convertToModelMessages,
   createIdGenerator,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  generateId,
   stepCountIs,
   streamText,
+  type JSONValue,
+  type LanguageModel,
+  type ToolSet,
+  type UIMessage,
 } from "ai";
-import { aiTools } from "@/lib/ai-tools";
-import { loadChat, saveChat } from "@/lib/chat-store";
+import { aiTools, onboardingTools } from "@/lib/ai-tools";
+import { extractTextFromParts, saveChat } from "@/lib/chat-store";
+import { isDemoMode } from "@/lib/demo/flag";
+import { OPENROUTER_DEFAULT_MODEL, openrouter } from "@/lib/demo/openrouter";
+import { checkRateLimit, clientKeyFromRequest } from "@/lib/demo/rate-limit";
+import {
+  type ScriptedCall,
+  scriptedAssistantText,
+  scriptedOnboardingTurn,
+} from "@/lib/demo/scripted-copilot";
+import {
+  DEMO_SYSTEM_PROMPT,
+  ELASTIC_SYSTEM_PROMPT,
+  FALLBACK_SYSTEM_PROMPT,
+  ONBOARDING_SYSTEM_PROMPT,
+} from "@/lib/prompts";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
+
+type ProviderOptions = Record<string, Record<string, JSONValue>>;
+
+interface ScriptContextInput {
+  hasOrgName?: boolean;
+  cameraNames?: string[];
+  ruleLabels?: string[];
+}
+
+/** Pull the most recent user message's text out of UI messages. */
+function lastUserText(messages: UIMessage[]): string {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (m?.role !== "user") continue;
+    return extractTextFromParts(m).trim();
+  }
+  return "";
+}
+
+/** Stream a fixed assistant reply plus optional tool calls, with no LLM. */
+function scriptedStreamResponse(text: string, calls: ScriptedCall[]) {
+  const stream = createUIMessageStream({
+    execute({ writer }) {
+      // The UI message stream envelope (start … finish) is required for
+      // useChat to mark the turn complete — without it the client streams
+      // forever. createUIMessageStream does NOT add these automatically.
+      writer.write({ type: "start" });
+      writer.write({ type: "start-step" });
+
+      const textId = generateId();
+      writer.write({ type: "text-start", id: textId });
+      writer.write({ type: "text-delta", id: textId, delta: text });
+      writer.write({ type: "text-end", id: textId });
+
+      for (const call of calls) {
+        const toolCallId = generateId();
+        writer.write({
+          type: "tool-input-available",
+          toolCallId,
+          toolName: call.toolName,
+          input: call.input,
+        });
+        // Scripted onboarding tools don't run server-side; the client renders
+        // the call's input directly, so echo it back as the output.
+        writer.write({
+          type: "tool-output-available",
+          toolCallId,
+          output: call.input,
+        });
+      }
+
+      writer.write({ type: "finish-step" });
+      writer.write({ type: "finish" });
+    },
+  });
+  return createUIMessageStreamResponse({ stream });
+}
 
 export async function POST(req: Request) {
-  const { messages, chatId, model: selectedModel } = await req.json();
+  const {
+    messages,
+    chatId,
+    model: selectedModel,
+    onboarding,
+    sessionContext,
+  } = (await req.json()) as {
+    messages: UIMessage[];
+    chatId: string;
+    model?: string;
+    onboarding?: boolean;
+    sessionContext?: ScriptContextInput;
+  };
+  const isOnboarding =
+    onboarding === true || selectedModel === "onboarding-guide";
 
-  // Initialize MCP client for Elastic Agent Builder
+  // Elastic Agent Builder MCP client (disabled in demo).
   let mcpClient:
     | Awaited<ReturnType<typeof experimental_createMCPClient>>
     | undefined;
-  let tools = { ...aiTools };
+  let tools: ToolSet = isOnboarding
+    ? { ...onboardingTools }
+    : { ...aiTools };
 
   const elasticsearchUrl = process.env.ELASTICSEARCH_URL;
   const apiKey = process.env.ELASTICSEARCH_API_KEY;
 
-  if (elasticsearchUrl && apiKey) {
+  if (!isDemoMode && elasticsearchUrl && apiKey) {
     try {
-      // Convert Elasticsearch URL to Kibana URL
+      // Agent Builder lives on Kibana, not Elasticsearch — derive its host.
       const kibanaUrl = elasticsearchUrl
         .replace(".es.", ".kb.")
         .replace(":443", "");
@@ -42,7 +136,6 @@ export async function POST(req: Request) {
         },
       });
 
-      // Get all available tools from the MCP server and merge with AI tools
       const mcpTools = await mcpClient.tools();
       tools = { ...aiTools, ...mcpTools };
       console.log(
@@ -51,98 +144,148 @@ export async function POST(req: Request) {
       );
     } catch (error) {
       console.error("Failed to connect to Elastic MCP server:", error);
-      // Continue without MCP tools if connection fails
+      // Continue without MCP tools if connection fails.
     }
   }
 
-  // Validate API keys
-  if (
-    !process.env.ANTHROPIC_API_KEY &&
-    !process.env.GROQ_API_KEY &&
-    !process.env.LETTA_API_KEY
-  ) {
-    return new Response(
-      "Missing API keys. Please configure ANTHROPIC_API_KEY, GROQ_API_KEY, or LETTA_API_KEY.",
-      { status: 500 },
-    );
-  }
+  let model: LanguageModel | undefined;
+  let effectiveModel = selectedModel;
 
-  // Select the appropriate model and provider
-  let model;
-  switch (selectedModel) {
-    case "claude-sonnet-4.5":
-      if (!process.env.ANTHROPIC_API_KEY) {
-        return new Response("ANTHROPIC_API_KEY not configured", {
-          status: 500,
-        });
-      }
-      model = anthropic("claude-sonnet-4-20250929");
-      break;
+  if (isDemoMode) {
+    // Best-effort per-IP rate limit so the public demo can't be hammered.
+    const rl = checkRateLimit(clientKeyFromRequest(req));
+    if (!rl.ok) {
+      return scriptedStreamResponse(
+        `You're sending messages a little fast — give me about ${rl.retryAfterSeconds}s and try again.`,
+        [],
+      );
+    }
 
-    case "claude-haiku-4.5":
-      if (!process.env.ANTHROPIC_API_KEY) {
-        return new Response("ANTHROPIC_API_KEY not configured", {
-          status: 500,
-        });
-      }
+    // Provider tiering: Anthropic Haiku → OpenRouter → deterministic scripted.
+    if (process.env.ANTHROPIC_API_KEY) {
       model = anthropic("claude-haiku-4-5-20251001");
-      break;
-
-    case "kimi-k2":
-      if (!process.env.GROQ_API_KEY) {
-        return new Response("GROQ_API_KEY not configured", { status: 500 });
+      effectiveModel = "anthropic";
+    } else if (process.env.OPENROUTER_API_KEY) {
+      const demoModel =
+        selectedModel === "claude-sonnet-4.5"
+          ? "anthropic/claude-3.5-sonnet"
+          : selectedModel === "kimi-k2"
+            ? "moonshotai/kimi-k2"
+            : selectedModel === "claude-haiku-4.5"
+              ? "anthropic/claude-3.5-haiku"
+              : OPENROUTER_DEFAULT_MODEL;
+      model = openrouter(demoModel);
+      effectiveModel = "openrouter";
+    } else {
+      // No provider key configured — never 500. Stream a scripted reply that
+      // still drives the onboarding wizard via tool calls.
+      const userText = lastUserText(messages);
+      if (isOnboarding) {
+        const ctx: ScriptContextInput = sessionContext ?? {};
+        const { text, calls } = scriptedOnboardingTurn(userText, {
+          hasOrgName: ctx.hasOrgName ?? false,
+          existingCameraNames: ctx.cameraNames ?? [],
+          existingRuleLabels: ctx.ruleLabels ?? [],
+        });
+        return scriptedStreamResponse(text, calls);
       }
-      model = groq("moonshotai/kimi-k2-instruct-0905");
-      break;
+      return scriptedStreamResponse(scriptedAssistantText(), []);
+    }
+  } else {
+    if (
+      !process.env.ANTHROPIC_API_KEY &&
+      !process.env.GROQ_API_KEY &&
+      !process.env.LETTA_API_KEY
+    ) {
+      return new Response(
+        "Missing API keys. Please configure ANTHROPIC_API_KEY, GROQ_API_KEY, or LETTA_API_KEY.",
+        { status: 500 },
+      );
+    }
 
-    case "stateful-argus":
-      if (!process.env.LETTA_API_KEY) {
-        return new Response("LETTA_API_KEY not configured", { status: 500 });
-      }
-      if (!process.env.LETTA_AGENT_ID) {
-        return new Response(
-          "LETTA_AGENT_ID not configured. Please set the ID of your 'stateful argus' agent.",
-          { status: 500 },
-        );
-      }
-      model = lettaCloud();
-      break;
+    switch (selectedModel) {
+      case "claude-sonnet-4.5":
+        if (!process.env.ANTHROPIC_API_KEY) {
+          return new Response("ANTHROPIC_API_KEY not configured", {
+            status: 500,
+          });
+        }
+        model = anthropic("claude-sonnet-4-20250929");
+        break;
 
-    default:
-      // Default to Claude Haiku if no model specified
-      if (process.env.ANTHROPIC_API_KEY) {
+      case "claude-haiku-4.5":
+        if (!process.env.ANTHROPIC_API_KEY) {
+          return new Response("ANTHROPIC_API_KEY not configured", {
+            status: 500,
+          });
+        }
         model = anthropic("claude-haiku-4-5-20251001");
-      } else {
-        return new Response("No API keys configured", { status: 500 });
-      }
+        break;
+
+      case "kimi-k2":
+        if (!process.env.GROQ_API_KEY) {
+          return new Response("GROQ_API_KEY not configured", { status: 500 });
+        }
+        model = groq("moonshotai/kimi-k2-instruct-0905");
+        break;
+
+      case "stateful-argus":
+        if (!process.env.LETTA_API_KEY) {
+          return new Response("LETTA_API_KEY not configured", { status: 500 });
+        }
+        if (!process.env.LETTA_AGENT_ID) {
+          return new Response(
+            "LETTA_AGENT_ID not configured. Please set the ID of your 'stateful argus' agent.",
+            { status: 500 },
+          );
+        }
+        model = lettaCloud();
+        break;
+
+      default:
+        // No explicit model selected — default to Claude Haiku.
+        if (process.env.ANTHROPIC_API_KEY) {
+          model = anthropic("claude-haiku-4-5-20251001");
+        } else {
+          return new Response("No API keys configured", { status: 500 });
+        }
+    }
   }
 
-  // Convert UIMessages to ModelMessages
   const modelMessages = convertToModelMessages(messages);
 
-  // Configure provider-specific options
-  const providerOptions: any = {
-    anthropic: {
+  if (!model) {
+    return new Response("No model configured", { status: 500 });
+  }
+
+  const providerOptions: ProviderOptions = {};
+  if (!isDemoMode) {
+    providerOptions.anthropic = {
       thinking: {
         type: "enabled",
         budgetTokens: 10000,
       },
-    },
-  };
+    };
+  }
 
-  // Add Letta-specific options when using Letta model
-  if (selectedModel === "stateful-argus") {
+  if (!isDemoMode && selectedModel === "stateful-argus") {
     providerOptions.letta = {
       agent: {
-        id: process.env.LETTA_AGENT_ID,
+        id: process.env.LETTA_AGENT_ID ?? "",
         maxSteps: 10,
         streamTokens: true,
       },
     };
   }
 
-  // Build streamText config
-  const streamConfig: any = {
+  const streamConfig: {
+    model: LanguageModel;
+    messages: ReturnType<typeof convertToModelMessages>;
+    tools: ToolSet;
+    providerOptions: ProviderOptions;
+    stopWhen: ReturnType<typeof stepCountIs>;
+    system?: string;
+  } = {
     model,
     messages: modelMessages,
     tools,
@@ -150,9 +293,9 @@ export async function POST(req: Request) {
     stopWhen: stepCountIs(10),
   };
 
-  // Only add system prompt for non-Letta models
-  // Letta agents use their own configured system prompt from Letta Cloud
-  if (selectedModel !== "stateful-argus") {
+  // Letta agents carry their own system prompt from Letta Cloud; injecting one
+  // here would override it, so only set `system` for the other providers.
+  if (effectiveModel !== "stateful-argus") {
     const currentDateTime = new Date().toLocaleString("en-US", {
       weekday: "long",
       year: "numeric",
@@ -166,17 +309,21 @@ export async function POST(req: Request) {
 
     const baseSystemPrompt = `Current date and time: ${currentDateTime}\n\n`;
 
-    streamConfig.system =
-      elasticsearchUrl && apiKey
-        ? baseSystemPrompt +
-          "You are a helpful AI assistant named Argus with access to a video content database through Elastic Agent Builder. When users ask about videos, streams, or recorded content, use the available search tools to find relevant information. For more advanced filtering and complex queries, you can use the generate_esql tool to create ES|QL queries and then execute them with the execute_esql tool. When you mention specific events from search results, use the displayEvent or displayEventById tools to show them as interactive cards that users can click to watch the video at that moment. To show a full video asset with a player, use the displayAsset tool with the asset ID. You can also create comprehensive reports using the createReport tool - use this to generate documentation, analysis summaries, or investigation reports with properly formatted markdown content. Provide clear, concise responses based on the search results."
-        : baseSystemPrompt +
-          "You are a helpful AI assistant for a video streaming platform. You can help users with questions about their video content, streams, and recordings. When discussing specific events, use the displayEvent or displayEventById tools to show them as interactive cards. To show a full video asset with a player, use the displayAsset tool with the asset ID. You can also create comprehensive reports using the createReport tool - use this to generate documentation, analysis summaries, or investigation reports with properly formatted markdown content.";
+    if (isOnboarding) {
+      streamConfig.system = baseSystemPrompt + ONBOARDING_SYSTEM_PROMPT;
+    } else if (isDemoMode) {
+      streamConfig.system = baseSystemPrompt + DEMO_SYSTEM_PROMPT;
+    } else {
+      streamConfig.system =
+        elasticsearchUrl && apiKey
+          ? baseSystemPrompt + ELASTIC_SYSTEM_PROMPT
+          : baseSystemPrompt + FALLBACK_SYSTEM_PROMPT;
+    }
   }
 
   const result = streamText(streamConfig);
 
-  // Consume stream to ensure completion even if client disconnects
+  // Consume the stream so generation completes even if the client disconnects.
   result.consumeStream();
 
   return result.toUIMessageStreamResponse({

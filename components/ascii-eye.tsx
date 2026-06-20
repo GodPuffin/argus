@@ -133,18 +133,27 @@ export const AsciiEye = memo(function AsciiEye() {
   useEffect(() => {
     let colorInterval: NodeJS.Timeout | undefined;
     let scrambleInterval: NodeJS.Timeout | undefined;
-    
+
     // Color update - every 2000ms (increased from 800ms)
     colorInterval = setInterval(() => {
       // Update only a small batch of characters
-      const batchSize = Math.min(50, Math.ceil(nonWhitespaceIndicesRef.current.length / 10));
-      const startIdx = Math.floor(Math.random() * (nonWhitespaceIndicesRef.current.length - batchSize));
-      
-      for (let i = startIdx; i < startIdx + batchSize && i < nonWhitespaceIndicesRef.current.length; i++) {
+      const batchSize = Math.min(
+        50,
+        Math.ceil(nonWhitespaceIndicesRef.current.length / 10),
+      );
+      const startIdx = Math.floor(
+        Math.random() * (nonWhitespaceIndicesRef.current.length - batchSize),
+      );
+
+      for (
+        let i = startIdx;
+        i < startIdx + batchSize && i < nonWhitespaceIndicesRef.current.length;
+        i++
+      ) {
         const idx = nonWhitespaceIndicesRef.current[i];
         const char = charData[idx];
         const span = spansRef.current[idx];
-        
+
         if (span) {
           const newColor = getRandomColor(char.isDarkChar);
           span.style.color = newColor;
@@ -156,13 +165,15 @@ export const AsciiEye = memo(function AsciiEye() {
     scrambleInterval = setInterval(() => {
       const numToScramble = 10; // Reduced from 15-20
       const scrambledIndices: number[] = [];
-      
+
       // Scramble random characters
       for (let i = 0; i < numToScramble; i++) {
-        const randomIdx = Math.floor(Math.random() * nonWhitespaceIndicesRef.current.length);
+        const randomIdx = Math.floor(
+          Math.random() * nonWhitespaceIndicesRef.current.length,
+        );
         const idx = nonWhitespaceIndicesRef.current[randomIdx];
         scrambledIndices.push(idx);
-        
+
         const span = spansRef.current[idx];
         if (span) {
           span.textContent = getRandomBrailleChar();
@@ -173,7 +184,7 @@ export const AsciiEye = memo(function AsciiEye() {
       if (scrambleTimeoutRef.current) {
         window.clearTimeout(scrambleTimeoutRef.current);
       }
-      
+
       scrambleTimeoutRef.current = window.setTimeout(() => {
         scrambledIndices.forEach((idx) => {
           const span = spansRef.current[idx];

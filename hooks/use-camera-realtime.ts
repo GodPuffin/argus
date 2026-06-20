@@ -1,5 +1,7 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
+import { isDemoMode } from "@/lib/demo/flag";
+import { mockCameras } from "@/lib/demo/mock-data";
 import { type Camera, supabase } from "@/lib/supabase";
 
 /**
@@ -7,10 +9,19 @@ import { type Camera, supabase } from "@/lib/supabase";
  * Now uses mux.live_streams table for instant status updates from Mux webhooks
  */
 export function useCameraRealtime(browserId: string | null) {
-  const [camera, setCamera] = useState<Camera | null>(null);
+  const [camera, setCamera] = useState<Camera | null>(
+    isDemoMode
+      ? (mockCameras.find((c) => c.browser_id === browserId) ?? null)
+      : null,
+  );
 
   useEffect(() => {
     if (!browserId) return;
+    // No backend in demo — resolve from mock cameras, skip Supabase.
+    if (isDemoMode) {
+      setCamera(mockCameras.find((c) => c.browser_id === browserId) ?? null);
+      return;
+    }
 
     // Fetch initial camera data from mux.live_streams
     const fetchCamera = async () => {
@@ -48,8 +59,6 @@ export function useCameraRealtime(browserId: string | null) {
           filter: `browser_id=eq.${browserId}`,
         },
         (payload) => {
-          console.log("Camera realtime event:", payload);
-
           if (
             payload.eventType === "INSERT" ||
             payload.eventType === "UPDATE"

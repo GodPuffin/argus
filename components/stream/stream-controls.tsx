@@ -11,8 +11,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { isDemoMode } from "@/lib/demo/flag";
+import { cn } from "@/lib/utils";
+
+const DEMO_DISABLED_TITLE = isDemoMode ? "Disabled in demo" : undefined;
 
 interface StreamControlsProps {
+  className?: string;
   cameraName: string;
   editingName: boolean;
   editNameValue: string;
@@ -36,6 +41,7 @@ interface StreamControlsProps {
 }
 
 export function StreamControls({
+  className,
   cameraName,
   editingName,
   editNameValue,
@@ -59,7 +65,7 @@ export function StreamControls({
 }: StreamControlsProps) {
   const isBrowserStream = streamType === "browser";
   return (
-    <Card>
+    <Card className={cn(className)}>
       <CardHeader>
         <div className="flex items-center gap-2">
           {editingName ? (
@@ -152,12 +158,15 @@ export function StreamControls({
             {!cameraEnabled ? (
               <Button
                 onClick={onEnableCamera}
-                disabled={!streamKey || loadingStream}
+                disabled={isDemoMode || !streamKey || loadingStream}
                 className="w-full"
                 size="lg"
+                title={DEMO_DISABLED_TITLE}
               >
                 <IconVideo className="mr-2 size-5" />
-                Enable Camera
+                {isDemoMode
+                  ? "Live streaming disabled in demo"
+                  : "Enable Camera"}
               </Button>
             ) : streaming ? (
               <Button
@@ -165,6 +174,8 @@ export function StreamControls({
                 variant="destructive"
                 className="w-full"
                 size="lg"
+                disabled={isDemoMode}
+                title={DEMO_DISABLED_TITLE}
               >
                 <IconVideoOff className="mr-2 size-5" />
                 Stop Streaming
@@ -172,12 +183,15 @@ export function StreamControls({
             ) : (
               <Button
                 onClick={onStartStreaming}
-                disabled={!streamKey}
+                disabled={isDemoMode || !streamKey}
                 className="w-full"
                 size="lg"
+                title={DEMO_DISABLED_TITLE}
               >
                 <IconVideo className="mr-2 size-5" />
-                Start Streaming
+                {isDemoMode
+                  ? "Live streaming disabled in demo"
+                  : "Start Streaming"}
               </Button>
             )}
           </>

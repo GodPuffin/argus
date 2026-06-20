@@ -1,9 +1,26 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { isDemoMode } from "@/lib/demo/flag";
+import { mockCameras } from "@/lib/demo/mock-data";
 
 const MUX_TOKEN_ID = process.env.MUX_TOKEN_ID;
 const MUX_TOKEN_SECRET = process.env.MUX_TOKEN_SECRET;
 
 export async function GET(request: NextRequest) {
+  if (isDemoMode) {
+    const streams = mockCameras.map((c) => ({
+      id: c.id,
+      streamKey: c.stream_key,
+      status: c.status,
+      playbackId: Array.isArray(c.playback_ids)
+        ? c.playback_ids[0]?.id
+        : undefined,
+      createdAt: c.created_at,
+      recentAssetIds: c.recent_asset_ids ?? [],
+      reconnectWindow: c.reconnect_window_seconds ?? 60,
+      latencyMode: c.latency_mode ?? "low",
+    }));
+    return NextResponse.json({ streams });
+  }
   if (!MUX_TOKEN_ID || !MUX_TOKEN_SECRET) {
     return NextResponse.json(
       { error: "Mux credentials not configured" },

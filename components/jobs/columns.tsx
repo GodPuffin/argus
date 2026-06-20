@@ -4,7 +4,7 @@ import {
   IconExclamationCircle,
   IconReportAnalytics,
 } from "@tabler/icons-react";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, HeaderContext } from "@tanstack/react-table";
 import { ArrowUpDown, Copy, Eye, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -49,54 +49,47 @@ function formatTimestamp(timestamp: string): string {
   });
 }
 
-function formatDuration(
+function formatTimeWindow(
   startEpoch: number,
   endEpoch: number,
   sourceType: string,
 ): string {
+  // VOD stores relative seconds; live stores Unix epochs.
   if (sourceType === "vod") {
-    // For VOD, these are relative seconds
     return `${startEpoch}s - ${endEpoch}s`;
-  } else {
-    // For live, these are Unix epochs
-    const duration = endEpoch - startEpoch;
-    return `${duration}s segment`;
   }
+  return `${endEpoch - startEpoch}s segment`;
+}
+
+/** Header renderer for a sortable column: a ghost button that toggles sorting. */
+function sortableHeader(label: string) {
+  return function SortableColumnHeader({
+    column,
+  }: HeaderContext<AIAnalysisJob, unknown>) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        {label}
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    );
+  };
 }
 
 export const columns: ColumnDef<AIAnalysisJob>[] = [
   {
     accessorKey: "id",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Job ID
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
+    header: sortableHeader("Job ID"),
     cell: ({ row }) => (
       <div className="font-mono text-sm">#{row.getValue("id")}</div>
     ),
   },
   {
     accessorKey: "status",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Status
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
+    header: sortableHeader("Status"),
     cell: ({ row }) => {
       const status = row.getValue("status") as AIAnalysisJob["status"];
       return (
@@ -148,25 +141,33 @@ export const columns: ColumnDef<AIAnalysisJob>[] = [
       const sourceType = row.original.source_type;
       return (
         <div className="text-sm">
-          {formatDuration(startEpoch, endEpoch, sourceType)}
+          {formatTimeWindow(startEpoch, endEpoch, sourceType)}
+        </div>
+      );
+    },
+  },
+  {
+    id: "models",
+    header: "Models",
+    cell: ({ row }) => {
+      const models = row.original.models ?? [];
+      if (models.length === 0) {
+        return <span className="text-xs text-muted-foreground">—</span>;
+      }
+      return (
+        <div className="flex max-w-[260px] flex-wrap gap-1">
+          {models.map((m) => (
+            <Badge key={m} variant="secondary" className="text-[10px]">
+              {m.split(/[:—]/)[0].trim()}
+            </Badge>
+          ))}
         </div>
       );
     },
   },
   {
     accessorKey: "attempts",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Attempts
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
+    header: sortableHeader("Attempts"),
     cell: ({ row }) => {
       const attempts = row.getValue("attempts") as number;
       return (
@@ -180,47 +181,21 @@ export const columns: ColumnDef<AIAnalysisJob>[] = [
   },
   {
     accessorKey: "created_at",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Created
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      return (
-        <div className="text-sm text-muted-foreground">
-          {formatTimestamp(row.getValue("created_at"))}
-        </div>
-      );
-    },
+    header: sortableHeader("Created"),
+    cell: ({ row }) => (
+      <div className="text-sm text-muted-foreground">
+        {formatTimestamp(row.getValue("created_at"))}
+      </div>
+    ),
   },
   {
     accessorKey: "updated_at",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Updated
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      return (
-        <div className="text-sm text-muted-foreground">
-          {formatTimestamp(row.getValue("updated_at"))}
-        </div>
-      );
-    },
+    header: sortableHeader("Updated"),
+    cell: ({ row }) => (
+      <div className="text-sm text-muted-foreground">
+        {formatTimestamp(row.getValue("updated_at"))}
+      </div>
+    ),
   },
   {
     id: "actions",

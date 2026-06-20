@@ -5,6 +5,8 @@
 
 import { NextResponse } from "next/server";
 import { getCriticalEvents } from "@/lib/ai-analysis-queries";
+import { isDemoMode } from "@/lib/demo/flag";
+import { mockEvents } from "@/lib/demo/mock-data";
 
 export async function GET(request: Request) {
   try {
@@ -12,6 +14,13 @@ export async function GET(request: Request) {
     const limit = searchParams.get("limit")
       ? Number.parseInt(searchParams.get("limit")!, 10)
       : 20;
+
+    if (isDemoMode) {
+      const events = mockEvents
+        .filter((e) => e.severity === "High")
+        .slice(0, limit);
+      return NextResponse.json(events);
+    }
 
     const events = await getCriticalEvents(limit);
     return NextResponse.json(events);

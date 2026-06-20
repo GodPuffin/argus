@@ -1,0 +1,23 @@
+name: Scour
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  scour:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run scour
+        uses: carsonSgit/scour@v0.4.0
+        with:
+          fail-on: error
+          triage: "true"

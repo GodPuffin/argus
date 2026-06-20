@@ -5,8 +5,6 @@
  */
 
 import { hcl } from "d3-color";
-import { scaleOrdinal, scaleSequential } from "d3-scale";
-import { interpolateRainbow, schemeTableau10 } from "d3-scale-chromatic";
 
 /**
  * Generate perceptually uniform colors using HCL color space
@@ -43,7 +41,7 @@ export function generateHCLColors(
 /**
  * Convert hex to HSL string for compatibility with existing chart configs
  */
-export function hexToHSL(hex: string): string {
+function hexToHSL(hex: string): string {
   const color = hcl(hex);
   const h = Math.round(color.h || 0);
   const c = Math.round((color.c / 100) * 100); // Chroma as percentage
@@ -55,7 +53,7 @@ export function hexToHSL(hex: string): string {
  * Colorblind-safe palette based on Tableau 10
  * Optimized for distinguishability and dark backgrounds
  */
-export const COLORBLIND_SAFE_PALETTE = [
+const COLORBLIND_SAFE_PALETTE = [
   hcl(210, 70, 65).formatHex(), // Blue
   hcl(25, 75, 62).formatHex(), // Orange
   hcl(130, 65, 58).formatHex(), // Green

@@ -5,6 +5,8 @@
 
 import { NextResponse } from "next/server";
 import { getEventsForAsset } from "@/lib/ai-analysis-queries";
+import { isDemoMode } from "@/lib/demo/flag";
+import { mockEvents } from "@/lib/demo/mock-data";
 
 export async function GET(
   request: Request,
@@ -23,6 +25,14 @@ export async function GET(
     const limit = searchParams.get("limit")
       ? Number.parseInt(searchParams.get("limit")!, 10)
       : undefined;
+
+    if (isDemoMode) {
+      let events = mockEvents.filter((e) => e.asset_id === assetId);
+      if (severity) events = events.filter((e) => e.severity === severity);
+      if (type) events = events.filter((e) => e.type === type);
+      if (limit) events = events.slice(0, limit);
+      return NextResponse.json(events);
+    }
 
     const events = await getEventsForAsset(assetId, {
       severity: severity || undefined,

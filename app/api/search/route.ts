@@ -1,4 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { isDemoMode } from "@/lib/demo/flag";
+import { mockAssets, mockEvents } from "@/lib/demo/mock-data";
 import { searchContent } from "@/lib/elasticsearch";
 import { supabase } from "@/lib/supabase";
 import type {
@@ -7,6 +9,15 @@ import type {
   EventType,
   SearchFilters,
 } from "@/lib/types/elasticsearch";
+
+/**
+ * Parse a comma-separated query param into a typed array, dropping empties.
+ * Returns `[]` when the param is absent or blank.
+ */
+function parseCsvParam<T extends string>(value: string | null): T[] {
+  if (!value) return [];
+  return value.split(",").filter(Boolean) as T[];
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,7 +29,6 @@ export async function GET(request: NextRequest) {
     const from = searchParams.get("from");
     const to = searchParams.get("to");
 
-    // Validate query parameter
     if (!query || query.trim().length === 0) {
       return NextResponse.json(
         { error: "Query parameter 'q' is required" },
@@ -26,7 +36,77 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Validate doc_type parameter
+    if (isDemoMode) {
+      const q = query.trim().toLowerCase();
+      const isWildcard = q === "*" || q === "";
+      const severityList = parseCsvParam<EventSeverity>(severityParam);
+      const eventTypeList = parseCsvParam<EventType>(eventTypeParam);
+      const matches = mockEvents.filter((e) => {
+        const textMatch =
+          isWildcard ||
+          e.name.toLowerCase().includes(q) ||
+          e.description.toLowerCase().includes(q) ||
+          e.type.toLowerCase().includes(q);
+        const severityMatch =
+          severityList.length === 0 || severityList.includes(e.severity);
+        const typeMatch =
+          eventTypeList.length === 0 ||
+          eventTypeList.includes(e.type as EventType);
+        return textMatch && severityMatch && typeMatch;
+      });
+      // Synthetic hits intentionally diverge from SearchHit/EventDocument:
+      // playback_id/duration may be null and we add event_id/entities the real
+      // index doesn't carry, so these stay structurally typed rather than cast.
+      const hits = matches.map((e) => {
+        const asset = mockAssets.find((a) => a.id === e.asset_id);
+        const playbackId =
+          (Array.isArray(asset?.playback_ids) && asset?.playback_ids[0]?.id) ||
+          undefined;
+        return {
+          id: `event-${e.id}`,
+          score: 1,
+          source: {
+            doc_type: "event",
+            asset_id: e.asset_id,
+            event_id: e.id,
+            name: e.name,
+            title: e.name,
+            description: e.description,
+            severity: e.severity,
+            event_type: e.type,
+            timestamp_seconds: e.timestamp_seconds,
+            affected_entities: e.affected_entities ?? [],
+            tags: [],
+            entities: e.affected_entities ?? [],
+            asset_type: "vod",
+            playback_id: playbackId,
+            duration: asset?.duration_seconds ?? null,
+            created_at: e.created_at,
+          },
+        };
+      });
+      const grouped: Record<string, typeof hits> = {};
+      for (const h of hits) {
+        (grouped[h.source.asset_id] ??= []).push(h);
+      }
+      return NextResponse.json({
+        query: query.trim(),
+        results: hits,
+        grouped,
+        total: hits.length,
+        took: 1,
+        filters: {
+          doc_type: docType || null,
+          severity: severityParam ? severityParam.split(",") : null,
+          event_type: eventTypeParam ? eventTypeParam.split(",") : null,
+          dateRange: from && to ? { from, to } : null,
+        },
+        assets: mockAssets
+          .filter((a) => grouped[a.id])
+          .map((a) => ({ id: a.id, created_at: a.created_at })),
+      });
+    }
+
     if (docType && !["event", "analysis"].includes(docType)) {
       return NextResponse.json(
         { error: "Invalid doc_type. Must be 'event' or 'analysis'" },
@@ -34,50 +114,37 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build filters object
     const filters: SearchFilters = {};
 
     if (docType) {
       filters.doc_type = docType;
     }
 
-    // Parse severity filter (comma-separated)
-    if (severityParam) {
-      const severityList = severityParam
-        .split(",")
-        .filter(Boolean) as EventSeverity[];
-      if (severityList.length > 0) {
-        filters.severity = severityList;
-      }
+    const severityList = parseCsvParam<EventSeverity>(severityParam);
+    if (severityList.length > 0) {
+      filters.severity = severityList;
     }
 
-    // Parse event_type filter (comma-separated)
-    if (eventTypeParam) {
-      const eventTypeList = eventTypeParam
-        .split(",")
-        .filter(Boolean) as EventType[];
-      if (eventTypeList.length > 0) {
-        filters.event_type = eventTypeList;
-      }
+    const eventTypeList = parseCsvParam<EventType>(eventTypeParam);
+    if (eventTypeList.length > 0) {
+      filters.event_type = eventTypeList;
     }
 
     if (from && to) {
       filters.dateRange = { from, to };
     }
 
-    // Perform the search
     const results = await searchContent(query.trim(), filters);
 
-    // Validate that assets still exist in mux.assets table
+    // Search results can outlive their Mux asset; drop hits whose asset has
+    // since been deleted so the UI never links to missing video.
     let validatedHits = results.hits;
 
     if (results.hits.length > 0) {
-      // Get unique asset IDs from search results
       const assetIds = [
         ...new Set(results.hits.map((hit) => hit.source.asset_id)),
       ];
 
-      // Query mux.assets to check which assets still exist
       const { data: existingAssets, error: assetsError } = await supabase
         .schema("mux")
         .from("assets")
@@ -89,12 +156,9 @@ export async function GET(request: NextRequest) {
           "[Search API] Error checking assets existence:",
           assetsError,
         );
-        // Continue with unvalidated results if the check fails
+        // Continue with unvalidated results if the check fails.
       } else {
-        // Create a Set of valid asset IDs for fast lookup
         const validAssetIds = new Set(existingAssets?.map((a) => a.id) || []);
-
-        // Filter results to only include those with valid assets
         const originalCount = results.hits.length;
         validatedHits = results.hits.filter((hit) =>
           validAssetIds.has(hit.source.asset_id),
@@ -108,7 +172,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Group results by asset_id
     const groupedResults = new Map<string, typeof validatedHits>();
     for (const hit of validatedHits) {
       const assetId = hit.source.asset_id;

@@ -5,12 +5,18 @@ import TaskList from "@tiptap/extension-task-list";
 import Underline from "@tiptap/extension-underline";
 import { generateJSON } from "@tiptap/html";
 import StarterKit from "@tiptap/starter-kit";
+import { generateId } from "ai";
 import { marked } from "marked";
 import { type NextRequest, NextResponse } from "next/server";
+import { isDemoMode } from "@/lib/demo/flag";
+import { demoReportStore } from "@/lib/demo/mock-data";
 import { supabase } from "@/lib/supabase";
 
 // GET /api/reports - List all reports
 export async function GET() {
+  if (isDemoMode) {
+    return NextResponse.json({ reports: demoReportStore() });
+  }
   try {
     const { data: reports, error } = await supabase
       .from("reports")
@@ -42,7 +48,10 @@ export async function POST(req: NextRequest) {
     const { title = "Untitled Report", markdown } = body;
 
     // Convert markdown to Tiptap JSON if provided
-    let content = { type: "doc", content: [{ type: "paragraph" }] };
+    let content: Record<string, unknown> = {
+      type: "doc",
+      content: [{ type: "paragraph" }],
+    };
 
     if (markdown) {
       try {
@@ -84,6 +93,19 @@ export async function POST(req: NextRequest) {
           ],
         };
       }
+    }
+
+    if (isDemoMode) {
+      const now = new Date().toISOString();
+      const report = {
+        id: `demo-report-${generateId()}`,
+        title,
+        content,
+        created_at: now,
+        updated_at: now,
+      };
+      demoReportStore().unshift(report);
+      return NextResponse.json({ report }, { status: 201 });
     }
 
     const { data: report, error } = await supabase

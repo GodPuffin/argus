@@ -1,4 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { isDemoMode } from "@/lib/demo/flag";
+import { mockAssets } from "@/lib/demo/mock-data";
 import { deleteDocumentsByAssetId } from "@/lib/elasticsearch";
 
 const MUX_TOKEN_ID = process.env.MUX_TOKEN_ID;
@@ -9,6 +11,10 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  if (isDemoMode) {
+    const asset = mockAssets.find((a) => a.id === params.id);
+    return NextResponse.json({ asset: asset ?? null });
+  }
   if (!MUX_TOKEN_ID || !MUX_TOKEN_SECRET) {
     return NextResponse.json(
       { error: "Mux credentials not configured" },
@@ -68,6 +74,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  if (isDemoMode) {
+    return NextResponse.json({ success: true, demo: true });
+  }
   if (!MUX_TOKEN_ID || !MUX_TOKEN_SECRET) {
     return NextResponse.json(
       { error: "Mux credentials not configured" },

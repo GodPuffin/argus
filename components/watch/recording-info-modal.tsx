@@ -1,19 +1,18 @@
 "use client";
 
-import { IconHelpCircle, IconInfoCircle } from "@tabler/icons-react";
+import { IconInfoCircle } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/shadcn-io/spinner";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Table,
   TableBody,
@@ -22,7 +21,42 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { isDemoMode } from "@/lib/demo/flag";
+import { formatClockDuration } from "@/lib/format";
 import { type Asset, supabase } from "@/lib/supabase";
+
+// Minimal shapes for the Mux JSONB fields stored on Asset (typed as `any`).
+interface PlaybackId {
+  id: string;
+  policy: string;
+}
+
+interface AssetTrack {
+  id: string;
+  type: string;
+  primary?: boolean;
+  max_width?: number;
+  max_height?: number;
+  max_channels?: number;
+  language_code?: string;
+  name?: string;
+  status?: string;
+}
+
+interface RecordingTime {
+  started_at: string | number;
+  duration: number;
+  type: string;
+}
+
+interface StaticRenditionFile {
+  name: string;
+  width?: number;
+  height?: number;
+  resolution_tier?: string;
+  filesize?: string;
+  status: string;
+}
 
 interface RecordingInfoModalProps {
   asset: Asset;
@@ -37,13 +71,6 @@ export function RecordingInfoModal({
 }: RecordingInfoModalProps) {
   const [cameraName, setCameraName] = useState<string | null>(null);
   const [loadingCamera, setLoadingCamera] = useState(false);
-
-  const formatDuration = (seconds: number) => {
-    if (!seconds) return "N/A";
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
 
   const formatDate = (timestamp: string | number) => {
     // Handle both ISO strings and Unix timestamps
@@ -62,6 +89,8 @@ export function RecordingInfoModal({
   useEffect(() => {
     const fetchCameraName = async () => {
       if (!asset.live_stream_id) return;
+      // No backend in demo — skip the Supabase lookup.
+      if (isDemoMode) return;
 
       setLoadingCamera(true);
       try {
@@ -93,15 +122,15 @@ export function RecordingInfoModal({
   }, [asset.live_stream_id, open]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle>Recording Details</DialogTitle>
-          <DialogDescription>Recording metadata</DialogDescription>
-        </DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-2xl">
+        <SheetHeader className="border-b">
+          <SheetTitle>Recording Details</SheetTitle>
+          <SheetDescription>Recording metadata</SheetDescription>
+        </SheetHeader>
 
-        <ScrollArea className="max-h-[70vh]">
-          <div className="space-y-6 pr-4">
+        <ScrollArea className="min-h-0 flex-1">
+          <div className="space-y-6 p-4">
             {/* Basic Info */}
             <div className="space-y-3">
               <h3 className="font-semibold text-sm border-b pb-2">
@@ -124,7 +153,7 @@ export function RecordingInfoModal({
                 <div>
                   <p className="text-muted-foreground text-xs">Duration</p>
                   <p className="text-xs">
-                    {formatDuration(asset.duration_seconds || 0)}
+                    {formatClockDuration(asset.duration_seconds, "N/A")}
                   </p>
                 </div>
                 <div>
@@ -256,24 +285,26 @@ export function RecordingInfoModal({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {asset.playback_ids.map((playback: any, idx: number) => (
-                        <TableRow key={idx}>
-                          <TableCell className="font-mono text-xs">
-                            {playback.id}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                playback.policy === "public"
-                                  ? "default"
-                                  : "secondary"
-                              }
-                            >
-                              {playback.policy}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {asset.playback_ids.map(
+                        (playback: PlaybackId, idx: number) => (
+                          <TableRow key={idx}>
+                            <TableCell className="font-mono text-xs">
+                              {playback.id}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  playback.policy === "public"
+                                    ? "default"
+                                    : "secondary"
+                                }
+                              >
+                                {playback.policy}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ),
+                      )}
                     </TableBody>
                   </Table>
                 </div>
@@ -294,7 +325,7 @@ export function RecordingInfoModal({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {asset.tracks.map((track: any) => (
+                      {asset.tracks.map((track: AssetTrack) => (
                         <TableRow key={track.id}>
                           <TableCell>
                             <Badge variant="outline">{track.type}</Badge>
@@ -350,13 +381,13 @@ export function RecordingInfoModal({
                     </TableHeader>
                     <TableBody>
                       {asset.recording_times.map(
-                        (recording: any, idx: number) => (
+                        (recording: RecordingTime, idx: number) => (
                           <TableRow key={idx}>
                             <TableCell className="text-xs">
                               {formatDate(recording.started_at)}
                             </TableCell>
                             <TableCell>
-                              {formatDuration(recording.duration)}
+                              {formatClockDuration(recording.duration, "N/A")}
                             </TableCell>
                             <TableCell>
                               <Badge
@@ -449,7 +480,7 @@ export function RecordingInfoModal({
                       </TableHeader>
                       <TableBody>
                         {asset.static_renditions.files.map(
-                          (file: any, idx: number) => (
+                          (file: StaticRenditionFile, idx: number) => (
                             <TableRow key={idx}>
                               <TableCell className="font-mono text-xs">
                                 {file.name}
@@ -499,14 +530,16 @@ export function RecordingInfoModal({
                         {asset.errors.type}
                       </p>
                     )}
-                    {asset.errors.messages.map((message: any, idx: number) => (
-                      <div
-                        key={idx}
-                        className="text-sm p-2 bg-destructive/10 rounded border border-destructive/20"
-                      >
-                        {message}
-                      </div>
-                    ))}
+                    {asset.errors.messages.map(
+                      (message: string, idx: number) => (
+                        <div
+                          key={idx}
+                          className="text-sm p-2 bg-destructive/10 rounded border border-destructive/20"
+                        >
+                          {message}
+                        </div>
+                      ),
+                    )}
                   </div>
                 </div>
               )}
@@ -565,8 +598,8 @@ export function RecordingInfoModal({
             )}
           </div>
         </ScrollArea>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
 

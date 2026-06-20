@@ -1,13 +1,18 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
+import { isDemoMode } from "@/lib/demo/flag";
+import { mockAnalysisJobs } from "@/lib/demo/mock-data";
+import { useDemoListState } from "@/lib/demo/use-realtime-demo";
 import { type AIAnalysisJob, supabase } from "@/lib/supabase";
 
 export function useJobsRealtime() {
-  const [jobs, setJobs] = useState<AIAnalysisJob[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [jobs, setJobs, loading, setLoading] =
+    useDemoListState<AIAnalysisJob>(mockAnalysisJobs);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isDemoMode) return;
+
     // Initial fetch from ai_analysis_jobs table
     const fetchJobs = async () => {
       try {
@@ -39,8 +44,6 @@ export function useJobsRealtime() {
           table: "ai_analysis_jobs",
         },
         (payload) => {
-          console.log("Job realtime event:", payload);
-
           if (payload.eventType === "INSERT") {
             const newJob = payload.new as AIAnalysisJob;
             setJobs((current) => [newJob, ...current]);

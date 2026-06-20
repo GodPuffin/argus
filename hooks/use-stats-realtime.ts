@@ -4,6 +4,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { isDemoMode } from "@/lib/demo/flag";
 import type { StatsData } from "@/lib/stats-queries";
 import { supabase } from "@/lib/supabase";
 
@@ -16,32 +17,16 @@ export function useStatsRealtime({
   enabled,
   onUpdate,
 }: UseStatsRealtimeOptions) {
-  const [updateCount, setUpdateCount] = useState(0);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
-  const handleJobChange = useCallback(() => {
-    setUpdateCount((prev) => prev + 1);
+  // Both subscriptions just signal the parent to refetch and stamp the time.
+  const handleChange = useCallback(() => {
     setLastUpdate(new Date());
-
-    // Trigger a refetch in the parent component
-    if (onUpdate) {
-      // Signal that jobs data needs to be refetched
-      onUpdate({});
-    }
-  }, [onUpdate]);
-
-  const handleDetectionChange = useCallback(() => {
-    setUpdateCount((prev) => prev + 1);
-    setLastUpdate(new Date());
-
-    if (onUpdate) {
-      // Signal that detection data needs to be refetched
-      onUpdate({});
-    }
+    onUpdate?.({});
   }, [onUpdate]);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || isDemoMode) {
       return;
     }
 
@@ -55,7 +40,7 @@ export function useStatsRealtime({
           schema: "public",
           table: "ai_analysis_jobs",
         },
-        handleJobChange,
+        handleChange,
       )
       .subscribe();
 
@@ -69,7 +54,7 @@ export function useStatsRealtime({
           schema: "public",
           table: "ai_object_detections",
         },
-        handleDetectionChange,
+        handleChange,
       )
       .subscribe();
 
@@ -78,11 +63,7 @@ export function useStatsRealtime({
       supabase.removeChannel(jobsChannel);
       supabase.removeChannel(detectionsChannel);
     };
-  }, [enabled, handleJobChange, handleDetectionChange]);
+  }, [enabled, handleChange]);
 
-  return {
-    updateCount,
-    lastUpdate,
-    isActive: enabled,
-  };
+  return { lastUpdate };
 }

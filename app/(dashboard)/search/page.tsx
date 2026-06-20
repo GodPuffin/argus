@@ -9,19 +9,21 @@ import {
   X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState, Suspense } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import type { DateRange } from "react-day-picker";
+import { PageContainer } from "@/components/page-container";
+import { PageHeader } from "@/components/page-header";
 import { SiteHeader } from "@/components/site-header";
+import {
+  Surface,
+  SurfaceContent,
+  SurfaceDescription,
+  SurfaceHeader,
+  SurfaceTitle,
+} from "@/components/surface";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,6 +46,7 @@ import type {
   SearchHit,
 } from "@/lib/types/elasticsearch";
 import { formatDuration, getThumbnailUrl } from "@/lib/types/elasticsearch";
+import { cn } from "@/lib/utils";
 
 interface SearchResponse {
   query: string;
@@ -71,6 +74,57 @@ const EVENT_TYPES: EventType[] = [
 ];
 
 const SEVERITIES: EventSeverity[] = ["Minor", "Medium", "High"];
+
+interface FilterToggleBadgeProps {
+  label: string;
+  active: boolean;
+  onToggle: () => void;
+  activeClassName?: string;
+}
+
+function FilterToggleBadge({
+  label,
+  active,
+  onToggle,
+  activeClassName,
+}: FilterToggleBadgeProps) {
+  return (
+    <Badge
+      variant={active && !activeClassName ? "default" : "outline"}
+      className={cn(
+        "cursor-pointer transition-colors",
+        active ? activeClassName : "hover:bg-accent",
+      )}
+      onClick={onToggle}
+    >
+      {label}
+    </Badge>
+  );
+}
+
+interface ActiveFilterBadgeProps {
+  label: string;
+  onRemove: () => void;
+}
+
+function ActiveFilterBadge({ label, onRemove }: ActiveFilterBadgeProps) {
+  return (
+    <Badge variant="secondary" className="text-xs">
+      {label}
+      <button
+        type="button"
+        className="ml-1 inline-flex items-center rounded-sm hover:bg-accent hover:text-accent-foreground"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onRemove();
+        }}
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </Badge>
+  );
+}
 
 function SearchContent() {
   const router = useRouter();
@@ -115,13 +169,8 @@ function SearchContent() {
   // Debounced search
   const handleSearch = useCallback(
     async (searchQuery: string) => {
-      // Allow search with just filters (no query required)
-      if (!searchQuery.trim() && !hasActiveFilters) {
-        setResults([]);
-        setSearchResponse(null);
-        return;
-      }
-
+      // No query and no filters → show recent results (wildcard) instead of an
+      // empty screen, so the page is always populated.
       setLoading(true);
       try {
         const params = new URLSearchParams();
@@ -162,7 +211,7 @@ function SearchContent() {
         setLoading(false);
       }
     },
-    [selectedSeverities, selectedEventTypes, dateRange, hasActiveFilters],
+    [selectedSeverities, selectedEventTypes, dateRange],
   );
 
   // Debounce search as user types
@@ -172,7 +221,9 @@ function SearchContent() {
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timer);
-  }, [query, selectedSeverities, selectedEventTypes, dateRange, handleSearch]);
+    // handleSearch already changes when the filters change, so depending on it
+    // (plus the query) covers every input without re-listing each filter.
+  }, [query, handleSearch]);
 
   // Update URL params when search state changes
   useEffect(() => {
@@ -274,19 +325,21 @@ function SearchContent() {
     <div className="flex flex-1 flex-col min-h-0">
       <SiteHeader title="Search" />
       <ScrollArea className="flex-1 min-h-0">
-        <div className="@container/main flex flex-col gap-4 p-4 md:gap-6 md:p-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Search Content</CardTitle>
-              <CardDescription>
+        <PageContainer>
+          <PageHeader
+            title="Search"
+            description="Query AI analysis and event documents indexed in Elasticsearch."
+          />
+          <Surface>
+            <SurfaceHeader>
+              <SurfaceTitle>Search Content</SurfaceTitle>
+              <SurfaceDescription>
                 Search across AI-detected events and video analysis
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Search Bar with Filters */}
+              </SurfaceDescription>
+            </SurfaceHeader>
+            <SurfaceContent className="space-y-4">
               <div className="flex flex-col gap-2">
                 <div className="flex gap-2">
-                  {/* Search Input with Icon */}
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -302,7 +355,6 @@ function SearchContent() {
                     )}
                   </div>
 
-                  {/* Filters Dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -320,55 +372,41 @@ function SearchContent() {
                       <DropdownMenuLabel>Filters</DropdownMenuLabel>
                       <DropdownMenuSeparator />
 
-                      {/* Severity Filter with Badges */}
                       <div className="px-2 py-3">
                         <div className="text-sm font-medium mb-3">Severity</div>
                         <div className="flex flex-wrap gap-2">
                           {SEVERITIES.map((severity) => (
-                            <Badge
+                            <FilterToggleBadge
                               key={severity}
-                              variant="outline"
-                              className={`cursor-pointer transition-colors ${
-                                selectedSeverities.includes(severity)
-                                  ? getSeverityBadgeClass(severity)
-                                  : "hover:bg-accent"
-                              }`}
-                              onClick={() => toggleSeverity(severity)}
-                            >
-                              {severity}
-                            </Badge>
+                              label={severity}
+                              active={selectedSeverities.includes(severity)}
+                              activeClassName={getSeverityBadgeClass(severity)}
+                              onToggle={() => toggleSeverity(severity)}
+                            />
                           ))}
                         </div>
                       </div>
 
                       <DropdownMenuSeparator />
 
-                      {/* Event Type Filter with Badges */}
                       <div className="px-2 py-3">
                         <div className="text-sm font-medium mb-3">
                           Event Type
                         </div>
                         <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
                           {EVENT_TYPES.map((eventType) => (
-                            <Badge
+                            <FilterToggleBadge
                               key={eventType}
-                              variant={
-                                selectedEventTypes.includes(eventType)
-                                  ? "default"
-                                  : "outline"
-                              }
-                              className="cursor-pointer"
-                              onClick={() => toggleEventType(eventType)}
-                            >
-                              {eventType}
-                            </Badge>
+                              label={eventType}
+                              active={selectedEventTypes.includes(eventType)}
+                              onToggle={() => toggleEventType(eventType)}
+                            />
                           ))}
                         </div>
                       </div>
 
                       <DropdownMenuSeparator />
 
-                      {/* Date Range Filter with Calendar */}
                       <div className="px-2 py-3">
                         <div className="text-sm font-medium mb-3">
                           <CalendarIcon className="h-4 w-4 inline mr-1" />
@@ -427,65 +465,27 @@ function SearchContent() {
                   </DropdownMenu>
                 </div>
 
-                {/* Active Filters Display */}
                 {hasActiveFilters && (
                   <div className="flex flex-wrap gap-2">
                     {selectedSeverities.map((severity) => (
-                      <Badge
+                      <ActiveFilterBadge
                         key={severity}
-                        variant="secondary"
-                        className="text-xs"
-                      >
-                        Severity: {severity}
-                        <button
-                          type="button"
-                          className="ml-1 inline-flex items-center rounded-sm hover:bg-accent hover:text-accent-foreground"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            toggleSeverity(severity);
-                          }}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
+                        label={`Severity: ${severity}`}
+                        onRemove={() => toggleSeverity(severity)}
+                      />
                     ))}
                     {selectedEventTypes.map((eventType) => (
-                      <Badge
+                      <ActiveFilterBadge
                         key={eventType}
-                        variant="secondary"
-                        className="text-xs"
-                      >
-                        {eventType}
-                        <button
-                          type="button"
-                          className="ml-1 inline-flex items-center rounded-sm hover:bg-accent hover:text-accent-foreground"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            toggleEventType(eventType);
-                          }}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
+                        label={eventType}
+                        onRemove={() => toggleEventType(eventType)}
+                      />
                     ))}
                     {dateRange?.from && dateRange?.to && (
-                      <Badge variant="secondary" className="text-xs">
-                        {format(dateRange.from, "LLL dd, y")} to{" "}
-                        {format(dateRange.to, "LLL dd, y")}
-                        <button
-                          type="button"
-                          className="ml-1 inline-flex items-center rounded-sm hover:bg-accent hover:text-accent-foreground"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setDateRange(undefined);
-                          }}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
+                      <ActiveFilterBadge
+                        label={`${format(dateRange.from, "LLL dd, y")} to ${format(dateRange.to, "LLL dd, y")}`}
+                        onRemove={() => setDateRange(undefined)}
+                      />
                     )}
                   </div>
                 )}
@@ -498,7 +498,6 @@ function SearchContent() {
                 </div>
               )}
 
-              {/* Results */}
               {results.length > 0 && (
                 <div className="space-y-6">
                   {Array.from(groupedResults.entries()).map(
@@ -523,7 +522,6 @@ function SearchContent() {
                           ? firstResult.camera_name || "Live Stream"
                           : "Video";
 
-                      // Sort hits by score descending and limit to top 3
                       const sortedHits = [...hits].sort(
                         (a, b) => b.score - a.score,
                       );
@@ -532,13 +530,11 @@ function SearchContent() {
 
                       return (
                         <div key={assetId} className="space-y-2">
-                          {/* Asset Header */}
                           <div className="text-sm font-medium text-muted-foreground">
                             {assetTitle} - {assetDate} - {assetTime} (
                             {hits.length} result{hits.length > 1 ? "s" : ""})
                           </div>
 
-                          {/* Results for this asset */}
                           <div className="space-y-3">
                             {displayedHits.map((hit) => {
                               const source = hit.source;
@@ -554,30 +550,25 @@ function SearchContent() {
                                 : analysisDoc!.asset_start_seconds;
 
                               return (
-                                <Card
+                                <Surface
                                   key={hit.id}
-                                  className="cursor-pointer transition-all hover:shadow-md py-0"
+                                  className="cursor-pointer transition-colors hover:bg-accent/30"
                                   onClick={() => handleResultClick(hit)}
                                 >
-                                  <CardContent className="p-4">
+                                  <SurfaceContent className="p-4">
                                     <div className="flex gap-4">
-                                      {/* Left: Content */}
                                       <div className="flex-1 min-w-0">
-                                        {/* Title */}
                                         <h3 className="font-semibold text-lg mb-2">
                                           {source.title}
                                         </h3>
 
-                                        {/* Description */}
                                         <p className="text-sm text-muted-foreground mb-3">
                                           {isEvent
                                             ? eventDoc!.description
                                             : analysisDoc!.summary}
                                         </p>
 
-                                        {/* Metadata Badges */}
                                         <div className="flex flex-wrap gap-2 mb-2">
-                                          {/* Event-specific badges */}
                                           {isEvent && eventDoc && (
                                             <>
                                               <Badge
@@ -594,7 +585,6 @@ function SearchContent() {
                                             </>
                                           )}
 
-                                          {/* Analysis-specific badges */}
                                           {!isEvent &&
                                             analysisDoc &&
                                             analysisDoc.tags.length > 0 && (
@@ -625,7 +615,6 @@ function SearchContent() {
                                               </>
                                             )}
 
-                                          {/* Entities */}
                                           {isEvent &&
                                             eventDoc &&
                                             eventDoc.affected_entities.length >
@@ -654,7 +643,6 @@ function SearchContent() {
                                             )}
                                         </div>
 
-                                        {/* Footer Info */}
                                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                                           <span>
                                             @ {formatDuration(timestamp)}
@@ -674,7 +662,6 @@ function SearchContent() {
                                         </div>
                                       </div>
 
-                                      {/* Right: Thumbnail */}
                                       <div className="flex-shrink-0">
                                         <img
                                           src={getThumbnailUrl(
@@ -682,7 +669,7 @@ function SearchContent() {
                                             timestamp,
                                           )}
                                           alt={source.title}
-                                          className="w-48 h-28 object-cover rounded border"
+                                          className="w-48 h-28 object-cover border border-border"
                                           onError={(e) => {
                                             // Fallback to placeholder if thumbnail fails
                                             e.currentTarget.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='80'%3E%3Crect fill='%23ddd' width='128' height='80'/%3E%3Ctext fill='%23999' font-family='sans-serif' font-size='14' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3ENo preview%3C/text%3E%3C/svg%3E`;
@@ -690,12 +677,11 @@ function SearchContent() {
                                         />
                                       </div>
                                     </div>
-                                  </CardContent>
-                                </Card>
+                                  </SurfaceContent>
+                                </Surface>
                               );
                             })}
 
-                            {/* Show +X others if there are more than 3 results */}
                             {remainingCount > 0 && (
                               <div className="text-sm text-muted-foreground text-center py-2">
                                 +{remainingCount} other
@@ -720,9 +706,9 @@ function SearchContent() {
                   )}
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
+            </SurfaceContent>
+          </Surface>
+        </PageContainer>
       </ScrollArea>
     </div>
   );
@@ -730,17 +716,19 @@ function SearchContent() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={
-      <div className="flex flex-1 flex-col min-h-0">
-        <SiteHeader title="Search" />
-        <div className="flex-1 min-h-0 flex items-center justify-center">
-          <div className="text-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading search...</p>
+    <Suspense
+      fallback={
+        <div className="flex flex-1 flex-col min-h-0">
+          <SiteHeader title="Search" />
+          <div className="flex-1 min-h-0 flex items-center justify-center">
+            <div className="text-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto mb-4" />
+              <p className="text-muted-foreground">Loading search...</p>
+            </div>
           </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <SearchContent />
     </Suspense>
   );

@@ -1,9 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { isDemoMode } from "@/lib/demo/flag";
 
 const MUX_TOKEN_ID = process.env.MUX_TOKEN_ID;
 const MUX_TOKEN_SECRET = process.env.MUX_TOKEN_SECRET;
 
 export async function DELETE(request: NextRequest) {
+  if (isDemoMode) {
+    return NextResponse.json(
+      {
+        disabled: true,
+        reason: "Live streaming is disabled in the demo deployment.",
+      },
+      { status: 501 },
+    );
+  }
   if (!MUX_TOKEN_ID || !MUX_TOKEN_SECRET) {
     return NextResponse.json(
       { error: "Mux credentials not configured" },

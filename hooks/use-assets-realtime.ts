@@ -1,13 +1,18 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
+import { isDemoMode } from "@/lib/demo/flag";
+import { mockAssets } from "@/lib/demo/mock-data";
+import { useDemoListState } from "@/lib/demo/use-realtime-demo";
 import { type Asset, supabase } from "@/lib/supabase";
 
 export function useAssetsRealtime() {
-  const [assets, setAssets] = useState<Asset[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [assets, setAssets, loading, setLoading] =
+    useDemoListState<Asset>(mockAssets);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isDemoMode) return;
+
     // Initial fetch from mux.assets table
     const fetchAssets = async () => {
       try {
@@ -40,8 +45,6 @@ export function useAssetsRealtime() {
           table: "assets",
         },
         (payload) => {
-          console.log("Asset realtime event:", payload);
-
           if (payload.eventType === "INSERT") {
             const newAsset = payload.new as Asset;
             setAssets((current) => [newAsset, ...current]);

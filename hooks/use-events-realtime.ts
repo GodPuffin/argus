@@ -1,5 +1,7 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
+import { isDemoMode } from "@/lib/demo/flag";
+import { mockEvents } from "@/lib/demo/mock-data";
 import { type AIAnalysisEvent, supabase } from "@/lib/supabase";
 
 export function useEventsRealtime(assetId: string | null) {
@@ -10,6 +12,12 @@ export function useEventsRealtime(assetId: string | null) {
   useEffect(() => {
     if (!assetId) {
       setEvents([]);
+      setLoading(false);
+      return;
+    }
+
+    if (isDemoMode) {
+      setEvents(mockEvents.filter((e) => e.asset_id === assetId));
       setLoading(false);
       return;
     }
@@ -47,8 +55,6 @@ export function useEventsRealtime(assetId: string | null) {
           filter: `asset_id=eq.${assetId}`,
         },
         (payload) => {
-          console.log("Event realtime update:", payload);
-
           if (payload.eventType === "INSERT") {
             const newEvent = payload.new as AIAnalysisEvent;
             setEvents((current) => {

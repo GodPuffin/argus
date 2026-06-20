@@ -1,4 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { isDemoMode } from "@/lib/demo/flag";
+import { mockCameras } from "@/lib/demo/mock-data";
 import { supabase } from "@/lib/supabase";
 
 const MUX_TOKEN_ID = process.env.MUX_TOKEN_ID;
@@ -9,6 +11,15 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  if (isDemoMode) {
+    const body = await request.json().catch(() => ({}));
+    const cam = mockCameras.find((c) => c.id === params.id);
+    return NextResponse.json({
+      camera: cam
+        ? { ...cam, camera_name: body.cameraName ?? cam.camera_name }
+        : null,
+    });
+  }
   try {
     const { cameraName } = await request.json();
     const streamId = params.id;
@@ -54,6 +65,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  if (isDemoMode) {
+    return NextResponse.json({ success: true, demo: true });
+  }
   if (!MUX_TOKEN_ID || !MUX_TOKEN_SECRET) {
     return NextResponse.json(
       { error: "Mux credentials not configured" },

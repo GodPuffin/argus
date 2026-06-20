@@ -8,21 +8,16 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import {
-  LuxeCard as Card,
-  LuxeCardContent as CardContent,
-  LuxeCardDescription as CardDescription,
-  LuxeCardHeader as CardHeader,
-  LuxeCardTitle as CardTitle,
-} from "@/components/ui/luxe-card";
+import { useChartAnimation } from "@/hooks/use-chart-animation";
 import { getEntityTypeColor } from "@/lib/chart-colors";
-import { ChartBackground } from "./chart-background";
+import { buildDynamicChartConfig, ChartShell } from "./chart-shell";
 
 interface TopEntitiesChartProps {
   data: Array<{ entity: string; count: number; type?: string }>;
 }
 
 export function TopEntitiesChart({ data }: TopEntitiesChartProps) {
+  const chartAnimation = useChartAnimation("top-entities");
   const total = data.reduce((sum, item) => sum + item.count, 0);
   const topData = data.slice(0, 10).map((item) => ({
     entity: item.entity,
@@ -30,73 +25,50 @@ export function TopEntitiesChart({ data }: TopEntitiesChartProps) {
     fill: item.type ? getEntityTypeColor(item.type) : "hsl(0, 0%, 50%)",
   }));
 
-  // Build chart config dynamically
-  const chartConfig = topData.reduce(
-    (acc, item) => {
-      acc[item.entity] = {
-        label: item.entity,
-        color: item.fill,
-      };
-      return acc;
-    },
-    {} as Record<string, { label: string; color: string }>,
+  const chartConfig = buildDynamicChartConfig(
+    topData,
+    (item) => item.entity,
+    (item) => item.fill,
   );
 
   return (
-    <Card variant="revealed-pointer">
-      <CardHeader>
-        <CardTitle>Top Detected Entities</CardTitle>
-        <CardDescription>
-          {total > 0
-            ? `Most frequently detected entities (${total.toLocaleString()} total)`
-            : "No entities yet"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pb-6">
-        <ChartBackground>
-          {topData.length > 0 ? (
-            <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <BarChart
-                data={topData}
-                layout="vertical"
-                margin={{ left: 10, right: 10 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis
-                  type="number"
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
-                />
-                <YAxis
-                  dataKey="entity"
-                  type="category"
-                  width={100}
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
-                />
-                <ChartTooltip
-                  cursor={{ fill: "hsl(var(--muted))" }}
-                  content={<ChartTooltipContent hideLabel />}
-                />
-                <Bar
-                  dataKey="count"
-                  radius={[0, 4, 4, 0]}
-                  animationDuration={800}
-                >
-                  {topData.map((entry) => (
-                    <Cell key={entry.entity} fill={entry.fill} />
-                  ))}
-                </Bar>
-                <ChartLegend content={<ChartLegendContent />} />
-              </BarChart>
-            </ChartContainer>
-          ) : (
-            <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-              No entity data available
-            </div>
-          )}
-        </ChartBackground>
-      </CardContent>
-    </Card>
+    <ChartShell
+      title="Top Detected Entities"
+      description={
+        total > 0
+          ? `Most frequently detected entities (${total.toLocaleString()} total)`
+          : "No entities yet"
+      }
+      isEmpty={topData.length === 0}
+      emptyMessage="No entity data available"
+    >
+      <ChartContainer config={chartConfig} className="h-[300px] w-full">
+        <BarChart data={topData} layout="vertical" margin={{ left: 10, right: 10 }}>
+          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+          <XAxis
+            type="number"
+            stroke="hsl(var(--muted-foreground))"
+            fontSize={12}
+          />
+          <YAxis
+            dataKey="entity"
+            type="category"
+            width={100}
+            stroke="hsl(var(--muted-foreground))"
+            fontSize={12}
+          />
+          <ChartTooltip
+            cursor={{ fill: "hsl(var(--muted))" }}
+            content={<ChartTooltipContent hideLabel />}
+          />
+          <Bar dataKey="count" radius={[0, 4, 4, 0]} {...chartAnimation}>
+            {topData.map((entry) => (
+              <Cell key={entry.entity} fill={entry.fill} />
+            ))}
+          </Bar>
+          <ChartLegend content={<ChartLegendContent />} />
+        </BarChart>
+      </ChartContainer>
+    </ChartShell>
   );
 }

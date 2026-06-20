@@ -1,10 +1,20 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { isDemoMode } from "@/lib/demo/flag";
 import { supabase } from "@/lib/supabase";
 
 const MUX_TOKEN_ID = process.env.MUX_TOKEN_ID;
 const MUX_TOKEN_SECRET = process.env.MUX_TOKEN_SECRET;
 
+const DEMO_DISABLED_BODY = {
+  disabled: true,
+  reason: "Live streaming is disabled in the demo deployment.",
+};
+
 export async function POST(request: NextRequest) {
+  if (isDemoMode) {
+    return NextResponse.json(DEMO_DISABLED_BODY, { status: 501 });
+  }
+
   if (!MUX_TOKEN_ID || !MUX_TOKEN_SECRET) {
     return NextResponse.json(
       {
@@ -87,11 +97,11 @@ export async function POST(request: NextRequest) {
     // Wait for the Mux webhook to create the live_streams record using realtime
     console.log("Waiting for webhook to sync stream:", streamId);
 
-    const streamReady = await new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         cleanup();
         reject(new Error("Timeout waiting for webhook sync"));
-      }, 10000); // 10 second timeout as safety net
+      }, 10000);
 
       const channel = supabase
         .channel(`wait_for_stream_${streamId}`)
@@ -103,8 +113,7 @@ export async function POST(request: NextRequest) {
             table: "live_streams",
             filter: `id=eq.${streamId}`,
           },
-          (payload) => {
-            console.log("Stream synced via webhook:", streamId);
+          () => {
             cleanup();
             resolve(true);
           },
@@ -116,7 +125,6 @@ export async function POST(request: NextRequest) {
         supabase.removeChannel(channel);
       };
 
-      // Also check if it already exists (race condition)
       supabase
         .schema("mux")
         .from("live_streams")
@@ -125,14 +133,12 @@ export async function POST(request: NextRequest) {
         .maybeSingle()
         .then(({ data: existing }) => {
           if (existing) {
-            console.log("Stream already exists in DB:", streamId);
             cleanup();
             resolve(true);
           }
         });
     });
 
-    // Now update the live_streams record with browser_id and camera_name
     const { data: updatedStream, error: updateError } = await supabase
       .schema("mux")
       .from("live_streams")
@@ -146,11 +152,6 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (updateError || !updatedStream) {
-      console.error(
-        "Failed to update live stream with camera info:",
-        updateError,
-      );
-      // Fallback: return Mux data if update somehow fails
       return NextResponse.json({
         streamKey: data.data.stream_key,
         streamId: streamId,
@@ -162,7 +163,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Successfully updated - return the database data
     return NextResponse.json({
       streamKey: updatedStream.stream_key,
       streamId: updatedStream.id,

@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import React from "react";
 import { columns } from "@/components/jobs/columns";
+import { PageContainer } from "@/components/page-container";
+import { PageHeader } from "@/components/page-header";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -124,7 +126,11 @@ export default function JobsPage() {
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <SiteHeader title="AI Analysis Jobs" />
-      <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6 overflow-hidden">
+      <PageContainer className="overflow-hidden">
+        <PageHeader
+          title="AI Analysis Jobs"
+          description="Monitor the AI analysis queue across uploads and live streams."
+        />
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-6">
           <Card variant="revealed-pointer">
@@ -464,7 +470,7 @@ export default function JobsPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
     </div>
   );
 }

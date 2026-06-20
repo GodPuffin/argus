@@ -9,6 +9,8 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { PageContainer } from "@/components/page-container";
+import { PageHeader } from "@/components/page-header";
 import { SiteHeader } from "@/components/site-header";
 import { AssetDurationChart } from "@/components/stats/asset-duration-chart";
 import { CameraActivityChart } from "@/components/stats/camera-activity-chart";
@@ -140,7 +142,11 @@ export default function StatsPage() {
       </SiteHeader>
 
       <ScrollArea className="h-[calc(100vh-6rem)]">
-        <div className="@container/main flex flex-1 flex-col gap-4 p-4 pb-0 md:gap-6 md:p-6 md:pb-0">
+        <PageContainer className="pb-0 lg:pb-0">
+          <PageHeader
+            title="Statistics"
+            description="Activity, detections, and processing metrics across your streams."
+          />
           {/* Controls */}
           <div className="flex items-center justify-between gap-3">
             <div key="section-tabs">
@@ -491,7 +497,7 @@ export default function StatsPage() {
               </Card>
             )}
           </div>
-        </div>
+        </PageContainer>
       </ScrollArea>
     </div>
   );

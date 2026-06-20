@@ -14,7 +14,8 @@ import {
 
 export function NavMain({
   items,
-}: {
+  labelClassName,
+}: Readonly<{
   items: {
     title?: string;
     items: {
@@ -23,7 +24,8 @@ export function NavMain({
       icon?: Icon;
     }[];
   }[];
-}) {
+  labelClassName?: string;
+}>) {
   const pathname = usePathname();
 
   return (
@@ -31,7 +33,9 @@ export function NavMain({
       {items.map((section) => (
         <SidebarGroup key={section.title || "main"}>
           {section.title && (
-            <SidebarGroupLabel>{section.title}</SidebarGroupLabel>
+            <SidebarGroupLabel className={labelClassName}>
+              {section.title}
+            </SidebarGroupLabel>
           )}
           <SidebarGroupContent className="flex flex-col gap-2">
             <SidebarMenu>

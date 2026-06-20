@@ -54,7 +54,7 @@ app.prepare().then(() => {
   // Track active connections
   let connectionCount = 0;
   const activeConnections = new Map();
-  
+
   // WebSocket send queue configuration
   const WS_BUFFER_THRESHOLD = 1024 * 1024; // 1MB - pause if buffer exceeds this
 
@@ -164,13 +164,13 @@ app.prepare().then(() => {
       "60", // keyframe every 2 seconds at 30fps
       "-sc_threshold",
       "0",
-      
+
       // Additional buffering for input stability
       "-probesize",
       "10M",
       "-analyzeduration",
       "5M",
-      
+
       "-f",
       "flv",
       "-flvflags",
@@ -185,7 +185,7 @@ app.prepare().then(() => {
       // This helps prevent data loss during brief network hiccups
       stdio: ["pipe", "pipe", "pipe"],
     });
-    
+
     // Increase stdin buffer size to handle bursty data better
     if (ffmpeg.stdin && ffmpeg.stdin.setDefaultEncoding) {
       ffmpeg.stdin.setMaxListeners(0);
@@ -343,7 +343,7 @@ app.prepare().then(() => {
           // Check if ffmpeg stdin buffer is getting full
           // If it is, we might want to apply backpressure
           const canWrite = ffmpeg.stdin.write(msg);
-          
+
           if (!canWrite) {
             // Buffer is full, wait for drain event
             // This implements backpressure to prevent memory issues

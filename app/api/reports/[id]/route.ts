@@ -1,4 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { isDemoMode } from "@/lib/demo/flag";
+import { demoReportStore } from "@/lib/demo/mock-data";
 import { supabase } from "@/lib/supabase";
 
 // GET /api/reports/[id] - Get a specific report
@@ -8,6 +10,17 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+
+    if (isDemoMode) {
+      const report = demoReportStore().find((r) => r.id === id);
+      if (!report) {
+        return NextResponse.json(
+          { error: "Report not found" },
+          { status: 404 },
+        );
+      }
+      return NextResponse.json({ report });
+    }
 
     const { data: report, error } = await supabase
       .from("reports")
@@ -39,6 +52,25 @@ export async function PATCH(
     const { id } = await params;
     const body = await req.json();
     const { title, content } = body;
+
+    if (isDemoMode) {
+      const store = demoReportStore();
+      const idx = store.findIndex((r) => r.id === id);
+      if (idx < 0) {
+        return NextResponse.json(
+          { error: "Report not found" },
+          { status: 404 },
+        );
+      }
+      const updated = {
+        ...store[idx],
+        ...(title !== undefined ? { title } : {}),
+        ...(content !== undefined ? { content } : {}),
+        updated_at: new Date().toISOString(),
+      };
+      store[idx] = updated;
+      return NextResponse.json({ report: updated });
+    }
 
     const updateData: any = {};
     if (title !== undefined) updateData.title = title;
@@ -76,6 +108,13 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+
+    if (isDemoMode) {
+      const store = demoReportStore();
+      const idx = store.findIndex((r) => r.id === id);
+      if (idx >= 0) store.splice(idx, 1);
+      return NextResponse.json({ success: true });
+    }
 
     const { error } = await supabase.from("reports").delete().eq("id", id);
 

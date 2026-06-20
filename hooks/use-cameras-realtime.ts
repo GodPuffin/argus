@@ -1,5 +1,8 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useDemoSession } from "@/hooks/use-demo-session";
+import { isDemoMode } from "@/lib/demo/flag";
+import { mockCameras } from "@/lib/demo/mock-data";
 import { type Camera, supabase } from "@/lib/supabase";
 
 export function useCamerasRealtime() {
@@ -7,7 +10,17 @@ export function useCamerasRealtime() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // In demo mode there is no backend: layer session-added cameras (from the
+  // onboarding overlay) in front of the base mocks and skip the subscription.
+  const { cameras: sessionCameras } = useDemoSession();
+  const demoCameras = useMemo(
+    () => [...sessionCameras, ...mockCameras],
+    [sessionCameras],
+  );
+
   useEffect(() => {
+    if (isDemoMode) return;
+
     // Initial fetch from mux.live_streams table
     const fetchCameras = async () => {
       try {
@@ -43,8 +56,6 @@ export function useCamerasRealtime() {
           table: "live_streams",
         },
         (payload) => {
-          console.log("Live stream realtime event:", payload);
-
           if (payload.eventType === "INSERT") {
             const newCamera = payload.new as Camera;
             // Only add if it has a browser_id (is a camera)
@@ -87,6 +98,10 @@ export function useCamerasRealtime() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  if (isDemoMode) {
+    return { cameras: demoCameras, loading: false, error: null };
+  }
 
   return { cameras, loading, error };
 }

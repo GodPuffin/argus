@@ -11,7 +11,7 @@ const getRecorderSettings = () => {
     video: "",
     audio: "",
   };
-  
+
   // Prefer WebM for streaming - it handles continuous streams better than MP4
   // MP4 chunks have complete container metadata that can confuse streaming parsers
   if (MediaRecorder.isTypeSupported("video/webm;codecs=h264,opus")) {

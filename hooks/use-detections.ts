@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { isDemoMode } from "@/lib/demo/flag";
+import { getMockDetectionsForAsset } from "@/lib/demo/mock-data";
 import type { DetectionFrame } from "@/lib/detection-queries";
 
 interface UseDetectionsOptions {
@@ -31,6 +33,13 @@ export function useDetections(
   useEffect(() => {
     if (!sourceId || !enabled) {
       setDetections([]);
+      return;
+    }
+
+    if (isDemoMode) {
+      setDetections(getMockDetectionsForAsset(sourceId));
+      setLoading(false);
+      setError(null);
       return;
     }
 

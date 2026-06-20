@@ -1,6 +1,17 @@
-import { tool } from "ai";
+import { generateId, tool } from "ai";
 import { z } from "zod";
-import { supabase } from "./supabase";
+import { isDemoMode } from "./demo/flag";
+import { demoReportStore, mockEvents } from "./demo/mock-data";
+import { type AIAnalysisEvent, supabase } from "./supabase";
+
+/** Resolve an event by id from the in-memory demo fixtures. */
+function getDemoEventById(eventId: number): AIAnalysisEvent {
+  const event = mockEvents.find((e) => e.id === eventId);
+  if (!event) {
+    throw new Error(`Event ${eventId} not found in demo data`);
+  }
+  return event;
+}
 
 // Event severity and type enums matching database schema
 const eventSeverityEnum = z.enum(["Minor", "Medium", "High"]);
@@ -47,7 +58,6 @@ export const displayEvent = tool({
     timestamp_seconds,
     affected_entities,
   }) => {
-    // Passthrough - return data as-is for UI rendering
     return {
       asset_id,
       event_id,
@@ -72,22 +82,24 @@ export const displayEventById = tool({
     event_id: z.number().describe("The event ID to fetch and display"),
   }),
   execute: async ({ event_id }) => {
-    // Fetch event from database
-    const { data: event, error } = await supabase
-      .from("ai_analysis_events")
-      .select("*")
-      .eq("id", event_id)
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to fetch event ${event_id}: ${error.message}`);
+    let event: AIAnalysisEvent;
+    if (isDemoMode) {
+      event = getDemoEventById(event_id);
+    } else {
+      const { data, error } = await supabase
+        .from("ai_analysis_events")
+        .select("*")
+        .eq("id", event_id)
+        .single();
+      if (error) {
+        throw new Error(`Failed to fetch event ${event_id}: ${error.message}`);
+      }
+      if (!data) {
+        throw new Error(`Event ${event_id} not found`);
+      }
+      event = data as AIAnalysisEvent;
     }
 
-    if (!event) {
-      throw new Error(`Event ${event_id} not found`);
-    }
-
-    // Return formatted event data
     return {
       asset_id: event.asset_id,
       event_id: event.id,
@@ -112,7 +124,6 @@ export const displayAsset = tool({
     asset_id: z.string().describe("The video asset ID to display"),
   }),
   execute: async ({ asset_id }) => {
-    // Passthrough - return data as-is for UI rendering
     return {
       asset_id,
     };
@@ -135,7 +146,6 @@ export const createReport = tool({
       ),
   }),
   execute: async ({ title, markdown }) => {
-    // Import required modules
     const { marked } = await import("marked");
     const { generateJSON } = await import("@tiptap/html");
     const StarterKit = (await import("@tiptap/starter-kit")).default;
@@ -145,10 +155,13 @@ export const createReport = tool({
     const TaskItem = (await import("@tiptap/extension-task-item")).default;
     const ListItem = (await import("@tiptap/extension-list-item")).default;
 
-    // Convert markdown to HTML first
-    let content = { type: "doc", content: [{ type: "paragraph" }] };
+    // Default to an empty doc; replaced below once markdown is converted.
+    let content: Record<string, unknown> = {
+      type: "doc",
+      content: [{ type: "paragraph" }],
+    };
     try {
-      // Configure marked to preserve line breaks and use GFM (GitHub Flavored Markdown)
+      // GFM + breaks so report markdown renders the way users expect.
       marked.setOptions({
         breaks: true,
         gfm: true,
@@ -156,7 +169,6 @@ export const createReport = tool({
 
       const html = await marked(markdown);
 
-      // Convert HTML to Tiptap JSON with all extensions
       content = generateJSON(html, [
         StarterKit.configure({
           listItem: false, // We use custom ListItem
@@ -169,7 +181,7 @@ export const createReport = tool({
       ]);
     } catch (err) {
       console.error("Error converting markdown:", err);
-      // If conversion fails, create a simple paragraph with the markdown text
+      // Fall back to the raw markdown as plain text so the report still saves.
       content = {
         type: "doc",
         content: [
@@ -186,6 +198,24 @@ export const createReport = tool({
       };
     }
 
+    if (isDemoMode) {
+      const store = demoReportStore();
+      const now = new Date().toISOString();
+      const report = {
+        id: `demo-report-${generateId()}`,
+        title,
+        content,
+        created_at: now,
+        updated_at: now,
+      };
+      store.unshift(report);
+      return {
+        id: report.id,
+        title: report.title,
+        created_at: report.created_at,
+      };
+    }
+
     const { data: report, error } = await supabase
       .from("reports")
       .insert({
@@ -199,7 +229,6 @@ export const createReport = tool({
       throw new Error(`Failed to create report: ${error.message}`);
     }
 
-    // Return report data for UI rendering
     return {
       id: report.id,
       title: report.title,
@@ -208,10 +237,105 @@ export const createReport = tool({
   },
 });
 
-// Export tools object
+// ────────────────────────────────────────────────────────────────────────
+// Onboarding copilot tools
+//
+// Pass-through tools (mirrors the displayEvent pattern): `execute` simply
+// returns the validated args. The onboarding client reads these outputs from
+// the streamed message parts and applies them to the demo-session store.
+// ────────────────────────────────────────────────────────────────────────
+
+export const setOrgName = tool({
+  description:
+    "Set the organization / site name for the workspace being configured. Call this once you know what to call the deployment.",
+  inputSchema: z.object({
+    name: z
+      .string()
+      .describe("The organization or site name, e.g. 'Office HQ'"),
+  }),
+  execute: async ({ name }) => ({ name }),
+});
+
+export const addCamera = tool({
+  description:
+    "Add a camera to the workspace for a specific area the user wants to monitor. Call once per camera. Prefer short, location-based names.",
+  inputSchema: z.object({
+    name: z
+      .string()
+      .describe("Camera name, usually the area it watches, e.g. 'Lobby'"),
+    location: z
+      .string()
+      .optional()
+      .describe("Optional finer location detail, e.g. 'North entrance'"),
+  }),
+  execute: async ({ name, location }) => ({ name, location }),
+});
+
+export const addDetectionRule = tool({
+  description:
+    "Add an AI detection rule describing something the user wants flagged (e.g. weapons, medical emergencies, theft). Call once per rule.",
+  inputSchema: z.object({
+    label: z.string().describe("Short rule name, e.g. 'Weapons Detection'"),
+    description: z
+      .string()
+      .optional()
+      .describe("What the rule should detect, in one sentence."),
+    severity: eventSeverityEnum
+      .optional()
+      .describe("How serious a match is. Defaults to Medium."),
+  }),
+  execute: async ({ label, description, severity }) => ({
+    label,
+    description,
+    severity: severity ?? "Medium",
+  }),
+});
+
+export const setAlerts = tool({
+  description:
+    "Configure how the user is notified about detections: which channels (dashboard, email, sms) and the minimum severity that triggers an alert.",
+  inputSchema: z.object({
+    channels: z
+      .array(z.enum(["dashboard", "email", "sms"]))
+      .optional()
+      .describe("Notification channels to enable."),
+    severityThreshold: eventSeverityEnum
+      .optional()
+      .describe("Only alert at or above this severity."),
+    email: z.string().optional().describe("Email address for alerts."),
+    phone: z.string().optional().describe("Phone number for SMS alerts."),
+  }),
+  execute: async ({ channels, severityThreshold, email, phone }) => ({
+    channels: channels ?? ["dashboard"],
+    severityThreshold: severityThreshold ?? "Medium",
+    email,
+    phone,
+  }),
+});
+
+export const completeOnboarding = tool({
+  description:
+    "Finish onboarding once the user confirms their setup looks good. Only call after summarizing what was configured and getting confirmation.",
+  inputSchema: z.object({
+    confirm: z
+      .boolean()
+      .optional()
+      .describe("Whether the user confirmed completion."),
+  }),
+  execute: async ({ confirm }) => ({ confirm: confirm ?? true }),
+});
+
 export const aiTools = {
   displayEvent,
   displayEventById,
   displayAsset,
   createReport,
+};
+
+export const onboardingTools = {
+  setOrgName,
+  addCamera,
+  addDetectionRule,
+  setAlerts,
+  completeOnboarding,
 };
