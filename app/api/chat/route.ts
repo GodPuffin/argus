@@ -10,6 +10,9 @@ import {
   generateId,
   stepCountIs,
   streamText,
+  type JSONValue,
+  type LanguageModel,
+  type ToolSet,
   type UIMessage,
 } from "ai";
 import { aiTools, onboardingTools } from "@/lib/ai-tools";
@@ -29,7 +32,9 @@ import {
   ONBOARDING_SYSTEM_PROMPT,
 } from "@/lib/prompts";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
+
+type ProviderOptions = Record<string, Record<string, JSONValue>>;
 
 interface ScriptContextInput {
   hasOrgName?: boolean;
@@ -107,7 +112,7 @@ export async function POST(req: Request) {
   let mcpClient:
     | Awaited<ReturnType<typeof experimental_createMCPClient>>
     | undefined;
-  let tools: Record<string, unknown> = isOnboarding
+  let tools: ToolSet = isOnboarding
     ? { ...onboardingTools }
     : { ...aiTools };
 
@@ -143,7 +148,7 @@ export async function POST(req: Request) {
     }
   }
 
-  let model;
+  let model: LanguageModel | undefined;
   let effectiveModel = selectedModel;
 
   if (isDemoMode) {
@@ -249,9 +254,11 @@ export async function POST(req: Request) {
 
   const modelMessages = convertToModelMessages(messages);
 
-  // Provider option shapes differ per provider (anthropic.thinking vs.
-  // letta.agent) and the SDK types them loosely, so keep this as a bag.
-  const providerOptions: any = {};
+  if (!model) {
+    return new Response("No model configured", { status: 500 });
+  }
+
+  const providerOptions: ProviderOptions = {};
   if (!isDemoMode) {
     providerOptions.anthropic = {
       thinking: {
@@ -264,15 +271,21 @@ export async function POST(req: Request) {
   if (!isDemoMode && selectedModel === "stateful-argus") {
     providerOptions.letta = {
       agent: {
-        id: process.env.LETTA_AGENT_ID,
+        id: process.env.LETTA_AGENT_ID ?? "",
         maxSteps: 10,
         streamTokens: true,
       },
     };
   }
 
-  // `system` is added conditionally below, so the config stays loosely typed.
-  const streamConfig: any = {
+  const streamConfig: {
+    model: LanguageModel;
+    messages: ReturnType<typeof convertToModelMessages>;
+    tools: ToolSet;
+    providerOptions: ProviderOptions;
+    stopWhen: ReturnType<typeof stepCountIs>;
+    system?: string;
+  } = {
     model,
     messages: modelMessages,
     tools,

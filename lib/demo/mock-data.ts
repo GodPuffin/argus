@@ -516,7 +516,9 @@ export const mockReports: Report[] = [
 ];
 
 // In-memory store so POST /api/reports + createReport tool persist during a
-// single server instance (resets on cold start, which is fine for a demo).
+// single warm server instance. On serverless hosts, cold starts or requests
+// routed to a different instance may fall back to seeded reports, which is
+// acceptable for an ephemeral public demo.
 declare global {
   // eslint-disable-next-line no-var
   var __demoReportStore: Report[] | undefined;

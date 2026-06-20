@@ -96,6 +96,10 @@ function demoChats(): Map<string, DemoChatRecord> {
 /**
  * In-memory implementation of the chat store used in demo mode. Mirrors the
  * Supabase-backed code paths below; each public function branches here once.
+ *
+ * This state is scoped to a single warm server instance. On serverless hosts,
+ * cold starts or requests routed to a different instance may fall back to the
+ * seeded demo history, which is acceptable for an ephemeral public demo.
  */
 const demoChatStore = {
   create(id: string): void {

@@ -14,12 +14,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # Full history so scour can diff the PR against its base ref.
           fetch-depth: 0
 
       - name: Run scour
-        # Pinned to a real release tag (no v1 tag exists upstream yet).
         uses: carsonSgit/scour@v0.4.0
         with:
-          fail-on: warning
+          fail-on: error
           triage: "true"

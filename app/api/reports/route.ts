@@ -5,6 +5,7 @@ import TaskList from "@tiptap/extension-task-list";
 import Underline from "@tiptap/extension-underline";
 import { generateJSON } from "@tiptap/html";
 import StarterKit from "@tiptap/starter-kit";
+import { generateId } from "ai";
 import { marked } from "marked";
 import { type NextRequest, NextResponse } from "next/server";
 import { isDemoMode } from "@/lib/demo/flag";
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
     if (isDemoMode) {
       const now = new Date().toISOString();
       const report = {
-        id: `demo-report-${Date.now()}`,
+        id: `demo-report-${generateId()}`,
         title,
         content,
         created_at: now,

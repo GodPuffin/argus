@@ -1,4 +1,4 @@
-import { tool } from "ai";
+import { generateId, tool } from "ai";
 import { z } from "zod";
 import { isDemoMode } from "./demo/flag";
 import { demoReportStore, mockEvents } from "./demo/mock-data";
@@ -202,7 +202,7 @@ export const createReport = tool({
       const store = demoReportStore();
       const now = new Date().toISOString();
       const report = {
-        id: `demo-report-${Date.now()}`,
+        id: `demo-report-${generateId()}`,
         title,
         content,
         created_at: now,
