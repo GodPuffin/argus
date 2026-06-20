@@ -202,6 +202,42 @@
   .animate-breathe {
     animation: breathe 5s ease-in-out infinite;
   }
+
+  @keyframes feed-in {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-feed-in {
+    animation: feed-in 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes scanline {
+    0% {
+      transform: translateY(0);
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+  }
+
+  .animate-scanline {
+    animation: scanline 4s ease-in-out infinite;
+  }
 }
 
 /* Tiptap Editor Styles */

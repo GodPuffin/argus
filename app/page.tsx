@@ -93,9 +93,24 @@ export default function Home() {
           <div className="max-w-[1500px] mx-auto px-6 sm:px-10 lg:px-12 pt-24 pb-16">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 lg:items-center">
               <div className="flex flex-col gap-8">
-                <h1 className="font-semibold text-5xl sm:text-6xl lg:text-7xl tracking-tight text-balance max-w-[14ch]">
-                  The watcher, catalogued.
-                </h1>
+                <div className="flex flex-col gap-5">
+                  <span className="inline-flex w-fit items-center gap-2 border border-border py-1.5 pr-3 pl-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+                    <span className="relative flex size-1.5 items-center justify-center">
+                      <span
+                        className="absolute inline-flex size-full rounded-full animate-ping motion-reduce:hidden"
+                        style={{ backgroundColor: "var(--linear-success)" }}
+                      />
+                      <span
+                        className="relative size-1.5 rounded-full"
+                        style={{ backgroundColor: "var(--linear-success)" }}
+                      />
+                    </span>
+                    Live · real-time surveillance intelligence
+                  </span>
+                  <h1 className="font-semibold text-5xl sm:text-6xl lg:text-7xl tracking-tight text-balance max-w-[14ch]">
+                    The watcher, catalogued.
+                  </h1>
+                </div>
                 <p className="text-lg text-muted-foreground text-pretty max-w-[44ch]">
                   Computer vision, analytics, and an AI assistant — watching
                   your streams so you don&apos;t have to.
@@ -121,6 +136,48 @@ export default function Home() {
 
               <div className="relative aspect-square w-full max-w-[560px] lg:ml-auto">
                 <div className="absolute inset-0 border border-border" />
+
+                {/* Targeting brackets */}
+                <span
+                  aria-hidden
+                  className="absolute -top-px -left-px size-4 border-t-2 border-l-2 border-foreground/40"
+                />
+                <span
+                  aria-hidden
+                  className="absolute -top-px -right-px size-4 border-t-2 border-r-2 border-foreground/40"
+                />
+                <span
+                  aria-hidden
+                  className="absolute -bottom-px -left-px size-4 border-b-2 border-l-2 border-foreground/40"
+                />
+                <span
+                  aria-hidden
+                  className="absolute -bottom-px -right-px size-4 border-b-2 border-r-2 border-foreground/40"
+                />
+
+                {/* Viewfinder scanline */}
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 overflow-hidden"
+                >
+                  <div className="absolute inset-x-0 top-0 h-px bg-primary/50 animate-scanline motion-reduce:hidden" />
+                </div>
+
+                {/* REC + tracking labels */}
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute top-3 left-3 flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground"
+                >
+                  <span className="size-1.5 rounded-full bg-destructive animate-pulse motion-reduce:animate-none" />
+                  Rec
+                </div>
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute bottom-3 right-3 text-[10px] uppercase tracking-widest text-muted-foreground tabular-nums"
+                >
+                  Trk · 48.42°N
+                </div>
+
                 <div className="absolute inset-3 [&_span]:!text-foreground flex items-center justify-center">
                   <AsciiEye />
                 </div>

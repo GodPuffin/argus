@@ -70,6 +70,8 @@ function scriptedStreamResponse(text: string, calls: ScriptedCall[]) {
           toolName: call.toolName,
           input: call.input,
         });
+        // Scripted onboarding tools don't run server-side; the client renders
+        // the call's input directly, so echo it back as the output.
         writer.write({
           type: "tool-output-available",
           toolCallId,

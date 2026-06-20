@@ -4,6 +4,7 @@ import Image from "next/image";
 import { CtaLink } from "@/components/cta-link";
 import { PricingSection } from "@/components/landing/pricing-section";
 import { Section, SectionInner } from "@/components/landing/section";
+import { WorkflowPipeline } from "@/components/landing/workflow-pipeline";
 import { SiteFooter } from "@/components/site-footer";
 import { cn } from "@/lib/utils";
 
@@ -157,6 +158,7 @@ function FeaturesAlternating({
 export function LandingSections({ features }: { features: FeatureItem[] }) {
   return (
     <>
+      <WorkflowPipeline />
       <ModelsSection />
       <FeaturesAlternating features={features} />
       <CtaSection />

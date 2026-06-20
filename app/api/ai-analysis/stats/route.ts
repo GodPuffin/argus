@@ -11,7 +11,9 @@ import { mockStats } from "@/lib/demo/mock-data";
 export async function GET() {
   try {
     if (isDemoMode) {
-      const { successRate: _s, ...rest } = mockStats.jobStats;
+      // The mock carries an extra successRate; drop it to match the leaner
+      // AnalysisJobSummary shape that getJobStats() returns in prod.
+      const { successRate: _successRate, ...rest } = mockStats.jobStats;
       return NextResponse.json(rest);
     }
     const stats = await getJobStats();

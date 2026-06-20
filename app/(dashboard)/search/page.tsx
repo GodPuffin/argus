@@ -221,7 +221,9 @@ function SearchContent() {
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timer);
-  }, [query, selectedSeverities, selectedEventTypes, dateRange, handleSearch]);
+    // handleSearch already changes when the filters change, so depending on it
+    // (plus the query) covers every input without re-listing each filter.
+  }, [query, handleSearch]);
 
   // Update URL params when search state changes
   useEffect(() => {

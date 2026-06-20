@@ -3,15 +3,15 @@ import { useEffect, useMemo, useState } from "react";
 import { useDemoSession } from "@/hooks/use-demo-session";
 import { isDemoMode } from "@/lib/demo/flag";
 import { mockCameras } from "@/lib/demo/mock-data";
-import { useDemoListState } from "@/lib/demo/use-realtime-demo";
 import { type Camera, supabase } from "@/lib/supabase";
 
 export function useCamerasRealtime() {
-  const [cameras, setCameras, loading, setLoading] =
-    useDemoListState<Camera>(mockCameras);
+  const [cameras, setCameras] = useState<Camera[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Session-added cameras (onboarding overlay) sit in front of the base mocks.
+  // In demo mode there is no backend: layer session-added cameras (from the
+  // onboarding overlay) in front of the base mocks and skip the subscription.
   const { cameras: sessionCameras } = useDemoSession();
   const demoCameras = useMemo(
     () => [...sessionCameras, ...mockCameras],
